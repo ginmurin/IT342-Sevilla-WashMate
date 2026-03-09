@@ -1,9 +1,9 @@
 import axios from 'axios';
 import type { AuthResponse, LoginCredentials, RegisterData } from '../types';
 
-const BASE_URL = 'http://localhost:8080';
+const BASE_URL = '';
 
-// Create axios instance pointing to Spring Boot backend
+// Create axios instance — requests go through Vite proxy to Spring Boot
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {
@@ -11,16 +11,19 @@ const api = axios.create({
   },
 });
 
-// Attach JWT token to every request
+// Attach JWT token to every request (skip for auth endpoints)
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('washmate_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const url = config.url ?? '';
+  if (!url.startsWith('/api/auth/')) {
+    const token = localStorage.getItem('washmate_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   return config;
 });
 
-// Handle 401 errors globally
+// Handle API errors globally
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -28,6 +31,12 @@ api.interceptors.response.use(
       localStorage.removeItem('washmate_token');
       localStorage.removeItem('washmate_user');
       window.location.href = '/login';
+      return Promise.reject(error);
+    }
+    // Surface the backend error message if available
+    const backendMessage = error.response?.data?.error || error.response?.data?.message;
+    if (backendMessage) {
+      return Promise.reject(new Error(backendMessage));
     }
     return Promise.reject(error);
   }
@@ -60,8 +69,14 @@ export const authAPI = {
     };
   },
 
-  register: async (data: RegisterData): Promise<{ success: boolean; message: string }> => {
-    await api.post('/api/auth/register', {
+  register: async (data: RegisterData): Promise<AuthResponse> => {
+    const response = await api.post<{
+      token: string;
+      email: string;
+      fullName: string;
+      role: string;
+      userId: number;
+    }>('/api/auth/register', {
       fullName: data.name,
       email: data.email,
       password: data.password,
@@ -69,9 +84,17 @@ export const authAPI = {
       role: data.role ? data.role.toUpperCase() : 'CUSTOMER',
     });
 
+    const d = response.data;
+    localStorage.setItem('washmate_token', d.token);
+
     return {
-      success: true,
-      message: 'Registration successful! Please log in.',
+      token: d.token,
+      user: {
+        id: d.userId,
+        name: d.fullName,
+        email: d.email,
+        role: d.role.toUpperCase() as AuthResponse['user']['role'],
+      },
     };
   },
 
