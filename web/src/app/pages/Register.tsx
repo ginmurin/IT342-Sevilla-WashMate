@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { authAPI } from "../utils/api";
+import { useAuth } from "../contexts/AuthContext";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../components/Card";
@@ -22,6 +23,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export function Register() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   const {
@@ -41,7 +43,7 @@ export function Register() {
   const onSubmit = async (data: RegisterFormValues) => {
     setError(null);
     try {
-      await authAPI.register({
+      const response = await authAPI.register({
         name: data.name,
         email: data.email,
         password: data.password,
@@ -50,7 +52,16 @@ export function Register() {
         acceptTerms: true,
         role: data.role,
       });
-      navigate("/login", { replace: true, state: { message: "Registration successful! Please log in." } });
+      const backendRole = response.user.role.toLowerCase() as "customer" | "shop_owner" | "admin";
+      login({
+        id: String(response.user.id),
+        name: response.user.name,
+        email: response.user.email,
+        role: backendRole,
+      });
+      if (backendRole === "shop_owner") navigate("/shop", { replace: true });
+      else if (backendRole === "admin") navigate("/admin", { replace: true });
+      else navigate("/customer", { replace: true });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Registration failed. Please try again.";
       setError(message);

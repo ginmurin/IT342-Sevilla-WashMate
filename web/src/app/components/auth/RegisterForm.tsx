@@ -4,11 +4,13 @@ import { User, Mail, Phone, Lock, Eye, EyeOff, Loader2, CheckCircle2 } from 'luc
 import { useNavigate, Link } from 'react-router';
 import type { RegisterData } from '../../types';
 import { authAPI } from '../../utils/api';
+import { useAuth } from '../../contexts/AuthContext';
 import { ErrorMessage } from '../shared/ErrorMessage';
 import { getPasswordStrength } from '../../utils/validation';
 
 export function RegisterForm() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,8 +33,17 @@ export function RegisterForm() {
     setError('');
 
     try {
-      await authAPI.register(data);
-      navigate('/verify-email', { state: { email: data.email } });
+      const response = await authAPI.register(data);
+      const backendRole = response.user.role.toLowerCase() as 'customer' | 'shop_owner' | 'admin';
+      login({
+        id: String(response.user.id),
+        name: response.user.name,
+        email: response.user.email,
+        role: backendRole,
+      });
+      if (backendRole === 'shop_owner') navigate('/shop', { replace: true });
+      else if (backendRole === 'admin') navigate('/admin', { replace: true });
+      else navigate('/customer', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
     } finally {
