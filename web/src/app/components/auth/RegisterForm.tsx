@@ -34,15 +34,10 @@ export function RegisterForm() {
 
     try {
       const response = await authAPI.register(data);
-      const backendRole = response.user.role.toLowerCase() as 'customer' | 'shop_owner' | 'admin';
-      login({
-        id: String(response.user.id),
-        name: response.user.name,
-        email: response.user.email,
-        role: backendRole,
-      });
-      if (backendRole === 'shop_owner') navigate('/shop', { replace: true });
-      else if (backendRole === 'admin') navigate('/admin', { replace: true });
+      login(response.user);
+      const role = response.user.role;
+      if (role === 'SHOP_OWNER') navigate('/shop', { replace: true });
+      else if (role === 'ADMIN') navigate('/admin', { replace: true });
       else navigate('/customer', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
@@ -65,32 +60,49 @@ export function RegisterForm() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <div>
-          <label htmlFor="name" className="mb-2 block text-sm text-gray-700">
-            Full Name
-          </label>
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-            <input
-              id="name"
-              type="text"
-              placeholder="Juan Dela Cruz"
-              className={`w-full rounded-lg border ${
-                errors.name ? 'border-red-500' : 'border-gray-300'
-              } bg-white py-3 pl-11 pr-4 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition-all`}
-              {...register('name', {
-                required: 'Full name is required',
-                minLength: {
-                  value: 2,
-                  message: 'Name must be at least 2 characters',
-                },
-                validate: (value) => {
-                  return value.trim().split(' ').length >= 2 || 'Please enter your full name (first and last name)';
-                },
-              })}
-            />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="firstName" className="mb-2 block text-sm text-gray-700">
+              First Name
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <input
+                id="firstName"
+                type="text"
+                placeholder="Juan"
+                className={`w-full rounded-lg border ${
+                  errors.firstName ? 'border-red-500' : 'border-gray-300'
+                } bg-white py-3 pl-11 pr-4 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition-all`}
+                {...register('firstName', {
+                  required: 'First name is required',
+                  minLength: { value: 1, message: 'First name is required' },
+                })}
+              />
+            </div>
+            {errors.firstName && <p className="mt-1 text-sm text-red-500">{errors.firstName.message}</p>}
           </div>
-          {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>}
+          <div>
+            <label htmlFor="lastName" className="mb-2 block text-sm text-gray-700">
+              Last Name
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <input
+                id="lastName"
+                type="text"
+                placeholder="Dela Cruz"
+                className={`w-full rounded-lg border ${
+                  errors.lastName ? 'border-red-500' : 'border-gray-300'
+                } bg-white py-3 pl-11 pr-4 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition-all`}
+                {...register('lastName', {
+                  required: 'Last name is required',
+                  minLength: { value: 1, message: 'Last name is required' },
+                })}
+              />
+            </div>
+            {errors.lastName && <p className="mt-1 text-sm text-red-500">{errors.lastName.message}</p>}
+          </div>
         </div>
 
         <div>

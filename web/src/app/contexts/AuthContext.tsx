@@ -1,14 +1,10 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 import { authAPI } from "../utils/api";
+import type { User as ApiUser } from "../types";
 
 export type Role = "customer" | "shop_owner" | "admin";
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: Role;
-}
+export type User = ApiUser;
 
 interface AuthContextType {
   user: User | null;

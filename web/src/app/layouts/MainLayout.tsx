@@ -84,7 +84,7 @@ export function MainLayout() {
             {user ? (
               <div className="flex items-center gap-4">
                 <span className={`text-sm font-medium ${isHome ? "text-gray-300" : "text-gray-700"}`}>
-                  Hi, {user.name}
+                  Hi, {user.firstName}
                 </span>
                 <button
                   onClick={handleLogout}
@@ -138,7 +138,7 @@ export function MainLayout() {
               {user ? (
                 <>
                   <p className={`py-2 text-sm ${isHome ? "text-gray-400" : "text-gray-500"}`}>
-                    Hi, {user.name}
+                    Hi, {user.firstName}
                   </p>
                   <button
                     onClick={handleLogout}

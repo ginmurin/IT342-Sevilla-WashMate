@@ -21,7 +21,7 @@ public class AuthController {
 
     /**
      * POST /api/auth/register
-     * Body: { fullName, email, password, phoneNumber?, role? }
+     * Body: { username?, firstName, lastName, email, password, phoneNumber?, role? }
      */
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {

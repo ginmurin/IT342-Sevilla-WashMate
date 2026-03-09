@@ -36,7 +36,9 @@ public class AuthService {
                 : "CUSTOMER";
 
         User user = User.builder()
-                .fullName(request.getFullName())
+                .username(request.getUsername())
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .phoneNumber(request.getPhoneNumber())
@@ -48,20 +50,27 @@ public class AuthService {
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
         String token = jwtUtil.generateToken(userDetails, Map.of("role", user.getRole()));
 
-        return new AuthResponse(token, user.getEmail(), user.getFullName(), user.getRole(), user.getUserId());
+        return new AuthResponse(token, user.getUserId(), user.getUsername(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getRole());
     }
 
     public AuthResponse login(LoginRequest request) {
+        // Resolve email from either an email address or a username
+        String email = request.getEmailOrUsername().contains("@")
+                ? request.getEmailOrUsername()
+                : userRepository.findByUsername(request.getEmailOrUsername())
+                        .map(User::getEmail)
+                        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(email, request.getPassword())
         );
 
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
         String token = jwtUtil.generateToken(userDetails, Map.of("role", user.getRole()));
 
-        return new AuthResponse(token, user.getEmail(), user.getFullName(), user.getRole(), user.getUserId());
+        return new AuthResponse(token, user.getUserId(), user.getUsername(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getRole());
     }
 }

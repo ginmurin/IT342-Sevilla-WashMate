@@ -47,7 +47,7 @@ api.interceptors.response.use(
 export const authAPI = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     const response = await api.post('/api/auth/login', {
-      email: credentials.email,
+      emailOrUsername: credentials.emailOrUsername,
       password: credentials.password,
     });
 
@@ -62,9 +62,11 @@ export const authAPI = {
       token,
       user: {
         id: data.userId,
-        name: data.fullName,
+        username: data.username ?? null,
+        firstName: data.firstName,
+        lastName: data.lastName,
         email: data.email,
-        role: data.role.toUpperCase() as AuthResponse['user']['role'],
+        role: data.role.toLowerCase() as AuthResponse['user']['role'],
       },
     };
   },
@@ -72,12 +74,16 @@ export const authAPI = {
   register: async (data: RegisterData): Promise<AuthResponse> => {
     const response = await api.post<{
       token: string;
-      email: string;
-      fullName: string;
-      role: string;
       userId: number;
+      username: string | null;
+      firstName: string;
+      lastName: string;
+      email: string;
+      role: string;
     }>('/api/auth/register', {
-      fullName: data.name,
+      username: data.username || null,
+      firstName: data.firstName,
+      lastName: data.lastName,
       email: data.email,
       password: data.password,
       phoneNumber: data.phone,
@@ -91,9 +97,11 @@ export const authAPI = {
       token: d.token,
       user: {
         id: d.userId,
-        name: d.fullName,
+        username: d.username ?? null,
+        firstName: d.firstName,
+        lastName: d.lastName,
         email: d.email,
-        role: d.role.toUpperCase() as AuthResponse['user']['role'],
+        role: d.role.toLowerCase() as AuthResponse['user']['role'],
       },
     };
   },
