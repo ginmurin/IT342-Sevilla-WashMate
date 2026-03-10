@@ -8,6 +8,7 @@ export interface User {
   email: string;
   role: UserRole;
   phone?: string;
+  emailVerified?: boolean;
 }
 
 export interface AuthResponse {

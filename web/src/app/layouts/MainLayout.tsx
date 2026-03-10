@@ -11,6 +11,7 @@ export function MainLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isHome = location.pathname === "/";
+  const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -142,7 +143,7 @@ export function MainLayout() {
                   </p>
                   <button
                     onClick={handleLogout}
-                    className={`flex items-center gap-2 py-2 text-sm ${isHome ? "text-gray-400" : "text-gray-500"}`}
+                  className={`flex items-center gap-2 py-2 text-sm ${isHome ? "text-gray-400" : "text-gray-500"}`}
                   >
                     <LogOut className="w-4 h-4" /> Log out
                   </button>
@@ -162,7 +163,7 @@ export function MainLayout() {
         )}
       </header>
 
-      <main className={`flex-1 flex flex-col ${isHome ? "" : "container mx-auto px-4 py-8 pt-24"}`}>
+      <main className={`flex-1 flex flex-col ${isHome || isAuthPage ? "" : "container mx-auto px-4 py-8 pt-24"}`}>
         <Outlet />
       </main>
     </div>

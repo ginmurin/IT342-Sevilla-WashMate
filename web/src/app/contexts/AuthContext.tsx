@@ -11,6 +11,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (userData: User) => void;
   logout: () => void;
+  verifyEmail: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,6 +38,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authAPI.logout();
   };
 
+  const verifyEmail = () => {
+    if (!user) return;
+    const updated = { ...user, emailVerified: true };
+    setUser(updated);
+    localStorage.setItem("washmate_user", JSON.stringify(updated));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -44,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         login,
         logout,
+        verifyEmail,
       }}
     >
       {children}

@@ -1,6 +1,8 @@
 # IT342 Phase 1 – User Registration and Login
 **WashMate – Laundry Management System**
-**Student:** John Sevilla
+
+**Final Commit:** `a3cc1091708f0fdbbf3d20597d6c0b6aef8b7724`
+**Commit Link:** https://github.com/ginmurin/IT342-Sevilla-WashMate/commit/a3cc1091708f0fdbbf3d20597d6c0b6aef8b7724
 
 ---
 
@@ -159,17 +161,3 @@ POST /api/auth/login
 ```
 
 ---
-
-## Technology Stack
-
-| Layer | Technology |
-|---|---|
-| Backend framework | Spring Boot 3.5 (Java 17) |
-| Security | Spring Security + JWT (JJWT 0.12.6) |
-| Password hashing | BCrypt via Spring Security |
-| Database | PostgreSQL (Supabase) |
-| ORM | Spring Data JPA / Hibernate |
-| Frontend framework | React 18 + TypeScript (Vite) |
-| Form validation | React Hook Form + Zod |
-| HTTP client | Axios |
-| Styling | Tailwind CSS |
