@@ -1,13 +1,14 @@
 package edu.cit.sevilla.washmate.controller;
 
 import edu.cit.sevilla.washmate.dto.AuthResponse;
-import edu.cit.sevilla.washmate.dto.LoginRequest;
 import edu.cit.sevilla.washmate.dto.RegisterRequest;
 import edu.cit.sevilla.washmate.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -21,12 +22,14 @@ public class AuthController {
 
     /**
      * POST /api/auth/register
-     * Body: { username?, firstName, lastName, email, password, phoneNumber?, role? }
+     * Sync endpoint for Supabase users. Expects a valid Supabase JWT Bearer token.
      */
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(
+            @Valid @RequestBody RegisterRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
         try {
-            AuthResponse response = authService.register(request);
+            AuthResponse response = authService.syncUser(request, jwt.getSubject(), jwt.getTokenValue());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -35,17 +38,16 @@ public class AuthController {
     }
 
     /**
-     * POST /api/auth/login
-     * Body: { email, password }
+     * GET /api/auth/email-by-username?username=xxx
+     * Public endpoint — resolves a username to its email so the frontend
+     * can pass the email to Supabase signInWithPassword.
      */
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        try {
-            AuthResponse response = authService.login(request);
-            return ResponseEntity.ok(response);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Invalid email or password"));
-        }
+    @GetMapping("/email-by-username")
+    public ResponseEntity<?> emailByUsername(@RequestParam("username") String username) {
+        return authService.findEmailByUsername(username)
+                .map(email -> ResponseEntity.ok(Map.of("email", email)))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "No account found with that username")));
     }
 }
+

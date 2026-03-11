@@ -27,7 +27,7 @@ import {
   Zap,
   Check,
 } from "lucide-react";
-import { motion, useScroll, useTransform } from "motion/react";
+import { motion } from "motion/react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 
 // Images
@@ -78,10 +78,6 @@ export function Home() {
   const { user, isAuthenticated } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
-
-  const { scrollYProgress } = useScroll();
-
-  const yBg = useTransform(scrollYProgress, [0, 0.15], ["0%", "30%"]);
 
   if (isAuthenticated && user) {
     if (user.role === "customer") return <Navigate to="/customer" replace />;
@@ -234,9 +230,7 @@ export function Home() {
       {/* ===== HERO SECTION ===== */}
       <section className="relative w-full min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-gray-900 via-blue-950 to-gray-900">
         <FloatingBubbles />
-        <motion.div style={{ y: yBg }} className="absolute inset-0 z-0 opacity-20">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/30 to-teal-500/30" />
-        </motion.div>
+        <div className="absolute inset-0 z-0 opacity-20 bg-gradient-to-r from-blue-600/30 to-teal-500/30" />
 
         <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">

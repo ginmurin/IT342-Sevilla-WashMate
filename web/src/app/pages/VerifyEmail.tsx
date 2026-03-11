@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, KeyboardEvent, ClipboardEvent } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
+import { supabase } from "../../lib/supabase";
+import { authAPI } from "../utils/api";
 import { Button } from "../components/Button";
 import {
   Card,
@@ -107,7 +109,7 @@ type Step = "verify" | "success";
 export default function VerifyEmail() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, verifyEmail, logout } = useAuth();
+  const { user, verifyEmail, login, logout } = useAuth();
 
   const email = location.state?.email || user?.email || "your email";
   const fromRegister = location.state?.fromRegister || false;
@@ -130,7 +132,7 @@ export default function VerifyEmail() {
 
   // If user is already verified, redirect them
   useEffect(() => {
-    if (user?.email_verified) {
+    if (user?.emailVerified) {
       const dashPath =
         user.role === "customer"
           ? "/customer"
@@ -158,17 +160,35 @@ export default function VerifyEmail() {
     }
 
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    setIsLoading(false);
+    const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+      email,
+      token: code,
+      type: "signup",
+    });
 
-    // Mock: reject "000000", accept everything else
-    if (code === "000000") {
+    if (verifyError || !verifyData.session || !verifyData.user) {
+      setIsLoading(false);
       setOtpError(true);
       setError("Invalid verification code. Please try again.");
       return;
     }
 
-    // Mark email as verified
+    // Sync with Spring Boot — creates public.users record immediately so
+    // username login works right away
+    try {
+      const syncResult = await authAPI.sync({
+        email: verifyData.user.email!,
+        uuid: verifyData.user.id,
+        jwt: verifyData.session.access_token,
+        user_metadata: verifyData.user.user_metadata,
+      });
+      login(syncResult.user);
+    } catch (syncErr) {
+      console.error('Backend sync failed after OTP verification:', syncErr);
+      // Non-fatal: OTP was verified in Supabase, full sync will happen on next login
+    }
+
+    setIsLoading(false);
     verifyEmail();
     setOtpError(false);
     setStep("success");
@@ -178,10 +198,17 @@ export default function VerifyEmail() {
     setIsResending(true);
     setError(null);
     setOtpError(false);
-    await new Promise((r) => setTimeout(r, 1000));
+    const { error: resendError } = await supabase.auth.resend({
+      type: "signup",
+      email,
+    });
     setIsResending(false);
-    setOtp(Array(6).fill(""));
-    setCooldown(60);
+    if (!resendError) {
+      setOtp(Array(6).fill(""));
+      setCooldown(60);
+    } else {
+      setError("Failed to resend code. Please try again.");
+    }
   };
 
   const handleGoToDashboard = () => {
@@ -459,7 +486,7 @@ export default function VerifyEmail() {
                     <div className="flex items-center justify-center gap-2 text-slate-700">
                       <PartyPopper className="w-5 h-5 text-amber-500" />
                       <span className="text-sm">
-                        Welcome to WashMate, <strong>{user?.first_name || "there"}</strong>!
+                        Welcome to WashMate, <strong>{user?.firstName || "there"}</strong>!
                       </span>
                       <PartyPopper className="w-5 h-5 text-amber-500 scale-x-[-1]" />
                     </div>

@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../contexts/AuthContext";
+import { supabase } from "../../lib/supabase";
 import { authAPI } from "../utils/api";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
@@ -79,24 +80,43 @@ export function Login() {
   const onSubmit = async (data: LoginFormValues) => {
     setError(null);
     try {
-      const result = await authAPI.login({
-        emailOrUsername: data.emailOrUsername,
+      // Resolve username → email if the input doesn't look like an email
+      let email = data.emailOrUsername;
+      if (!email.includes("@")) {
+        email = await authAPI.emailByUsername(data.emailOrUsername);
+      }
+
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
         password: data.password,
       });
 
-      login(result.user);
+      if (signInError) {
+        throw signInError;
+      }
 
-      const role = result.user.role;
+      if (!signInData.session || !signInData.user) {
+        throw new Error("Failed to create session");
+      }
+
+      // Sync the user with backend using our sync endpoint to get their roles
+      // For existing users already in Supabase, this links them if they aren't linked.
+      const syncResult = await authAPI.sync({
+        email: signInData.user.email!,
+        uuid: signInData.user.id,
+        jwt: signInData.session.access_token,
+        user_metadata: signInData.user.user_metadata
+      });
+
+      login(syncResult.user);
+
+      const role = String(syncResult.user.role).toLowerCase();
       if (role === "customer") navigate("/customer", { replace: true });
       else if (role === "shop_owner") navigate("/shop", { replace: true });
       else if (role === "admin") navigate("/admin", { replace: true });
       else navigate(from, { replace: true });
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Login failed. Please check your credentials."
-      );
+    } catch (err: any) {
+      setError(err.message || "Login failed. Please check your credentials.");
     }
   };
 
@@ -193,7 +213,7 @@ export function Login() {
                 className="text-sm font-medium text-slate-700"
                 htmlFor="emailOrUsername"
               >
-                Email Address
+                Username or Email
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -203,11 +223,10 @@ export function Login() {
                   placeholder="name@example.com"
                   autoComplete="username"
                   {...register("emailOrUsername")}
-                  className={`pl-9 ${
-                    errors.emailOrUsername
-                      ? "border-red-400 focus-visible:ring-red-400"
-                      : ""
-                  }`}
+                  className={`pl-9 ${errors.emailOrUsername
+                    ? "border-red-400 focus-visible:ring-red-400"
+                    : ""
+                    }`}
                 />
               </div>
               {errors.emailOrUsername && (
@@ -241,11 +260,10 @@ export function Login() {
                   placeholder="Enter your password"
                   autoComplete="current-password"
                   {...register("password")}
-                  className={`pl-9 pr-10 ${
-                    errors.password
-                      ? "border-red-400 focus-visible:ring-red-400"
-                      : ""
-                  }`}
+                  className={`pl-9 pr-10 ${errors.password
+                    ? "border-red-400 focus-visible:ring-red-400"
+                    : ""
+                    }`}
                 />
                 <button
                   type="button"

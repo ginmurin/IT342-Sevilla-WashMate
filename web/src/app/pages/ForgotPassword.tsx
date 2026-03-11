@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { supabase } from "../../lib/supabase";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
 import {
@@ -48,9 +49,6 @@ const newPasswordSchema = z
 
 type EmailFormValues = z.infer<typeof emailSchema>;
 type NewPasswordFormValues = z.infer<typeof newPasswordSchema>;
-
-// Mock valid emails
-const VALID_EMAILS = ["user@test.com", "shop@test.com", "admin@test.com"];
 
 // Password strength component
 function PasswordStrength({ password }: { password: string }) {
@@ -221,11 +219,11 @@ export default function ForgotPassword() {
   const handleEmailSubmit = async (data: EmailFormValues) => {
     setError(null);
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(data.email);
     setIsLoading(false);
 
-    if (!VALID_EMAILS.includes(data.email)) {
-      setError("No account found with this email address.");
+    if (resetError) {
+      setError(resetError.message);
       return;
     }
 
@@ -245,11 +243,14 @@ export default function ForgotPassword() {
     }
 
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      email,
+      token: code,
+      type: "recovery",
+    });
     setIsLoading(false);
 
-    // Mock: accept any 6-digit code (in real app, verify against backend)
-    if (code === "000000") {
+    if (verifyError) {
       setOtpError(true);
       setError("Invalid verification code. Please try again.");
       return;
@@ -262,20 +263,30 @@ export default function ForgotPassword() {
   // Resend OTP
   const handleResendOtp = async () => {
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
+    const { error: resendError } = await supabase.auth.resetPasswordForEmail(email);
     setIsLoading(false);
-    setOtp(Array(6).fill(""));
-    setOtpError(false);
-    setError(null);
-    setCooldown(60);
+    if (!resendError) {
+      setOtp(Array(6).fill(""));
+      setOtpError(false);
+      setError(null);
+      setCooldown(60);
+    } else {
+      setError("Failed to resend code. Please try again.");
+    }
   };
 
   // Step 3: Set new password
-  const handleNewPassword = async (_data: NewPasswordFormValues) => {
+  const handleNewPassword = async (data: NewPasswordFormValues) => {
     setError(null);
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: data.password,
+    });
     setIsLoading(false);
+    if (updateError) {
+      setError(updateError.message);
+      return;
+    }
     setStep("success");
   };
 

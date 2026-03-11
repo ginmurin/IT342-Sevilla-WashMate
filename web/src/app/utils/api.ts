@@ -27,7 +27,8 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const requestUrl = error.config?.url ?? '';
+    if (error.response?.status === 401 && !requestUrl.startsWith('/api/auth/')) {
       localStorage.removeItem('washmate_token');
       localStorage.removeItem('washmate_user');
       window.location.href = '/login';
@@ -106,9 +107,52 @@ export const authAPI = {
     };
   },
 
+  sync: async (data: { email: string; uuid: string; jwt: string; user_metadata: any; }): Promise<AuthResponse> => {
+    // We send the Supabase JWT in the Authorization header to authenticate the request
+    const response = await api.post<{
+      userId: number;
+      username: string | null;
+      firstName: string;
+      lastName: string;
+      email: string;
+      role: string;
+    }>('/api/auth/register', {
+      email: data.email,
+      username: data.user_metadata.username || null,
+      firstName: data.user_metadata.first_name || '',
+      lastName: data.user_metadata.last_name || '',
+      phoneNumber: data.user_metadata.phone || null,
+      role: 'CUSTOMER', // Default role for now, could be passed from metadata if you allow it
+    }, {
+      headers: {
+        Authorization: `Bearer ${data.jwt}`
+      }
+    });
+
+    const d = response.data;
+    localStorage.setItem('washmate_token', data.jwt);
+
+    return {
+      token: data.jwt,
+      user: {
+        id: d.userId,
+        username: d.username ?? null,
+        firstName: d.firstName,
+        lastName: d.lastName,
+        email: d.email,
+        role: d.role.toLowerCase() as AuthResponse['user']['role'],
+      },
+    };
+  },
+
   logout: async (): Promise<void> => {
     localStorage.removeItem('washmate_token');
     localStorage.removeItem('washmate_user');
+  },
+
+  emailByUsername: async (username: string): Promise<string> => {
+    const response = await api.get<{ email: string }>(`/api/auth/email-by-username?username=${encodeURIComponent(username)}`);
+    return response.data.email;
   },
 };
 

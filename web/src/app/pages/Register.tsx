@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../contexts/AuthContext";
+import { supabase } from "../../lib/supabase";
 import { authAPI } from "../utils/api";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
@@ -78,22 +79,22 @@ function PasswordStrength({ password }: { password: string }) {
     strength === 0
       ? ""
       : strength <= 2
-      ? "Weak"
-      : strength === 3
-      ? "Fair"
-      : "Strong";
+        ? "Weak"
+        : strength === 3
+          ? "Fair"
+          : "Strong";
   const strengthColor =
     strength <= 2
       ? "bg-red-400"
       : strength === 3
-      ? "bg-amber-400"
-      : "bg-emerald-500";
+        ? "bg-amber-400"
+        : "bg-emerald-500";
   const strengthTextColor =
     strength <= 2
       ? "text-red-500"
       : strength === 3
-      ? "text-amber-500"
-      : "text-emerald-500";
+        ? "text-amber-500"
+        : "text-emerald-500";
 
   if (!password) return null;
 
@@ -108,9 +109,8 @@ function PasswordStrength({ password }: { password: string }) {
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-                i <= strength ? strengthColor : "bg-slate-100"
-              }`}
+              className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i <= strength ? strengthColor : "bg-slate-100"
+                }`}
             />
           ))}
         </div>
@@ -122,9 +122,8 @@ function PasswordStrength({ password }: { password: string }) {
             key={check.label}
             initial={false}
             animate={{ opacity: 1 }}
-            className={`flex items-center gap-1.5 text-xs transition-colors ${
-              check.met ? "text-emerald-600" : "text-slate-300"
-            }`}
+            className={`flex items-center gap-1.5 text-xs transition-colors ${check.met ? "text-emerald-600" : "text-slate-300"
+              }`}
           >
             <CheckCircle2 className="w-3 h-3 shrink-0" />
             {check.label}
@@ -203,22 +202,45 @@ export function Register() {
   const onSubmit = async (data: RegisterFormValues) => {
     setError(null);
     try {
-      const result = await authAPI.register({
-        username: data.username,
-        firstName: data.first_name,
-        lastName: data.last_name,
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
-        phone: data.phone_number,
         password: data.password,
-        confirmPassword: data.confirm_password,
-        acceptTerms: data.accept_terms,
+        options: {
+          data: {
+            username: data.username,
+            first_name: data.first_name,
+            last_name: data.last_name,
+            phone: data.phone_number,
+          },
+        },
       });
 
-      login(result.user);
-      navigate("/verify-email", {
-        state: { email: data.email, fromRegister: true },
-        replace: true,
-      });
+      if (signUpError) {
+        throw signUpError;
+      }
+
+      // If Supabase returned a session (auto-confirm enabled), sync immediately
+      if (signUpData.session && signUpData.user) {
+        const syncResult = await authAPI.sync({
+          email: signUpData.user.email!,
+          uuid: signUpData.user.id,
+          jwt: signUpData.session.access_token,
+          user_metadata: signUpData.user.user_metadata,
+        });
+        login(syncResult.user);
+
+        const role = String(syncResult.user.role).toLowerCase();
+        if (role === "customer") navigate("/customer", { replace: true });
+        else if (role === "shop_owner") navigate("/shop", { replace: true });
+        else if (role === "admin") navigate("/admin", { replace: true });
+        else navigate("/", { replace: true });
+      } else {
+        // OTP flow — redirect to verify-email page
+        navigate("/verify-email", {
+          state: { email: data.email, fromRegister: true },
+          replace: true,
+        });
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Registration failed. Please try again.";
       if (message.toLowerCase().includes("username")) setStep(1);
@@ -351,9 +373,8 @@ export function Register() {
                     )}
                   </motion.div>
                   <span
-                    className={`text-xs whitespace-nowrap transition-colors ${
-                      step >= s.num ? "text-teal-700" : "text-slate-400"
-                    }`}
+                    className={`text-xs whitespace-nowrap transition-colors ${step >= s.num ? "text-teal-700" : "text-slate-400"
+                      }`}
                   >
                     {s.label}
                   </span>
@@ -403,7 +424,7 @@ export function Register() {
                       className="text-sm font-medium text-slate-700"
                       htmlFor="full_name"
                     >
-                      Full Name
+                      First Name
                     </label>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -414,11 +435,10 @@ export function Register() {
                             placeholder="First name"
                             autoComplete="given-name"
                             {...formRegister("first_name")}
-                            className={`pl-9 ${
-                              errors.first_name
-                                ? "border-red-400 focus-visible:ring-red-400"
-                                : ""
-                            }`}
+                            className={`pl-9 ${errors.first_name
+                              ? "border-red-400 focus-visible:ring-red-400"
+                              : ""
+                              }`}
                           />
                         </div>
                         {errors.first_name && (
@@ -465,11 +485,10 @@ export function Register() {
                         placeholder="your_username"
                         autoComplete="username"
                         {...formRegister("username")}
-                        className={`pl-7 ${
-                          errors.username
-                            ? "border-red-400 focus-visible:ring-red-400"
-                            : ""
-                        }`}
+                        className={`pl-7 ${errors.username
+                          ? "border-red-400 focus-visible:ring-red-400"
+                          : ""
+                          }`}
                       />
                     </div>
                     {errors.username && (
@@ -495,11 +514,10 @@ export function Register() {
                         placeholder="name@example.com"
                         autoComplete="email"
                         {...formRegister("email")}
-                        className={`pl-9 ${
-                          errors.email
-                            ? "border-red-400 focus-visible:ring-red-400"
-                            : ""
-                        }`}
+                        className={`pl-9 ${errors.email
+                          ? "border-red-400 focus-visible:ring-red-400"
+                          : ""
+                          }`}
                       />
                     </div>
                     {errors.email && (
@@ -525,11 +543,10 @@ export function Register() {
                         placeholder="+63 912 345 6789"
                         autoComplete="tel"
                         {...formRegister("phone_number")}
-                        className={`pl-9 ${
-                          errors.phone_number
-                            ? "border-red-400 focus-visible:ring-red-400"
-                            : ""
-                        }`}
+                        className={`pl-9 ${errors.phone_number
+                          ? "border-red-400 focus-visible:ring-red-400"
+                          : ""
+                          }`}
                       />
                     </div>
                     {errors.phone_number && (
@@ -586,11 +603,10 @@ export function Register() {
                         placeholder="Min. 8 characters"
                         autoComplete="new-password"
                         {...formRegister("password")}
-                        className={`pl-9 pr-10 ${
-                          errors.password
-                            ? "border-red-400 focus-visible:ring-red-400"
-                            : ""
-                        }`}
+                        className={`pl-9 pr-10 ${errors.password
+                          ? "border-red-400 focus-visible:ring-red-400"
+                          : ""
+                          }`}
                       />
                       <button
                         type="button"
@@ -629,11 +645,10 @@ export function Register() {
                         placeholder="Re-enter password"
                         autoComplete="new-password"
                         {...formRegister("confirm_password")}
-                        className={`pl-9 pr-10 ${
-                          errors.confirm_password
-                            ? "border-red-400 focus-visible:ring-red-400"
-                            : ""
-                        }`}
+                        className={`pl-9 pr-10 ${errors.confirm_password
+                          ? "border-red-400 focus-visible:ring-red-400"
+                          : ""
+                          }`}
                       />
                       <button
                         type="button"
