@@ -19,18 +19,28 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
-    // Try to restore from localStorage if available
     try {
       const stored = localStorage.getItem("washmate_user");
-      return stored ? JSON.parse(stored) : null;
+      if (!stored) return null;
+      const parsed: User = JSON.parse(stored);
+      // Normalize role in case it was stored as uppercase from a previous session
+      parsed.role = String(parsed.role).toLowerCase() as User["role"];
+      return parsed;
     } catch {
       return null;
     }
   });
 
+  const normalizeUser = (userData: User): User => ({
+    ...userData,
+    // Backend (and Google OAuth) may return role as uppercase e.g. "CUSTOMER"
+    role: String(userData.role).toLowerCase() as User["role"],
+  });
+
   const login = (userData: User) => {
-    setUser(userData);
-    localStorage.setItem("washmate_user", JSON.stringify(userData));
+    const normalized = normalizeUser(userData);
+    setUser(normalized);
+    localStorage.setItem("washmate_user", JSON.stringify(normalized));
   };
 
   const logout = async () => {
