@@ -8,6 +8,16 @@ import { Register } from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import AuthCallback from "./pages/AuthCallback";
+import PaymentCheckout from "./pages/PaymentCheckout";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentError from "./pages/PaymentError";
+import PaymentHistory from "./pages/PaymentHistory";
+import Wallet from "./pages/Wallet";
+import LaundryDetails from "./pages/LaundryDetails";
+import ScheduleAddress from "./pages/ScheduleAddress";
+import PaymentReview from "./pages/PaymentReview";
+import MyOrders from "./pages/MyOrders";
+import Services from "./pages/Services";
 import { CustomerDashboard } from "./pages/CustomerDashboard";
 import { ShopDashboard } from "./pages/ShopDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
@@ -40,6 +50,46 @@ export const router = createBrowserRouter([
       {
         path: "auth/callback",
         Component: AuthCallback,
+      },
+      {
+        path: "payment/checkout",
+        Component: PaymentCheckout,
+      },
+      {
+        path: "payment/success",
+        Component: PaymentSuccess,
+      },
+      {
+        path: "payment/error",
+        Component: PaymentError,
+      },
+      {
+        path: "payment/history",
+        Component: PaymentHistory,
+      },
+      {
+        path: "wallet",
+        Component: Wallet,
+      },
+      {
+        path: "order/laundry-details",
+        Component: LaundryDetails,
+      },
+      {
+        path: "order/schedule-address",
+        Component: ScheduleAddress,
+      },
+      {
+        path: "order/payment-review",
+        Component: PaymentReview,
+      },
+      {
+        path: "my-orders",
+        Component: MyOrders,
+      },
+      {
+        path: "services",
+        Component: Services,
       },
       // Customer Routes
       {
