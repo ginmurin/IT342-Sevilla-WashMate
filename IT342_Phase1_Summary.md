@@ -1,8 +1,6 @@
 # IT342 Phase 1 – User Registration and Login
 **WashMate – Laundry Management System**
 
-**Final Commit:** `a3cc1091708f0fdbbf3d20597d6c0b6aef8b7724`
-**Commit Link:** https://github.com/ginmurin/IT342-Sevilla-WashMate/commit/a3cc1091708f0fdbbf3d20597d6c0b6aef8b7724
 
 ---
 

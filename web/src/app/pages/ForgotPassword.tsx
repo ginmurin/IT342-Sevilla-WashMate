@@ -166,12 +166,12 @@ function OTPInput({
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)}
           onPaste={i === 0 ? handlePaste : undefined}
-          className={`w-11 h-13 text-center text-lg rounded-lg border-2 bg-white transition-all focus:outline-none focus:ring-2 focus:ring-teal-500/30 ${
+          className={`w-11 h-12 text-center text-lg font-semibold rounded-lg border-2 bg-white transition-all focus:outline-none focus:ring-2 focus:ring-teal-500/30 ${
             error
               ? "border-red-400 focus:border-red-500"
               : value[i]
               ? "border-teal-400 focus:border-teal-500"
-              : "border-slate-200 focus:border-teal-500"
+              : "border-slate-400 focus:border-teal-500"
           }`}
         />
       ))}
@@ -381,10 +381,10 @@ export default function ForgotPassword() {
                           ? "bg-teal-500"
                           : (["email", "otp", "new-password"].indexOf(step) > i)
                           ? "bg-teal-300"
-                          : "bg-slate-200"
+                          : "bg-slate-400"
                       }`}
                     />
-                    {i < 2 && <div className="w-8 h-px bg-slate-200" />}
+                    {i < 2 && <div className="w-8 h-px bg-slate-400" />}
                   </div>
                 ))}
               </div>

@@ -120,6 +120,15 @@ export function Login() {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (error) setError(error.message);
+  };
+
   return (
     <div className="flex-1 flex items-stretch min-h-screen pt-16">
       {/* Left image panel — hidden on mobile */}
@@ -327,9 +336,7 @@ export function Login() {
             type="button"
             variant="outline"
             className="w-full gap-2.5 text-slate-700 h-11 bg-white hover:bg-slate-50 border-slate-200"
-            onClick={() => {
-              alert("Google OAuth would redirect to Google sign-in");
-            }}
+            onClick={handleGoogleSignIn}
           >
             <GoogleIcon />
             Sign in with Google

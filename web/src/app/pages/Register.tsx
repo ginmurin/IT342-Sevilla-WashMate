@@ -122,7 +122,7 @@ function PasswordStrength({ password }: { password: string }) {
             key={check.label}
             initial={false}
             animate={{ opacity: 1 }}
-            className={`flex items-center gap-1.5 text-xs transition-colors ${check.met ? "text-emerald-600" : "text-slate-300"
+            className={`flex items-center gap-1.5 text-xs transition-colors ${check.met ? "text-emerald-600" : "text-slate-500"
               }`}
           >
             <CheckCircle2 className="w-3 h-3 shrink-0" />
@@ -158,6 +158,81 @@ function GoogleIcon() {
   );
 }
 
+function TermsModal({ type, onClose }: { type: "terms" | "privacy"; onClose: () => void }) {
+  const isTerms = type === "terms";
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col"
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <h2 className="text-lg font-semibold text-slate-800">
+            {isTerms ? "Terms of Service" : "Privacy Policy"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 transition-colors"
+            aria-label="Close"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="overflow-y-auto px-6 py-4 text-sm text-slate-600 space-y-4">
+          {isTerms ? (
+            <>
+              <p className="font-medium text-slate-700">Last updated: March 2026</p>
+              <p>Welcome to WashMate. By using our services, you agree to the following terms.</p>
+              <h3 className="font-semibold text-slate-800">1. Use of Service</h3>
+              <p>WashMate provides an online laundry management platform. You must be at least 18 years old to use our services. You agree not to misuse the platform or use it for any unlawful purpose.</p>
+              <h3 className="font-semibold text-slate-800">2. Account Responsibility</h3>
+              <p>You are responsible for maintaining the confidentiality of your account credentials. Notify us immediately of any unauthorized access to your account.</p>
+              <h3 className="font-semibold text-slate-800">3. Orders and Payment</h3>
+              <p>All orders placed through WashMate are subject to availability. Prices are listed in Philippine Peso (PHP) and are inclusive of applicable taxes unless stated otherwise.</p>
+              <h3 className="font-semibold text-slate-800">4. Cancellations</h3>
+              <p>Orders may be cancelled before they are picked up. Once processing begins, cancellations may not be accepted. Please refer to our cancellation policy for details.</p>
+              <h3 className="font-semibold text-slate-800">5. Liability</h3>
+              <p>WashMate takes reasonable care of your items but is not liable for pre-existing damage, color bleeding due to fabric nature, or shrinkage of delicate materials.</p>
+              <h3 className="font-semibold text-slate-800">6. Changes to Terms</h3>
+              <p>We reserve the right to update these terms at any time. Continued use of the service after changes constitutes acceptance of the updated terms.</p>
+            </>
+          ) : (
+            <>
+              <p className="font-medium text-slate-700">Last updated: March 2026</p>
+              <p>Your privacy is important to us. This policy explains how WashMate collects, uses, and protects your information.</p>
+              <h3 className="font-semibold text-slate-800">1. Information We Collect</h3>
+              <p>We collect information you provide when creating an account (name, email, phone number) and order history to provide and improve our services.</p>
+              <h3 className="font-semibold text-slate-800">2. How We Use Your Information</h3>
+              <p>Your information is used to process orders, communicate about your laundry, send service updates, and improve our platform experience.</p>
+              <h3 className="font-semibold text-slate-800">3. Data Sharing</h3>
+              <p>We do not sell your personal data. We may share necessary information with delivery partners solely to fulfill your orders.</p>
+              <h3 className="font-semibold text-slate-800">4. Data Security</h3>
+              <p>We implement industry-standard security measures to protect your personal information from unauthorized access or disclosure.</p>
+              <h3 className="font-semibold text-slate-800">5. Your Rights</h3>
+              <p>You may request access to, correction of, or deletion of your personal data by contacting our support team.</p>
+              <h3 className="font-semibold text-slate-800">6. Contact Us</h3>
+              <p>For privacy concerns, contact us at support@washmate.ph.</p>
+            </>
+          )}
+        </div>
+        <div className="px-6 py-4 border-t border-slate-100">
+          <Button
+            type="button"
+            onClick={onClose}
+            className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
+          >
+            I Understand
+          </Button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 export function Register() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -165,6 +240,7 @@ export function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
+  const [termsModal, setTermsModal] = useState<"terms" | "privacy" | null>(null);
 
   const {
     register: formRegister,
@@ -248,13 +324,28 @@ export function Register() {
     }
   };
 
+  const handleGoogleSignUp = async () => {
+    setError(null);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (error) setError(error.message);
+  };
+
   const stepInfo = [
     { num: 1, label: "Your Info" },
     { num: 2, label: "Security" },
   ];
 
   return (
-    <div className="flex-1 flex items-stretch min-h-screen pt-16">
+    <>
+      <AnimatePresence>
+        {termsModal && (
+          <TermsModal type={termsModal} onClose={() => setTermsModal(null)} />
+        )}
+      </AnimatePresence>
+      <div className="flex-1 flex items-stretch min-h-screen pt-16">
       {/* Left image panel — hidden on mobile (matches Login layout) */}
       <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden">
         {/* Full-bleed hero image */}
@@ -331,9 +422,7 @@ export function Register() {
             type="button"
             variant="outline"
             className="w-full gap-2 text-slate-700 h-11 bg-white hover:bg-slate-50 border-slate-200"
-            onClick={() => {
-              alert("Google OAuth would redirect to Google sign-up");
-            }}
+            onClick={handleGoogleSignUp}
           >
             <GoogleIcon />
             Sign up with Google
@@ -682,16 +771,16 @@ export function Register() {
                         I agree to the{" "}
                         <a
                           href="#"
-                          className="text-teal-600 hover:underline"
-                          onClick={(e) => e.preventDefault()}
+                          className="text-teal-600 hover:underline font-medium"
+                          onClick={(e) => { e.preventDefault(); setTermsModal("terms"); }}
                         >
                           Terms of Service
                         </a>{" "}
                         and{" "}
                         <a
                           href="#"
-                          className="text-teal-600 hover:underline"
-                          onClick={(e) => e.preventDefault()}
+                          className="text-teal-600 hover:underline font-medium"
+                          onClick={(e) => { e.preventDefault(); setTermsModal("privacy"); }}
                         >
                           Privacy Policy
                         </a>
@@ -756,5 +845,6 @@ export function Register() {
         </motion.div>
       </div>
     </div>
+    </>
   );
 }
