@@ -535,7 +535,7 @@ export function Home() {
                       </li>
                     ))}
                   </ul>
-                  <Link to="/register">
+                  <Link to="/services">
                     <Button className="w-full bg-blue-600 hover:bg-blue-500 text-white transition-all duration-300">
                       Book Now
                       <ArrowRight className="ml-2 w-4 h-4" />
