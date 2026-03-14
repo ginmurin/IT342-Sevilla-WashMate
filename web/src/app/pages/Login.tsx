@@ -15,9 +15,14 @@ import {
   EyeOff,
   Mail,
   Lock,
+  Store,
+  Users,
+  ArrowRight,
 } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import laundryHero from "../../assets/laundry-hero.png";
+
+type UserRole = "customer" | "shop_owner";
 
 const loginSchema = z.object({
   emailOrUsername: z
@@ -61,6 +66,9 @@ export function Login() {
   const location = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [step, setStep] = useState<"email" | "role" | "password">("email");
+  const [email, setEmail] = useState("");
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
 
   const from = location.state?.from?.pathname || "/";
 
@@ -68,7 +76,8 @@ export function Login() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginFormValues>({
+    setValue,
+  } = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       emailOrUsername: "",
@@ -77,17 +86,37 @@ export function Login() {
     },
   });
 
+  const handleEmailNext = () => {
+    if (!email.trim()) {
+      setError("Email or username is required");
+      return;
+    }
+    setError(null);
+    setValue("emailOrUsername", email);
+    setStep("role");
+  };
+
+  const handleRoleSelect = (role: UserRole) => {
+    setSelectedRole(role);
+    setStep("password");
+  };
+
   const onSubmit = async (data: LoginFormValues) => {
+    if (!selectedRole) {
+      setError("Please select a role");
+      return;
+    }
+
     setError(null);
     try {
       // Resolve username → email if the input doesn't look like an email
-      let email = data.emailOrUsername;
-      if (!email.includes("@")) {
-        email = await authAPI.emailByUsername(data.emailOrUsername);
+      let emailAddr = data.emailOrUsername;
+      if (!emailAddr.includes("@")) {
+        emailAddr = await authAPI.emailByUsername(data.emailOrUsername);
       }
 
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
+        email: emailAddr,
         password: data.password,
       });
 
@@ -108,12 +137,16 @@ export function Login() {
         user_metadata: signInData.user.user_metadata
       });
 
+      // Check if the user's role matches the selected role (security check)
+      const userRole = String(syncResult.user.role).toLowerCase() as UserRole;
+      if (userRole !== selectedRole) {
+        throw new Error(`This account is registered as a ${userRole}, not a ${selectedRole}.`);
+      }
+
       login(syncResult.user);
 
-      const role = String(syncResult.user.role).toLowerCase();
-      if (role === "customer") navigate("/customer", { replace: true });
-      else if (role === "shop_owner") navigate("/shop", { replace: true });
-      else if (role === "admin") navigate("/admin", { replace: true });
+      if (userRole === "customer") navigate("/customer", { replace: true });
+      else if (userRole === "shop_owner") navigate("/shop", { replace: true });
       else navigate(from, { replace: true });
     } catch (err: any) {
       setError(err.message || "Login failed. Please check your credentials.");
@@ -198,7 +231,9 @@ export function Login() {
               Welcome Back
             </h1>
             <p className="text-slate-500 mt-1.5 text-sm">
-              Please enter your details to sign in.
+              {step === "email" && "Please enter your details to sign in."}
+              {step === "role" && `Select how you'd like to sign in.`}
+              {step === "password" && `Sign in as ${selectedRole === "customer" ? "Customer" : "Shop Owner"}`}
             </p>
           </div>
 
@@ -214,133 +249,224 @@ export function Login() {
             </motion.div>
           )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            {/* Email Address */}
-            <div className="space-y-1.5">
-              <label
-                className="text-sm font-medium text-slate-700"
-                htmlFor="emailOrUsername"
+          {/* Step 1: Email Input */}
+          <AnimatePresence mode="wait">
+            {step === "email" && (
+              <motion.div
+                key="email-step"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                className="space-y-5"
               >
-                Username or Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input
-                  id="emailOrUsername"
-                  type="text"
-                  placeholder="name@example.com"
-                  autoComplete="username"
-                  {...register("emailOrUsername")}
-                  className={`pl-9 ${errors.emailOrUsername
-                    ? "border-red-400 focus-visible:ring-red-400"
-                    : ""
-                    }`}
-                />
-              </div>
-              {errors.emailOrUsername && (
-                <p className="text-xs text-red-500">
-                  {errors.emailOrUsername.message}
-                </p>
-              )}
-            </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-700" htmlFor="email">
+                    Username or Email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      id="email"
+                      type="text"
+                      placeholder="name@example.com"
+                      autoComplete="username"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleEmailNext()}
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
 
-            {/* Password */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label
-                  className="text-sm font-medium text-slate-700"
-                  htmlFor="password"
-                >
-                  Password
-                </label>
-                <Link
-                  to="/forgot-password"
-                  className="text-xs text-blue-600 hover:text-blue-700 hover:underline transition-colors"
-                >
-                  Forgot Password?
-                </Link>
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  autoComplete="current-password"
-                  {...register("password")}
-                  className={`pl-9 pr-10 ${errors.password
-                    ? "border-red-400 focus-visible:ring-red-400"
-                    : ""
-                    }`}
-                />
-                <button
+                <Button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                  tabIndex={-1}
+                  onClick={handleEmailNext}
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white h-11 gap-2 rounded-lg"
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
+                  Continue <ArrowRight className="w-4 h-4" />
+                </Button>
+
+                {/* Divider */}
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200" />
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-white px-3 text-slate-400 uppercase tracking-wider">
+                      or continue with
+                    </span>
+                  </div>
+                </div>
+
+                {/* Google OAuth */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full gap-2.5 text-slate-700 h-11 bg-white hover:bg-slate-50 border-slate-200"
+                  onClick={handleGoogleSignIn}
+                >
+                  <GoogleIcon />
+                  Sign in with Google
+                </Button>
+              </motion.div>
+            )}
+
+            {/* Step 2: Role Selection */}
+            {step === "role" && (
+              <motion.div
+                key="role-step"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                className="space-y-4"
+              >
+                <Button
+                  type="button"
+                  onClick={() => handleRoleSelect("customer")}
+                  className="w-full h-24 rounded-xl border-2 border-slate-200 bg-white hover:border-teal-400 hover:bg-teal-50 transition-all flex items-center justify-start px-6 gap-4"
+                >
+                  <div className="w-12 h-12 rounded-lg bg-teal-100 flex items-center justify-center shrink-0">
+                    <Users className="w-6 h-6 text-teal-600" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-slate-900">Customer</p>
+                    <p className="text-sm text-slate-500">Book laundry services</p>
+                  </div>
+                </Button>
+
+                <Button
+                  type="button"
+                  onClick={() => handleRoleSelect("shop_owner")}
+                  className="w-full h-24 rounded-xl border-2 border-slate-200 bg-white hover:border-blue-400 hover:bg-blue-50 transition-all flex items-center justify-start px-6 gap-4"
+                >
+                  <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                    <Store className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-slate-900">Shop Owner</p>
+                    <p className="text-sm text-slate-500">Manage laundry shop</p>
+                  </div>
+                </Button>
+
+                <Button
+                  type="button"
+                  onClick={() => setStep("email")}
+                  variant="outline"
+                  className="w-full text-slate-700 bg-white border-slate-200"
+                >
+                  Back
+                </Button>
+              </motion.div>
+            )}
+
+            {/* Step 3: Password Input */}
+            {step === "password" && (
+              <motion.form
+                key="password-step"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                onSubmit={handleSubmit(onSubmit)}
+                className="space-y-5"
+              >
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-700" htmlFor="password">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      autoComplete="current-password"
+                      {...register("password")}
+                      className={`pl-9 pr-10 ${
+                        errors.password
+                          ? "border-red-400 focus-visible:ring-red-400"
+                          : ""
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <p className="text-xs text-red-500">
+                      {errors.password.message}
+                    </p>
                   )}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-xs text-red-500">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
+                </div>
 
-            {/* Login button */}
-            <Button
-              type="submit"
-              className="w-full bg-[#2563EB] hover:bg-[#1d4ed8] text-white shadow-sm h-11 gap-2 rounded-lg"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      repeat: Infinity,
-                      duration: 1,
-                      ease: "linear",
-                    }}
-                    className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
-                  />
-                  Signing in...
-                </>
-              ) : (
-                "Login"
-              )}
-            </Button>
-          </form>
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      {...register("rememberMe")}
+                      className="h-4 w-4 rounded border-slate-300"
+                    />
+                    <span className="text-sm text-slate-600">Remember me</span>
+                  </label>
+                  <Link
+                    to="/forgot-password"
+                    className={`text-xs font-medium hover:underline transition-colors ${
+                      selectedRole === "customer"
+                        ? "text-teal-600 hover:text-teal-700"
+                        : "text-blue-600 hover:text-blue-700"
+                    }`}
+                  >
+                    Forgot Password?
+                  </Link>
+                </div>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-white px-3 text-slate-400 uppercase tracking-wider">
-                or continue with
-              </span>
-            </div>
-          </div>
+                {/* Login button */}
+                <Button
+                  type="submit"
+                  className={`w-full text-white h-11 gap-2 rounded-lg ${
+                    selectedRole === "customer"
+                      ? "bg-teal-600 hover:bg-teal-700"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }`}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 1,
+                          ease: "linear",
+                        }}
+                        className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                      />
+                      Signing in...
+                    </>
+                  ) : (
+                    "Login"
+                  )}
+                </Button>
 
-          {/* Google OAuth */}
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full gap-2.5 text-slate-700 h-11 bg-white hover:bg-slate-50 border-slate-200"
-            onClick={handleGoogleSignIn}
-          >
-            <GoogleIcon />
-            Sign in with Google
-          </Button>
+                <Button
+                  type="button"
+                  onClick={() => setStep("role")}
+                  variant="outline"
+                  className="w-full text-slate-700 bg-white border-slate-200"
+                >
+                  Back to Role Selection
+                </Button>
+              </motion.form>
+            )}
+          </AnimatePresence>
 
           {/* Footer */}
           <p className="text-sm text-slate-500 text-center mt-8">
