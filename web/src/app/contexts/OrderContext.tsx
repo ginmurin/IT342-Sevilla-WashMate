@@ -6,8 +6,13 @@ export interface OrderData {
   // Step 1: Laundry Details
   selectedServices?: ServiceType[];
   weight?: number;
+  serviceQuantities?: Record<string, number>;
   specialInstructions?: string;
   estimatedPrice?: number;
+  subtotal?: number;
+  discountPercentage?: number;
+  discountAmount?: number;
+  isRushOrder?: boolean;
 
   // Step 2: Schedule & Address
   pickupDate?: string;
@@ -15,6 +20,8 @@ export interface OrderData {
   deliveryDate?: string;
   deliveryTime?: string;
   address?: string;
+  lat?: number;
+  lng?: number;
   phoneNumber?: string;
   notes?: string;
 
@@ -39,6 +46,7 @@ const OrderContext = createContext<OrderContextType | undefined>(undefined);
 const initialOrder: OrderData = {
   selectedServices: [],
   weight: 5,
+  serviceQuantities: {},
   specialInstructions: "",
   estimatedPrice: 0,
   pickupDate: "",

@@ -14,6 +14,7 @@ import java.util.Optional;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final SubscriptionService subscriptionService;
 
     public AuthResponse syncUser(RegisterRequest request, String oauthId, String tokenValue) {
         // Find existing user by oauthId or create a new one
@@ -29,7 +30,7 @@ public class AuthService {
                 user.setOauthProvider("SUPABASE");
                 userRepository.save(user);
             } else {
-                // Completely new user
+                // Completely new user — assign FREE plan
                 String role = (request.getRole() != null && !request.getRole().isBlank())
                         ? request.getRole().toUpperCase()
                         : "CUSTOMER";
@@ -43,7 +44,8 @@ public class AuthService {
                         .oauthProvider("SUPABASE")
                         .phoneNumber(request.getPhoneNumber())
                         .role(role)
-                        .emailVerified(true) // Supabase handles verification
+                        .emailVerified(true)
+                        .subscription(subscriptionService.getOrCreateFreePlan())
                         .build();
 
                 user = userRepository.save(newUser);

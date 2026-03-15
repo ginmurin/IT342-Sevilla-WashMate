@@ -27,24 +27,35 @@ export function Navbar() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
-  const isCustomer = user?.role === "customer";
-  const isShopOwner = user?.role === "shop_owner";
+  // Derive nav context from current path so ADMIN/SHOPOWNER
+  // viewing /customer still get the customer nav links.
+  const currentView = location.pathname.startsWith("/admin")
+    ? "admin"
+    : location.pathname.startsWith("/shop")
+    ? "shopowner"
+    : "customer";
 
-  const navItems = isCustomer
-    ? [
-        { label: "Home", icon: Home, href: "/customer" },
-        { label: "Services", icon: ShoppingBag, href: "/services" },
-        { label: "My Orders", icon: Clock, href: "/my-orders" },
-        { label: "Wallet", icon: WalletIcon, href: "/wallet" },
-      ]
-    : isShopOwner
-    ? [
-        { label: "Dashboard", icon: Home, href: "/shop" },
-        { label: "Orders", icon: ShoppingBag, href: "/shop/orders" },
-        { label: "Analytics", icon: Heart, href: "/shop/analytics" },
-        { label: "Settings", icon: Settings, href: "/shop/settings" },
-      ]
-    : [];
+  const navItems =
+    currentView === "customer"
+      ? [
+          { label: "Home", icon: Home, href: "/customer" },
+          { label: "Services", icon: ShoppingBag, href: "/services" },
+          { label: "My Orders", icon: Clock, href: "/my-orders" },
+          { label: "Wallet", icon: WalletIcon, href: "/wallet" },
+        ]
+      : currentView === "shopowner"
+      ? [
+          { label: "Dashboard", icon: Home, href: "/shop" },
+          { label: "Orders", icon: ShoppingBag, href: "/shop/orders" },
+          { label: "Analytics", icon: Heart, href: "/shop/analytics" },
+          { label: "Settings", icon: Settings, href: "/shop/settings" },
+        ]
+      : [
+          { label: "Dashboard", icon: Home, href: "/admin" },
+          { label: "Users", icon: User, href: "/admin/users" },
+          { label: "Shops", icon: ShoppingBag, href: "/admin/shops" },
+          { label: "Settings", icon: Settings, href: "/admin/settings" },
+        ];
 
   const notifications = [
     { id: 1, message: "Your order #ORD-001 is ready for pickup", time: "5 mins ago" },
@@ -64,11 +75,11 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to={isCustomer ? "/customer" : isShopOwner ? "/shop" : "/"} className="flex items-center gap-2">
+          <Link to={currentView === "customer" ? "/customer" : currentView === "shopowner" ? "/shop" : "/admin"} className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-teal-600 flex items-center justify-center">
               <Droplets className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-lg text-slate-900 hidden sm:inline">WashMate</span>
+            <span className="font-bold text-lg text-slate-900">WashMate</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -95,7 +106,7 @@ export function Navbar() {
           {/* Right Section */}
           <div className="flex items-center gap-4">
             {/* Notifications */}
-            {isCustomer && (
+            {currentView === "customer" && (
               <div className="relative hidden sm:block">
                 <button
                   onClick={() => setNotificationsOpen(!notificationsOpen)}
@@ -172,7 +183,7 @@ export function Navbar() {
                       <p className="text-xs text-slate-500">{user?.email}</p>
                     </div>
                     <div className="space-y-1 p-2">
-                      {isCustomer && (
+                      {currentView === "customer" && (
                         <>
                           <a
                             href="#"
@@ -194,7 +205,7 @@ export function Navbar() {
                           </a>
                         </>
                       )}
-                      {isShopOwner && (
+                      {currentView === "shopowner" && (
                         <>
                           <a
                             href="#"

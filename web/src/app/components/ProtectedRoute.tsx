@@ -16,11 +16,11 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
     // Redirect based on role
     switch (user.role) {
-      case "customer":
+      case "CUSTOMER":
         return <Navigate to="/customer" replace />;
-      case "shop_owner":
+      case "SHOPOWNER":
         return <Navigate to="/shop" replace />;
-      case "admin":
+      case "ADMIN":
         return <Navigate to="/admin" replace />;
       default:
         return <Navigate to="/" replace />;
