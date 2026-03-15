@@ -6,7 +6,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,12 +22,8 @@ public class Subscription {
     @Column(name = "subscription_id")
     private Long subscriptionId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
-    /** BASIC, PREMIUM, ENTERPRISE */
-    @Column(name = "plan_type", nullable = false)
+    /** FREE, PREMIUM */
+    @Column(name = "plan_type", nullable = false, unique = true)
     private String planType;
 
     @Column(name = "plan_price", precision = 10, scale = 2, nullable = false)
@@ -37,24 +32,9 @@ public class Subscription {
     @Column(name = "orders_included")
     private Integer ordersIncluded;
 
-    @Column(name = "orders_used")
+    @Column(name = "discount_percentage", nullable = false)
     @Builder.Default
-    private Integer ordersUsed = 0;
-
-    @Column(name = "start_date", nullable = false)
-    private LocalDate startDate;
-
-    @Column(name = "end_date", nullable = false)
-    private LocalDate endDate;
-
-    /** ACTIVE, EXPIRED, CANCELLED */
-    @Column(name = "status", nullable = false)
-    @Builder.Default
-    private String status = "ACTIVE";
-
-    @Column(name = "auto_renew", nullable = false)
-    @Builder.Default
-    private Boolean autoRenew = false;
+    private Integer discountPercentage = 0;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

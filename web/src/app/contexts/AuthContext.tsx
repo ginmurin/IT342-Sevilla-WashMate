@@ -3,7 +3,7 @@ import { authAPI } from "../utils/api";
 import { supabase } from "../../lib/supabase";
 import type { User as ApiUser } from "../types";
 
-export type Role = "customer" | "shop_owner" | "admin";
+export type Role = "CUSTOMER" | "SHOPOWNER" | "ADMIN";
 
 export type User = ApiUser;
 
@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!stored) return null;
       const parsed: User = JSON.parse(stored);
       // Normalize role in case it was stored as uppercase from a previous session
-      parsed.role = String(parsed.role).toLowerCase() as User["role"];
+      parsed.role = String(parsed.role).toUpperCase() as User["role"];
       return parsed;
     } catch {
       return null;
@@ -33,8 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const normalizeUser = (userData: User): User => ({
     ...userData,
-    // Backend (and Google OAuth) may return role as uppercase e.g. "CUSTOMER"
-    role: String(userData.role).toLowerCase() as User["role"],
+    role: String(userData.role).toUpperCase() as User["role"],
   });
 
   const login = (userData: User) => {

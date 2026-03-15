@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { Card, CardHeader, CardTitle, CardContent } from "../components/Card";
+import { Card, CardContent } from "../components/Card";
 import { Button } from "../components/Button";
 import {
   ShoppingBag,
@@ -37,7 +37,7 @@ export default function MyOrders() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="max-w-5xl mx-auto space-y-8 pt-20 px-4 pb-12">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -16 }}

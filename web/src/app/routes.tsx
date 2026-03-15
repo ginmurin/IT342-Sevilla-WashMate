@@ -91,9 +91,9 @@ export const router = createBrowserRouter([
         path: "services",
         Component: Services,
       },
-      // Customer Routes
+      // Customer Routes — also accessible by SHOPOWNER and ADMIN
       {
-        element: <ProtectedRoute allowedRoles={["customer"]} />,
+        element: <ProtectedRoute allowedRoles={["CUSTOMER", "SHOPOWNER", "ADMIN"]} />,
         children: [
           {
             path: "customer",
@@ -101,9 +101,9 @@ export const router = createBrowserRouter([
           },
         ],
       },
-      // Shop Owner Routes
+      // Shop Owner Routes — also accessible by ADMIN
       {
-        element: <ProtectedRoute allowedRoles={["shop_owner"]} />,
+        element: <ProtectedRoute allowedRoles={["SHOPOWNER", "ADMIN"]} />,
         children: [
           {
             path: "shop",
@@ -113,7 +113,7 @@ export const router = createBrowserRouter([
       },
       // Admin Routes
       {
-        element: <ProtectedRoute allowedRoles={["admin"]} />,
+        element: <ProtectedRoute allowedRoles={["ADMIN"]} />,
         children: [
           {
             path: "admin",

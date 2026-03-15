@@ -79,12 +79,6 @@ export function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
 
-  if (isAuthenticated && user) {
-    if (user.role === "customer") return <Navigate to="/customer" replace />;
-    if (user.role === "shop_owner") return <Navigate to="/shop" replace />;
-    if (user.role === "admin") return <Navigate to="/admin" replace />;
-  }
-
   const ease = [0.16, 1, 0.3, 1] as const;
 
   const features = [
@@ -224,6 +218,12 @@ export function Home() {
     hidden: { opacity: 0, y: 30 },
     show: { opacity: 1, y: 0, transition: { duration: 0.6, ease } },
   };
+
+  if (isAuthenticated && user) {
+    if (user.role === "CUSTOMER") return <Navigate to="/customer" replace />;
+    if (user.role === "SHOPOWNER") return <Navigate to="/shop" replace />;
+    if (user.role === "ADMIN") return <Navigate to="/admin" replace />;
+  }
 
   return (
     <div className="flex-1 flex flex-col w-full -mt-16 relative" ref={containerRef}>

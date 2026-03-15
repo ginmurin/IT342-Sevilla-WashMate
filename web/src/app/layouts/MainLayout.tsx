@@ -12,7 +12,7 @@ export function MainLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isHome = location.pathname === "/";
-  const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
+  const isAuthPage = ["/login", "/register", "/forgot-password", "/verify-email"].includes(location.pathname);
   const showNewNav = user && !isHome && !isAuthPage;
 
   useEffect(() => {
@@ -25,6 +25,30 @@ export function MainLayout() {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
+  useEffect(() => {
+    const titles: Record<string, string> = {
+      "/": "WashMate — Fresh Laundry, Delivered",
+      "/login": "WashMate | Sign In",
+      "/register": "WashMate | Create Account",
+      "/forgot-password": "WashMate | Forgot Password",
+      "/verify-email": "WashMate | Verify Email",
+      "/customer": "WashMate | Dashboard",
+      "/services": "WashMate | Services & Plans",
+      "/my-orders": "WashMate | My Orders",
+      "/wallet": "WashMate | Wallet",
+      "/order/laundry-details": "WashMate | Laundry Details",
+      "/order/schedule-address": "WashMate | Schedule & Address",
+      "/order/payment-review": "WashMate | Review & Pay",
+      "/payment/checkout": "WashMate | Checkout",
+      "/payment/success": "WashMate | Payment Successful",
+      "/payment/error": "WashMate | Payment Failed",
+      "/payment/history": "WashMate | Payment History",
+      "/shop": "WashMate | Shop Dashboard",
+      "/admin": "WashMate | Admin Dashboard",
+    };
+    document.title = titles[location.pathname] ?? "WashMate";
+  }, [location.pathname]);
+
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -33,9 +57,9 @@ export function MainLayout() {
   const getDashboardLink = () => {
     if (!user) return "/";
     switch (user.role) {
-      case "customer": return "/customer";
-      case "shop_owner": return "/shop";
-      case "admin": return "/admin";
+      case "CUSTOMER": return "/customer";
+      case "SHOPOWNER": return "/shop";
+      case "ADMIN": return "/admin";
       default: return "/";
     }
   };
@@ -62,8 +86,8 @@ export function MainLayout() {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Link to={getDashboardLink()} className="flex items-center gap-2">
-                <Droplets className={`h-6 w-6 ${isHome ? "text-teal-400" : "text-blue-600"}`} />
-                <span className={`text-xl font-bold tracking-tight ${isHome ? "text-white" : "text-gray-900"}`}>
+                <Droplets className={`h-6 w-6 ${isHome ? "text-teal-400" : "text-teal-600"}`} />
+                <span className={`text-xl font-bold tracking-tight ${isHome ? "text-white" : "text-slate-900"}`}>
                   WashMate
                 </span>
               </Link>
