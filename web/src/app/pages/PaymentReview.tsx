@@ -1,18 +1,107 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useOrder } from "../contexts/OrderContext";
+import { usePayment } from "../contexts/PaymentContext";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/Card";
 import { Button } from "../components/Button";
-import { CreditCard, Smartphone, CheckCircle2, AlertCircle } from "lucide-react";
+import { CreditCard, Smartphone, CheckCircle2, AlertCircle, Loader2, Zap, Wallet as WalletIcon } from "lucide-react";
 import { motion } from "motion/react";
+import { createSource, type SourceType } from "../services/paymongo";
 
 export default function PaymentReview() {
   const navigate = useNavigate();
   const { orderData, setOrderData, prevStep, submitOrder } = useOrder();
+  const { walletBalance, addTransaction, deductFromWallet } = usePayment();
   const [isProcessing, setIsProcessing] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  const sourceTypeMap: Record<string, SourceType> = {
+    gcash: "gcash",
+    maya: "paymaya",
+    grab_pay: "grab_pay",
+  };
+
+  const handleSubmit = async () => {
+    if (!agreeToTerms) {
+      setPaymentError("Please agree to the terms and conditions.");
+      return;
+    }
+    setPaymentError(null);
+    setIsProcessing(true);
+
+    const amount = orderData.estimatedPrice || 0;
+    const orderId = `ORD-${Date.now()}`;
+
+    try {
+      // Handle wallet payment
+      if (orderData.paymentMethod === "wallet") {
+        if (walletBalance < amount) {
+          setPaymentError(
+            `Insufficient wallet balance. You need ₱${(amount - walletBalance).toFixed(2)} more.`
+          );
+          setIsProcessing(false);
+          return;
+        }
+
+        // Deduct from wallet and create transaction
+        const transaction = {
+          id: `TXN-${Date.now()}`,
+          orderId,
+          amount: -amount,
+          status: "completed" as const,
+          serviceType: "laundry_order",
+          date: new Date().toISOString(),
+          paymentMethod: "wallet",
+          referenceNumber: orderId,
+        };
+
+        deductFromWallet(amount);
+        addTransaction(transaction);
+        await submitOrder();
+
+        // Navigate to success
+        navigate("/payment/success", {
+          state: { orderId, amount, paymentMethod: "wallet" },
+        });
+        return;
+      }
+
+      if (orderData.paymentMethod === "card") {
+        await submitOrder();
+        navigate("/payment/checkout", {
+          state: { orderId, amount, paymentMethod: "card" },
+        });
+        return;
+      }
+
+      const sourceType = sourceTypeMap[orderData.paymentMethod!];
+      if (!sourceType) {
+        setPaymentError("Please select a payment method.");
+        setIsProcessing(false);
+        return;
+      }
+
+      const successUrl = `${window.location.origin}/payment/success?orderId=${orderId}&amount=${amount}`;
+      const failedUrl = `${window.location.origin}/payment/error`;
+
+      const checkoutUrl = await createSource(sourceType, amount, successUrl, failedUrl);
+      await submitOrder();
+      window.location.href = checkoutUrl;
+    } catch (err) {
+      setPaymentError(err instanceof Error ? err.message : "Payment failed. Please try again.");
+      setIsProcessing(false);
+    }
+  };
 
   const paymentMethods = [
+    {
+      id: "wallet",
+      name: "Wallet",
+      icon: WalletIcon,
+      description: `Use wallet balance (₱${walletBalance.toFixed(2)} available)`,
+      color: "from-teal-500 to-emerald-500",
+    },
     {
       id: "gcash",
       name: "GCash",
@@ -48,29 +137,6 @@ export default function PaymentReview() {
     fold: "Fold",
     iron: "Iron",
     dry_clean: "Dry Clean",
-  };
-
-  const handleSubmit = async () => {
-    if (!agreeToTerms) {
-      alert("Please agree to the terms and conditions");
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      await submitOrder();
-      // Redirect to payment checkout
-      navigate("/payment/checkout", {
-        state: {
-          orderId: `ORD-${Date.now()}`,
-          amount: orderData.estimatedPrice || 0,
-          paymentMethod: orderData.paymentMethod,
-        },
-      });
-    } catch (err) {
-      alert("Failed to submit order");
-      setIsProcessing(false);
-    }
   };
 
   return (
@@ -142,6 +208,12 @@ export default function PaymentReview() {
                         </span>
                       </div>
                     )}
+                    {orderData.isRushOrder && (
+                      <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs font-semibold text-amber-700 mt-1">
+                        <Zap className="w-3.5 h-3.5 shrink-0" />
+                        Priority Order — processed first
+                      </div>
+                    )}
                   </div>
 
                   {/* Schedule Details */}
@@ -149,14 +221,14 @@ export default function PaymentReview() {
                     <p className="font-semibold text-slate-900 text-sm">Schedule</p>
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600">Pickup</span>
-                      <span className="font-medium text-slate-900">
-                        {orderData.pickupDate} at {orderData.pickupTime}
+                      <span className="font-medium text-slate-900 text-right">
+                        {orderData.pickupDate ?? "—"}{orderData.pickupTime ? ` at ${orderData.pickupTime}` : ""}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600">Delivery</span>
-                      <span className="font-medium text-slate-900">
-                        {orderData.deliveryDate} at {orderData.deliveryTime}
+                      <span className="font-medium text-slate-900 text-right">
+                        {orderData.deliveryDate ?? "—"}{orderData.deliveryTime ? ` at ${orderData.deliveryTime}` : ""}
                       </span>
                     </div>
                   </div>
@@ -185,18 +257,25 @@ export default function PaymentReview() {
                   <div className="grid grid-cols-2 gap-3">
                     {paymentMethods.map((method) => {
                       const Icon = method.icon;
+                      const isWalletInsufficient = method.id === "wallet" && walletBalance < (orderData.estimatedPrice || 0);
+                      const isDisabled = isWalletInsufficient;
+
                       return (
                         <motion.button
                           key={method.id}
                           onClick={() =>
+                            !isDisabled &&
                             setOrderData({
                               paymentMethod: method.id as any,
                             })
                           }
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                          whileHover={{ scale: !isDisabled ? 1.02 : 1 }}
+                          whileTap={{ scale: !isDisabled ? 0.98 : 1 }}
+                          disabled={isDisabled}
                           className={`p-4 rounded-lg border-2 transition-all text-left ${
-                            orderData.paymentMethod === method.id
+                            isDisabled
+                              ? "opacity-50 cursor-not-allowed border-slate-200 bg-slate-50"
+                              : orderData.paymentMethod === method.id
                               ? "border-teal-500 bg-teal-50"
                               : "border-slate-200 hover:border-slate-300 bg-white"
                           }`}
@@ -214,6 +293,11 @@ export default function PaymentReview() {
                           <p className="text-xs text-slate-600 mt-1">
                             {method.description}
                           </p>
+                          {isWalletInsufficient && (
+                            <p className="text-xs text-red-600 mt-2 font-medium">
+                              Insufficient balance
+                            </p>
+                          )}
                         </motion.button>
                       );
                     })}
@@ -268,23 +352,24 @@ export default function PaymentReview() {
             <div className="sticky top-24 space-y-4">
               <Card className="bg-gradient-to-br from-teal-500 to-teal-700 text-white border-none shadow-lg">
                 <CardContent className="pt-6 space-y-4">
-                  <div className="space-y-2 pb-4 border-b border-teal-400">
+                  <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-teal-100">Laundry Service</span>
+                      <span className="text-white/80">Laundry Service</span>
                       <span className="font-semibold">
-                        ₱{(orderData.estimatedPrice || 0).toFixed(2)}
+                        ₱{(orderData.subtotal ?? orderData.estimatedPrice ?? 0).toFixed(2)}
                       </span>
                     </div>
-                  </div>
-
-                  <div className="bg-teal-600 bg-opacity-50 rounded-lg p-3">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-semibold text-sm">Discount</span>
-                      <span className="text-emerald-300 font-bold">- ₱0.00</span>
-                    </div>
-                    <p className="text-xs text-teal-100">
-                      No active promo codes
-                    </p>
+                    {(orderData.discountPercentage ?? 0) > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="flex items-center gap-1 text-amber-300">
+                          <Zap className="w-3.5 h-3.5" />
+                          Premium Discount ({orderData.discountPercentage}%)
+                        </span>
+                        <span className="font-semibold text-amber-300">
+                          −₱{(orderData.discountAmount ?? 0).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="border-t border-teal-400 pt-4 flex justify-between items-center">
@@ -294,7 +379,7 @@ export default function PaymentReview() {
                     </span>
                   </div>
 
-                  <div className="bg-white bg-opacity-10 rounded-lg p-3 space-y-2 text-xs text-teal-100">
+                  <div className="bg-white/10 rounded-lg p-3 space-y-2 text-xs text-white/80">
                     <div className="flex items-start gap-2">
                       <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
                       <span>100% secure payment</span>
@@ -307,23 +392,34 @@ export default function PaymentReview() {
                 </CardContent>
               </Card>
 
+              {paymentError && (
+                <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-700">{paymentError}</p>
+                </div>
+              )}
+
+              {orderData.paymentMethod === "wallet" && (
+                <div className="flex items-start gap-2 p-3 bg-teal-50 border border-teal-200 rounded-lg">
+                  <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
+                  <div className="text-sm text-teal-900">
+                    <p className="font-medium">Paying from wallet</p>
+                    <p className="text-xs mt-1">
+                      Available: ₱{walletBalance.toFixed(2)} | Cost: ₱{(orderData.estimatedPrice || 0).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <Button
                 onClick={handleSubmit}
                 disabled={isProcessing || !agreeToTerms || !orderData.paymentMethod}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-11 rounded-lg font-medium disabled:opacity-50"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-11 rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isProcessing ? (
                   <>
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{
-                        repeat: Infinity,
-                        duration: 1,
-                        ease: "linear",
-                      }}
-                      className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
-                    />
-                    Processing...
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Processing…
                   </>
                 ) : (
                   "Confirm & Pay"
@@ -331,7 +427,7 @@ export default function PaymentReview() {
               </Button>
 
               <Button
-                onClick={prevStep}
+                onClick={() => { prevStep(); navigate("/order/schedule-address"); }}
                 variant="outline"
                 className="w-full border-slate-300"
               >

@@ -13,6 +13,10 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentError from "./pages/PaymentError";
 import PaymentHistory from "./pages/PaymentHistory";
 import Wallet from "./pages/Wallet";
+import WalletPaymentReview from "./pages/WalletPaymentReview";
+import WalletPaymentCheckout from "./pages/WalletPaymentCheckout";
+import WalletPaymentSuccess from "./pages/WalletPaymentSuccess";
+import WalletPaymentError from "./pages/WalletPaymentError";
 import LaundryDetails from "./pages/LaundryDetails";
 import ScheduleAddress from "./pages/ScheduleAddress";
 import PaymentReview from "./pages/PaymentReview";
@@ -70,6 +74,22 @@ export const router = createBrowserRouter([
       {
         path: "wallet",
         Component: Wallet,
+      },
+      {
+        path: "wallet/payment-review",
+        Component: WalletPaymentReview,
+      },
+      {
+        path: "wallet/payment-checkout",
+        Component: WalletPaymentCheckout,
+      },
+      {
+        path: "wallet/payment-success",
+        Component: WalletPaymentSuccess,
+      },
+      {
+        path: "wallet/payment-error",
+        Component: WalletPaymentError,
       },
       {
         path: "order/laundry-details",
