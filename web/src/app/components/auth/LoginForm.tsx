@@ -41,15 +41,9 @@ export function LoginForm() {
         <p className="text-gray-600">Sign in to manage your laundry services</p>
       </div>
 
-      {/* Mobile Demo Info */}
+      {/* Mobile info */}
       <div className="lg:hidden mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
-        <p className="text-blue-900 mb-2">📝 Test Credentials:</p>
-        <div className="space-y-1 text-xs text-blue-800">
-          <p><span className="opacity-75">Customer:</span> customer@washmate.com</p>
-          <p><span className="opacity-75">Shop:</span> shop@washmate.com</p>
-          <p><span className="opacity-75">Admin:</span> admin@washmate.com</p>
-          <p className="pt-1 border-t border-blue-200"><span className="opacity-75">Password:</span> password123</p>
-        </div>
+        <p className="text-blue-900">Sign in with your registered email and password.</p>
       </div>
 
       {error && (
@@ -60,28 +54,24 @@ export function LoginForm() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div>
-          <label htmlFor="email" className="mb-2 block text-sm text-gray-700">
-            Email Address
+          <label htmlFor="emailOrUsername" className="mb-2 block text-sm text-gray-700">
+            Email or Username
           </label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             <input
-              id="email"
-              type="email"
-              placeholder="juan@example.com"
+              id="emailOrUsername"
+              type="text"
+              placeholder="name@example.com or username"
               className={`w-full rounded-lg border ${
-                errors.email ? 'border-red-500' : 'border-gray-300'
+                errors.emailOrUsername ? 'border-red-500' : 'border-gray-300'
               } bg-white py-3 pl-11 pr-4 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition-all`}
-              {...register('email', {
-                required: 'Email is required',
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Invalid email address',
-                },
+              {...register('emailOrUsername', {
+                required: 'Email or username is required',
               })}
             />
           </div>
-          {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
+          {errors.emailOrUsername && <p className="mt-1 text-sm text-red-500">{errors.emailOrUsername.message}</p>}
         </div>
 
         <div>

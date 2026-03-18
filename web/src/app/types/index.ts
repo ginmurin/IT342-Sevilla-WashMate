@@ -1,12 +1,14 @@
-export type UserRole = 'CUSTOMER' | 'SHOP_OWNER' | 'ADMIN';
+export type UserRole = 'customer' | 'shop_owner' | 'admin';
 
 export interface User {
   id: number;
-  name: string;
+  username: string | null;
+  firstName: string;
+  lastName: string;
   email: string;
   role: UserRole;
   phone?: string;
-  avatar?: string;
+  emailVerified?: boolean;
 }
 
 export interface AuthResponse {
@@ -15,13 +17,15 @@ export interface AuthResponse {
 }
 
 export interface LoginCredentials {
-  email: string;
+  emailOrUsername: string;
   password: string;
   rememberMe?: boolean;
 }
 
 export interface RegisterData {
-  name: string;
+  username?: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
   password: string;

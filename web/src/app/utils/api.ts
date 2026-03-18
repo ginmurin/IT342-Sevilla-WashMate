@@ -27,7 +27,8 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const requestUrl = error.config?.url ?? '';
+    if (error.response?.status === 401 && !requestUrl.startsWith('/api/auth/')) {
       localStorage.removeItem('washmate_token');
       localStorage.removeItem('washmate_user');
       window.location.href = '/login';
@@ -47,7 +48,7 @@ api.interceptors.response.use(
 export const authAPI = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     const response = await api.post('/api/auth/login', {
-      email: credentials.email,
+      emailOrUsername: credentials.emailOrUsername,
       password: credentials.password,
     });
 
@@ -62,9 +63,11 @@ export const authAPI = {
       token,
       user: {
         id: data.userId,
-        name: data.fullName,
+        username: data.username ?? null,
+        firstName: data.firstName,
+        lastName: data.lastName,
         email: data.email,
-        role: data.role.toUpperCase() as AuthResponse['user']['role'],
+        role: data.role.toLowerCase() as AuthResponse['user']['role'],
       },
     };
   },
@@ -72,12 +75,16 @@ export const authAPI = {
   register: async (data: RegisterData): Promise<AuthResponse> => {
     const response = await api.post<{
       token: string;
-      email: string;
-      fullName: string;
-      role: string;
       userId: number;
+      username: string | null;
+      firstName: string;
+      lastName: string;
+      email: string;
+      role: string;
     }>('/api/auth/register', {
-      fullName: data.name,
+      username: data.username || null,
+      firstName: data.firstName,
+      lastName: data.lastName,
       email: data.email,
       password: data.password,
       phoneNumber: data.phone,
@@ -91,9 +98,49 @@ export const authAPI = {
       token: d.token,
       user: {
         id: d.userId,
-        name: d.fullName,
+        username: d.username ?? null,
+        firstName: d.firstName,
+        lastName: d.lastName,
         email: d.email,
-        role: d.role.toUpperCase() as AuthResponse['user']['role'],
+        role: d.role.toLowerCase() as AuthResponse['user']['role'],
+      },
+    };
+  },
+
+  sync: async (data: { email: string; uuid: string; jwt: string; user_metadata: any; }): Promise<AuthResponse> => {
+    // We send the Supabase JWT in the Authorization header to authenticate the request
+    const response = await api.post<{
+      userId: number;
+      username: string | null;
+      firstName: string;
+      lastName: string;
+      email: string;
+      role: string;
+    }>('/api/auth/register', {
+      email: data.email,
+      username: data.user_metadata.username || null,
+      firstName: data.user_metadata.first_name || '',
+      lastName: data.user_metadata.last_name || '',
+      phoneNumber: data.user_metadata.phone || null,
+      role: 'CUSTOMER', // Default role for now, could be passed from metadata if you allow it
+    }, {
+      headers: {
+        Authorization: `Bearer ${data.jwt}`
+      }
+    });
+
+    const d = response.data;
+    localStorage.setItem('washmate_token', data.jwt);
+
+    return {
+      token: data.jwt,
+      user: {
+        id: d.userId,
+        username: d.username ?? null,
+        firstName: d.firstName,
+        lastName: d.lastName,
+        email: d.email,
+        role: d.role.toLowerCase() as AuthResponse['user']['role'],
       },
     };
   },
@@ -101,6 +148,11 @@ export const authAPI = {
   logout: async (): Promise<void> => {
     localStorage.removeItem('washmate_token');
     localStorage.removeItem('washmate_user');
+  },
+
+  emailByUsername: async (username: string): Promise<string> => {
+    const response = await api.get<{ email: string }>(`/api/auth/email-by-username?username=${encodeURIComponent(username)}`);
+    return response.data.email;
   },
 };
 

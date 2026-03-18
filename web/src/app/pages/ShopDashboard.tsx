@@ -22,7 +22,7 @@ export function ShopDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">Partner Dashboard</h1>
-          <p className="text-slate-500 mt-1">Hello {user?.name}, here is your shop's performance this week.</p>
+          <p className="text-slate-500 mt-1">Hello {user?.first_name}, here is your shop's performance this week.</p>
         </div>
         <div className="flex gap-3">
           <Button variant="outline" className="text-slate-700 bg-white">

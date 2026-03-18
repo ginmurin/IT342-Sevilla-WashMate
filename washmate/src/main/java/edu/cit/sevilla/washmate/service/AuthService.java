@@ -1,67 +1,60 @@
 package edu.cit.sevilla.washmate.service;
 
 import edu.cit.sevilla.washmate.dto.AuthResponse;
-import edu.cit.sevilla.washmate.dto.LoginRequest;
 import edu.cit.sevilla.washmate.dto.RegisterRequest;
 import edu.cit.sevilla.washmate.entity.User;
 import edu.cit.sevilla.washmate.repository.UserRepository;
-import edu.cit.sevilla.washmate.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
-    private final AuthenticationManager authenticationManager;
-    private final UserDetailsService userDetailsService;
 
-    public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email is already registered");
+    public AuthResponse syncUser(RegisterRequest request, String oauthId, String tokenValue) {
+        // Find existing user by oauthId or create a new one
+        User user = userRepository.findByOauthId(oauthId).orElse(null);
+
+        if (user == null) {
+            // Check by email if the user was created before Supabase migration but not linked yet
+            user = userRepository.findByEmail(request.getEmail()).orElse(null);
+            
+            if (user != null) {
+                // Link the existing user with the Supabase UUID
+                user.setOauthId(oauthId);
+                user.setOauthProvider("SUPABASE");
+                userRepository.save(user);
+            } else {
+                // Completely new user
+                String role = (request.getRole() != null && !request.getRole().isBlank())
+                        ? request.getRole().toUpperCase()
+                        : "CUSTOMER";
+
+                User newUser = User.builder()
+                        .username(request.getUsername())
+                        .firstName(request.getFirstName())
+                        .lastName(request.getLastName())
+                        .email(request.getEmail())
+                        .oauthId(oauthId)
+                        .oauthProvider("SUPABASE")
+                        .phoneNumber(request.getPhoneNumber())
+                        .role(role)
+                        .emailVerified(true) // Supabase handles verification
+                        .build();
+
+                user = userRepository.save(newUser);
+            }
         }
 
-        String role = (request.getRole() != null && !request.getRole().isBlank())
-                ? request.getRole().toUpperCase()
-                : "CUSTOMER";
-
-        User user = User.builder()
-                .fullName(request.getFullName())
-                .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .phoneNumber(request.getPhoneNumber())
-                .role(role)
-                .build();
-
-        userRepository.save(user);
-
-        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
-        String token = jwtUtil.generateToken(userDetails, Map.of("role", user.getRole()));
-
-        return new AuthResponse(token, user.getEmail(), user.getFullName(), user.getRole(), user.getUserId());
+        return new AuthResponse(tokenValue, user.getUserId(), user.getUsername(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getRole());
     }
 
-    public AuthResponse login(LoginRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
-
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
-        String token = jwtUtil.generateToken(userDetails, Map.of("role", user.getRole()));
-
-        return new AuthResponse(token, user.getEmail(), user.getFullName(), user.getRole(), user.getUserId());
+    public Optional<String> findEmailByUsername(String username) {
+        return userRepository.findByUsername(username).map(User::getEmail);
     }
 }
+
