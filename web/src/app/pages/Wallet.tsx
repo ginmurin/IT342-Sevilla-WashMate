@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { usePayment } from "../contexts/PaymentContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useWallet } from "../contexts/WalletContext";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/Card";
 import { Button } from "../components/Button";
 import {
@@ -18,9 +19,9 @@ import { motion } from "motion/react";
 export default function Wallet() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { walletBalance, addToWallet, transactions } = usePayment();
+  const { walletBalance, transactions } = usePayment();
+  const { setTopUpData } = useWallet();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
   const presetAmounts = [500, 1000, 2000, 5000];
 
@@ -31,16 +32,10 @@ export default function Wallet() {
     { id: "WAL-004", type: "refund", amount: 150, description: "Order refund", date: "2024-01-02" },
   ];
 
-  const handleLoadMoney = async (amount: number) => {
+  const handleLoadMoney = (amount: number) => {
     setSelectedAmount(amount);
-    setIsLoading(true);
-
-    // Simulate adding to wallet after 1 second (would actually do payment processing)
-    setTimeout(() => {
-      addToWallet(amount);
-      setIsLoading(false);
-      setSelectedAmount(null);
-    }, 1000);
+    setTopUpData({ amount });
+    navigate("/wallet/payment-review");
   };
 
   const handleCustomAmount = (e: React.FormEvent<HTMLFormElement>) => {
@@ -142,30 +137,11 @@ export default function Wallet() {
                       <Button
                         key={amount}
                         onClick={() => handleLoadMoney(amount)}
-                        disabled={isLoading}
-                        variant={selectedAmount === amount && isLoading ? "default" : "outline"}
-                        className={`h-16 flex flex-col items-center justify-center ${
-                          selectedAmount === amount && isLoading
-                            ? "bg-teal-600 text-white border-teal-600"
-                            : "border-slate-300 hover:border-teal-400"
-                        }`}
+                        variant="outline"
+                        className="h-16 flex flex-col items-center justify-center border-slate-300 hover:border-teal-400"
                       >
-                        {isLoading && selectedAmount === amount ? (
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{
-                              repeat: Infinity,
-                              duration: 1,
-                              ease: "linear",
-                            }}
-                            className="w-4 h-4 border-2 border-teal-200 border-t-white rounded-full"
-                          />
-                        ) : (
-                          <>
-                            <Plus className="w-4 h-4 mb-1" />
-                            <span className="font-semibold">₱{amount}</span>
-                          </>
-                        )}
+                        <Plus className="w-4 h-4 mb-1" />
+                        <span className="font-semibold">₱{amount}</span>
                       </Button>
                     ))}
                   </div>
@@ -202,7 +178,6 @@ export default function Wallet() {
                     </div>
                     <Button
                       type="submit"
-                      disabled={isLoading}
                       className="bg-teal-600 hover:bg-teal-700 text-white px-6"
                     >
                       Load Money

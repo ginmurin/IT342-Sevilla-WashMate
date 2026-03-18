@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useOrder } from "../contexts/OrderContext";
+import { usePayment } from "../contexts/PaymentContext";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/Card";
 import { Button } from "../components/Button";
-import { CreditCard, Smartphone, CheckCircle2, AlertCircle, Loader2, Zap } from "lucide-react";
+import { CreditCard, Smartphone, CheckCircle2, AlertCircle, Loader2, Zap, Wallet as WalletIcon } from "lucide-react";
 import { motion } from "motion/react";
 import { createSource, type SourceType } from "../services/paymongo";
 
 export default function PaymentReview() {
   const navigate = useNavigate();
   const { orderData, setOrderData, prevStep, submitOrder } = useOrder();
+  const { walletBalance, addTransaction, deductFromWallet } = usePayment();
   const [isProcessing, setIsProcessing] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -32,6 +34,39 @@ export default function PaymentReview() {
     const orderId = `ORD-${Date.now()}`;
 
     try {
+      // Handle wallet payment
+      if (orderData.paymentMethod === "wallet") {
+        if (walletBalance < amount) {
+          setPaymentError(
+            `Insufficient wallet balance. You need ₱${(amount - walletBalance).toFixed(2)} more.`
+          );
+          setIsProcessing(false);
+          return;
+        }
+
+        // Deduct from wallet and create transaction
+        const transaction = {
+          id: `TXN-${Date.now()}`,
+          orderId,
+          amount: -amount,
+          status: "completed" as const,
+          serviceType: "laundry_order",
+          date: new Date().toISOString(),
+          paymentMethod: "wallet",
+          referenceNumber: orderId,
+        };
+
+        deductFromWallet(amount);
+        addTransaction(transaction);
+        await submitOrder();
+
+        // Navigate to success
+        navigate("/payment/success", {
+          state: { orderId, amount, paymentMethod: "wallet" },
+        });
+        return;
+      }
+
       if (orderData.paymentMethod === "card") {
         await submitOrder();
         navigate("/payment/checkout", {
@@ -60,6 +95,13 @@ export default function PaymentReview() {
   };
 
   const paymentMethods = [
+    {
+      id: "wallet",
+      name: "Wallet",
+      icon: WalletIcon,
+      description: `Use wallet balance (₱${walletBalance.toFixed(2)} available)`,
+      color: "from-teal-500 to-emerald-500",
+    },
     {
       id: "gcash",
       name: "GCash",
@@ -215,18 +257,25 @@ export default function PaymentReview() {
                   <div className="grid grid-cols-2 gap-3">
                     {paymentMethods.map((method) => {
                       const Icon = method.icon;
+                      const isWalletInsufficient = method.id === "wallet" && walletBalance < (orderData.estimatedPrice || 0);
+                      const isDisabled = isWalletInsufficient;
+
                       return (
                         <motion.button
                           key={method.id}
                           onClick={() =>
+                            !isDisabled &&
                             setOrderData({
                               paymentMethod: method.id as any,
                             })
                           }
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                          whileHover={{ scale: !isDisabled ? 1.02 : 1 }}
+                          whileTap={{ scale: !isDisabled ? 0.98 : 1 }}
+                          disabled={isDisabled}
                           className={`p-4 rounded-lg border-2 transition-all text-left ${
-                            orderData.paymentMethod === method.id
+                            isDisabled
+                              ? "opacity-50 cursor-not-allowed border-slate-200 bg-slate-50"
+                              : orderData.paymentMethod === method.id
                               ? "border-teal-500 bg-teal-50"
                               : "border-slate-200 hover:border-slate-300 bg-white"
                           }`}
@@ -244,6 +293,11 @@ export default function PaymentReview() {
                           <p className="text-xs text-slate-600 mt-1">
                             {method.description}
                           </p>
+                          {isWalletInsufficient && (
+                            <p className="text-xs text-red-600 mt-2 font-medium">
+                              Insufficient balance
+                            </p>
+                          )}
                         </motion.button>
                       );
                     })}
@@ -342,6 +396,18 @@ export default function PaymentReview() {
                 <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
                   <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                   <p className="text-sm text-red-700">{paymentError}</p>
+                </div>
+              )}
+
+              {orderData.paymentMethod === "wallet" && (
+                <div className="flex items-start gap-2 p-3 bg-teal-50 border border-teal-200 rounded-lg">
+                  <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
+                  <div className="text-sm text-teal-900">
+                    <p className="font-medium">Paying from wallet</p>
+                    <p className="text-xs mt-1">
+                      Available: ₱{walletBalance.toFixed(2)} | Cost: ₱{(orderData.estimatedPrice || 0).toFixed(2)}
+                    </p>
+                  </div>
                 </div>
               )}
 

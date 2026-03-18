@@ -27,6 +27,7 @@ interface PaymentContextType {
   confirmPayment: (transactionId: string, receipt: any) => void;
   addTransaction: (transaction: Transaction) => void;
   addToWallet: (amount: number) => void;
+  deductFromWallet: (amount: number) => void;
   clearPayment: () => void;
 }
 
@@ -57,6 +58,10 @@ export function PaymentProvider({ children }: { children: ReactNode }) {
     setWalletBalance((prev) => prev + amount);
   };
 
+  const deductFromWallet = (amount: number) => {
+    setWalletBalance((prev) => Math.max(0, prev - amount));
+  };
+
   const clearPayment = () => {
     setCurrentOrder(null);
   };
@@ -71,6 +76,7 @@ export function PaymentProvider({ children }: { children: ReactNode }) {
         confirmPayment,
         addTransaction,
         addToWallet,
+        deductFromWallet,
         clearPayment,
       }}
     >
