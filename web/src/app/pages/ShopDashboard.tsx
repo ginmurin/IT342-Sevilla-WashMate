@@ -12,7 +12,7 @@ export function ShopDashboard() {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-slate-50 to-slate-100 p-6 md:p-10">
+    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-slate-50 to-slate-100 px-6 pb-6 pt-20 md:px-10 md:pb-10 md:pt-20">
       <div className="max-w-5xl mx-auto space-y-8">
 
         {/* Header */}

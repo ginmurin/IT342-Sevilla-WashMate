@@ -67,7 +67,7 @@ export const authAPI = {
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
-        role: data.role.toLowerCase() as AuthResponse['user']['role'],
+        role: data.role.toUpperCase() as AuthResponse['user']['role'],
       },
     };
   },
@@ -102,7 +102,7 @@ export const authAPI = {
         firstName: d.firstName,
         lastName: d.lastName,
         email: d.email,
-        role: d.role.toLowerCase() as AuthResponse['user']['role'],
+        role: d.role.toUpperCase() as AuthResponse['user']['role'],
       },
     };
   },
@@ -140,7 +140,7 @@ export const authAPI = {
         firstName: d.firstName,
         lastName: d.lastName,
         email: d.email,
-        role: d.role.toLowerCase() as AuthResponse['user']['role'],
+        role: d.role.toUpperCase() as AuthResponse['user']['role'],
       },
     };
   },

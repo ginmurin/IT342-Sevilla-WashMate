@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -21,6 +21,7 @@ import {
   BadgePercent,
 } from "lucide-react";
 import { Button } from "../components/Button";
+import { getMySubscription, SubscriptionData } from "../services/subscription";
 
 // ── Service definitions ──────────────────────────────────────────────────────
 type Unit = "kg" | "piece";
@@ -133,6 +134,14 @@ const PLANS = [
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function Services() {
   const navigate = useNavigate();
+
+  const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
+
+  useEffect(() => {
+    getMySubscription().then(setSubscription);
+  }, []);
+
+  const currentPlanId = subscription?.planType?.toLowerCase();
 
   // selected + qty per service
   const [selected, setSelected] = useState<Record<string, number>>({});
@@ -462,18 +471,30 @@ export default function Services() {
                 </ul>
 
                 {/* CTA */}
-                <Link to="/register">
-                  <Button
-                    className={`w-full h-11 font-semibold transition-all duration-200
-                      ${plan.highlight
-                        ? "bg-white text-teal-700 hover:bg-teal-50 shadow-lg"
-                        : "bg-teal-600 text-white hover:bg-teal-700"
-                      }`}
+                {plan.id === currentPlanId ? (
+                  <div className={`w-full h-11 flex items-center justify-center gap-2 rounded-lg font-semibold text-sm
+                    ${plan.highlight
+                      ? "bg-white/20 text-white border border-white/40"
+                      : "bg-teal-50 text-teal-600 border border-teal-200"
+                    }`}
                   >
-                    {plan.cta}
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </Link>
+                    <Check className="w-4 h-4" />
+                    Current Plan
+                  </div>
+                ) : currentPlanId && plan.id === "free" ? null : (
+                  <Link to="/register">
+                    <Button
+                      className={`w-full h-11 font-semibold transition-all duration-200
+                        ${plan.highlight
+                          ? "bg-white text-teal-700 hover:bg-teal-50 shadow-lg"
+                          : "bg-teal-600 text-white hover:bg-teal-700"
+                        }`}
+                    >
+                      {plan.cta}
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                )}
               </motion.div>
             ))}
           </div>

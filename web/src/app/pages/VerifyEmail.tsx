@@ -134,11 +134,11 @@ export default function VerifyEmail() {
   useEffect(() => {
     if (user?.emailVerified) {
       const dashPath =
-        user.role === "customer"
+        user.role === "CUSTOMER"
           ? "/customer"
-          : user.role === "shop_owner"
+          : user.role === "SHOPOWNER"
           ? "/shop"
-          : user.role === "admin"
+          : user.role === "ADMIN"
           ? "/admin"
           : "/";
       navigate(dashPath, { replace: true });
@@ -217,11 +217,11 @@ export default function VerifyEmail() {
       return;
     }
     const dashPath =
-      user.role === "customer"
+      user.role === "CUSTOMER"
         ? "/customer"
-        : user.role === "shop_owner"
+        : user.role === "SHOPOWNER"
         ? "/shop"
-        : user.role === "admin"
+        : user.role === "ADMIN"
         ? "/admin"
         : "/";
     navigate(dashPath, { replace: true });
@@ -237,13 +237,20 @@ export default function VerifyEmail() {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center py-12 px-4">
+    <div className="flex-1 flex items-center justify-center min-h-screen pt-16 pb-12 px-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="w-full max-w-md"
       >
+        {/* Logo */}
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <div className="w-9 h-9 rounded-lg bg-teal-600 flex items-center justify-center">
+            <Droplets className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-slate-800 text-xl font-bold tracking-tight">WashMate</span>
+        </div>
         <AnimatePresence mode="wait">
           {/* Step 1: OTP Verification */}
           {step === "verify" && (

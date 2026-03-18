@@ -16,11 +16,11 @@ export default function PaymentSuccess() {
   const navigate = useNavigate();
   const state = location.state as any;
 
-  const { orderId, amount, serviceType } = state || {
-    orderId: "ORD-" + Date.now(),
-    amount: 250,
-    serviceType: "wash_fold",
-  };
+  // Support both location.state (card/internal) and URL query params (PayMongo redirect)
+  const searchParams = new URLSearchParams(location.search);
+  const orderId = state?.orderId ?? searchParams.get("orderId") ?? `ORD-${Date.now()}`;
+  const amount = state?.amount ?? parseFloat(searchParams.get("amount") ?? "0");
+  const serviceType = state?.serviceType ?? "laundry_service";
 
   // Confetti animation component
   const Confetti = () => (

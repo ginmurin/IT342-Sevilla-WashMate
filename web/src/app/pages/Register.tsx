@@ -305,10 +305,10 @@ export function Register() {
         });
         login(syncResult.user);
 
-        const role = String(syncResult.user.role).toLowerCase();
-        if (role === "customer") navigate("/customer", { replace: true });
-        else if (role === "shop_owner") navigate("/shop", { replace: true });
-        else if (role === "admin") navigate("/admin", { replace: true });
+        const role = String(syncResult.user.role).toUpperCase();
+        if (role === "CUSTOMER") navigate("/customer", { replace: true });
+        else if (role === "SHOPOWNER") navigate("/shop", { replace: true });
+        else if (role === "ADMIN") navigate("/admin", { replace: true });
         else navigate("/", { replace: true });
       } else {
         // OTP flow — redirect to verify-email page

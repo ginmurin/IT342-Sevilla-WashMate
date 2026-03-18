@@ -22,7 +22,13 @@ public class DotenvEnvironmentPostProcessor implements EnvironmentPostProcessor 
 
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
-        File envFile = new File(System.getProperty("user.dir"), ENV_FILE);
+        String workingDir = System.getProperty("user.dir");
+
+        // Check working dir first, then a washmate/ subdirectory (when launched from project root)
+        File envFile = new File(workingDir, ENV_FILE);
+        if (!envFile.exists()) {
+            envFile = new File(workingDir + "/washmate", ENV_FILE);
+        }
         if (!envFile.exists()) {
             return;
         }

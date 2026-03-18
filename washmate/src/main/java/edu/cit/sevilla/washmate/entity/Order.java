@@ -34,10 +34,6 @@ public class Order {
     private Shop shop;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "service_id", nullable = false)
-    private WashService service;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pickup_address_id")
     private Address pickupAddress;
 
