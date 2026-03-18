@@ -1,156 +1,86 @@
 import { useAuth } from "../contexts/AuthContext";
-import { Card, CardHeader, CardTitle, CardContent } from "../components/Card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { ShieldAlert, Users, Store, Activity, MoreVertical, DollarSign, ArrowUpRight } from "lucide-react";
-import { Button } from "../components/Button";
+import { ShieldCheck, Users, Store, Activity, Construction } from "lucide-react";
+import { motion } from "motion/react";
+
+const PLACEHOLDERS = [
+  { label: "Total Users", icon: Users, color: "bg-blue-50 text-blue-600" },
+  { label: "Partner Shops", icon: Store, color: "bg-teal-50 text-teal-600" },
+  { label: "Platform Activity", icon: Activity, color: "bg-indigo-50 text-indigo-600" },
+];
 
 export function AdminDashboard() {
   const { user } = useAuth();
 
-  const data = [
-    { name: "Jan", users: 4000, shops: 240, amt: 2400 },
-    { name: "Feb", users: 3000, shops: 139, amt: 2210 },
-    { name: "Mar", users: 2000, shops: 980, amt: 2290 },
-    { name: "Apr", users: 2780, shops: 390, amt: 2000 },
-    { name: "May", users: 1890, shops: 480, amt: 2181 },
-    { name: "Jun", users: 2390, shops: 380, amt: 2500 },
-    { name: "Jul", users: 3490, shops: 430, amt: 2100 },
-  ];
-
   return (
-    <div className="space-y-8 w-full">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Platform Overview</h1>
-          <p className="text-slate-500 mt-1">Administrator dashboard. Signed in as {user?.email}.</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" className="text-slate-700 bg-white">
-            <Activity className="w-4 h-4 mr-2" />
-            System Status
-          </Button>
-          <Button className="bg-slate-900 hover:bg-slate-800 text-white">
-            <ShieldAlert className="w-4 h-4 mr-2" />
-            Admin Actions
-          </Button>
-        </div>
-      </div>
+    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-slate-50 to-slate-100 p-6 md:p-10">
+      <div className="max-w-5xl mx-auto space-y-8">
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="shadow-sm border-slate-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Total Users</CardTitle>
-            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
-              <Users className="w-4 h-4 text-blue-600" />
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col md:flex-row md:items-center justify-between gap-4"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center shadow-md">
+              <ShieldCheck className="w-6 h-6 text-white" />
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-slate-900">24,592</div>
-            <p className="text-sm text-emerald-600 flex items-center mt-2">
-              <ArrowUpRight className="w-4 h-4 mr-1" />
-              +12% vs last month
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm border-slate-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Partner Shops</CardTitle>
-            <div className="w-8 h-8 rounded-full bg-teal-50 flex items-center justify-center">
-              <Store className="w-4 h-4 text-teal-600" />
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
+              <p className="text-sm text-slate-500">
+                Signed in as <span className="font-medium text-slate-700">{user?.email}</span>
+              </p>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-slate-900">1,245</div>
-            <p className="text-sm text-emerald-600 flex items-center mt-2">
-              <ArrowUpRight className="w-4 h-4 mr-1" />
-              +3% vs last month
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+          <span className="inline-flex items-center gap-2 bg-amber-100 text-amber-700 text-xs font-semibold px-3 py-1.5 rounded-full border border-amber-200 w-fit">
+            <Construction className="w-3.5 h-3.5" />
+            Under Development
+          </span>
+        </motion.div>
 
-        <Card className="shadow-sm border-slate-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Platform Volume</CardTitle>
-            <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center">
-              <DollarSign className="w-4 h-4 text-indigo-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-slate-900">$2.4M</div>
-            <p className="text-sm text-emerald-600 flex items-center mt-2">
-              <ArrowUpRight className="w-4 h-4 mr-1" />
-              +8% vs last month
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 shadow-sm border-slate-200">
-          <CardHeader>
-            <CardTitle className="text-xl text-slate-800">Growth Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="px-2">
-            <div className="h-[350px] w-full mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={data}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid key="grid" strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis key="xaxis" dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis key="yaxis" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                  <Tooltip 
-                    cursor={{fill: '#f1f5f9'}}
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
-                  />
-                  <Bar key="bar-users" dataKey="users" fill="#0d9488" radius={[4, 4, 0, 0]} name="New Users" />
-                  <Bar key="bar-shops" dataKey="shops" fill="#3b82f6" radius={[4, 4, 0, 0]} name="New Shops" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm border-slate-200">
-          <CardHeader>
-            <CardTitle className="text-xl text-slate-800">Recent Applications</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="divide-y divide-slate-100">
-              {[
-                { name: "Sparkle Cleaners", city: "New York", status: "Pending" },
-                { name: "Fresh Fold", city: "Chicago", status: "Reviewing" },
-                { name: "City Laundry", city: "Seattle", status: "Pending" },
-                { name: "Wash & Go", city: "Austin", status: "Reviewing" },
-              ].map((shop, i) => (
-                <div key={i} className="py-4 flex items-center justify-between first:pt-0 last:pb-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-md bg-slate-100 flex items-center justify-center">
-                      <Store className="w-5 h-5 text-slate-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-900">{shop.name}</p>
-                      <p className="text-xs text-slate-500">{shop.city}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                      {shop.status}
-                    </span>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
-                  </div>
+        {/* Stat placeholders */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-5"
+        >
+          {PLACEHOLDERS.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <div
+                key={stat.label}
+                className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex items-center gap-4"
+              >
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${stat.color}`}>
+                  <Icon className="w-6 h-6" />
                 </div>
-              ))}
-            </div>
-            <Button className="w-full mt-4" variant="outline">
-              View All Applications
-            </Button>
-          </CardContent>
-        </Card>
+                <div>
+                  <p className="text-sm text-slate-500">{stat.label}</p>
+                  <p className="text-3xl font-bold text-slate-300 mt-0.5">—</p>
+                </div>
+              </div>
+            );
+          })}
+        </motion.div>
+
+        {/* Coming soon panel */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white rounded-2xl border border-slate-200 shadow-sm p-12 text-center"
+        >
+          <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Construction className="w-8 h-8 text-slate-400" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-700 mb-2">Platform analytics coming soon</h2>
+          <p className="text-slate-400 text-sm max-w-md mx-auto">
+            User management, shop approvals, revenue reports, and system monitoring
+            will be available here once the backend is connected.
+          </p>
+        </motion.div>
+
       </div>
     </div>
   );
