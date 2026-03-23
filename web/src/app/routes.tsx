@@ -25,6 +25,12 @@ import Services from "./pages/Services";
 import { CustomerDashboard } from "./pages/CustomerDashboard";
 import { ShopDashboard } from "./pages/ShopDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
+import SubscriptionPlans from "./pages/SubscriptionPlans";
+import SubscriptionUpgradeReview from "./pages/SubscriptionUpgradeReview";
+import SubscriptionUpgradeCheckout from "./pages/SubscriptionUpgradeCheckout";
+import SubscriptionUpgradeSuccess from "./pages/SubscriptionUpgradeSuccess";
+import SubscriptionManagement from "./pages/SubscriptionManagement";
+import SubscriptionHistory from "./pages/SubscriptionHistory";
 
 export const router = createBrowserRouter([
   {
@@ -138,6 +144,36 @@ export const router = createBrowserRouter([
           {
             path: "admin",
             Component: AdminDashboard,
+          },
+        ],
+      },
+      // Subscription Routes — accessible by all authenticated users
+      {
+        element: <ProtectedRoute allowedRoles={["CUSTOMER", "SHOPOWNER", "ADMIN"]} />,
+        children: [
+          {
+            path: "subscriptions",
+            Component: SubscriptionPlans,
+          },
+          {
+            path: "subscription/upgrade-review",
+            Component: SubscriptionUpgradeReview,
+          },
+          {
+            path: "subscription/upgrade-checkout",
+            Component: SubscriptionUpgradeCheckout,
+          },
+          {
+            path: "subscription/upgrade-success",
+            Component: SubscriptionUpgradeSuccess,
+          },
+          {
+            path: "subscription/management",
+            Component: SubscriptionManagement,
+          },
+          {
+            path: "subscription/history",
+            Component: SubscriptionHistory,
           },
         ],
       },

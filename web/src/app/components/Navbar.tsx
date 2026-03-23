@@ -16,6 +16,7 @@ import {
   Settings,
   Heart,
   ChevronDown,
+  Crown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -40,6 +41,7 @@ export function Navbar() {
       ? [
           { label: "Home", icon: Home, href: "/customer" },
           { label: "Services", icon: ShoppingBag, href: "/services" },
+          { label: "Subscriptions", icon: Crown, href: "/subscriptions" },
           { label: "My Orders", icon: Clock, href: "/my-orders" },
           { label: "Wallet", icon: WalletIcon, href: "/wallet" },
         ]
@@ -75,11 +77,11 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to={currentView === "customer" ? "/customer" : currentView === "shopowner" ? "/shop" : "/admin"} className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-teal-600 flex items-center justify-center">
+          <Link to={currentView === "customer" ? "/customer" : currentView === "shopowner" ? "/shop" : "/admin"} className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-md shadow-teal-200">
               <Droplets className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-lg text-slate-900">WashMate</span>
+            <span className="font-bold text-xl text-slate-900 tracking-tight">WashMate</span>
           </Link>
 
           {/* Desktop Nav */}

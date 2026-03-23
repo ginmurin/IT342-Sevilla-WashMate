@@ -26,12 +26,12 @@ const menuItems = {
   CUSTOMER: [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/customer/dashboard' },
     { icon: Package, label: 'My Orders', path: '/customer/orders' },
-    { icon: Crown, label: 'Subscription', path: '/customer/subscription' },
+    { icon: Crown, label: 'Subscription', path: '/subscription/management' },
     { icon: MapPin, label: 'Saved Addresses', path: '/customer/addresses' },
     { icon: MessageSquare, label: 'Feedback', path: '/customer/feedback' },
     { icon: Settings, label: 'Settings', path: '/customer/settings' },
   ],
-  SHOP_OWNER: [
+  SHOPOWNER: [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/shop/dashboard' },
     { icon: Package, label: "Today's Orders", path: '/shop/today' },
     { icon: FileText, label: 'All Orders', path: '/shop/orders' },

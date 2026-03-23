@@ -75,6 +75,7 @@ export function MainLayout() {
         { label: "Features", href: "#features", to: null },
         { label: "How It Works", href: "#how-it-works", to: null },
         { label: "Services", href: null, to: "/services" },
+        { label: "Subscriptions", href: null, to: "/subscriptions" },
       ]
     : [];
 

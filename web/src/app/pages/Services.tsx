@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { useState } from "react";
+import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import {
   WashingMachine,
@@ -9,19 +9,14 @@ import {
   Plus,
   Minus,
   Check,
-  Crown,
   ShoppingBag,
   ArrowRight,
-  Star,
   Sparkles,
   Shield,
   Clock,
   Truck,
-  Headphones,
-  BadgePercent,
 } from "lucide-react";
 import { Button } from "../components/Button";
-import { getMySubscription, SubscriptionData } from "../services/subscription";
 
 // ── Service definitions ──────────────────────────────────────────────────────
 type Unit = "kg" | "piece";
@@ -85,63 +80,9 @@ const SERVICE_LIST: ServiceDef[] = [
   },
 ];
 
-// ── Subscription plan definitions ────────────────────────────────────────────
-const PLANS = [
-  {
-    id: "free",
-    name: "Free",
-    badge: null,
-    price: 0,
-    billing: "forever free",
-    description: "Perfect for occasional laundry needs.",
-    highlight: false,
-    features: [
-      { label: "Up to 3 orders per month", included: true },
-      { label: "Standard 2–3 day service", included: true },
-      { label: "Basic customer support", included: true },
-      { label: "Regular pickup schedule", included: true },
-      { label: "Priority same-day pickup", included: false },
-      { label: "10% discount on all services", included: false },
-      { label: "Dedicated account manager", included: false },
-      { label: "Monthly usage report", included: false },
-    ],
-    cta: "Get Started Free",
-    ctaVariant: "outline" as const,
-  },
-  {
-    id: "premium",
-    name: "Premium",
-    badge: "Most Popular",
-    price: 299,
-    billing: "per month",
-    description: "For busy households that need fast, reliable service every week.",
-    highlight: true,
-    features: [
-      { label: "Unlimited orders per month", included: true },
-      { label: "Priority same-day service", included: true },
-      { label: "24/7 dedicated support", included: true },
-      { label: "Free express pickup", included: true },
-      { label: "Priority same-day pickup", included: true },
-      { label: "10% discount on all services", included: true },
-      { label: "Dedicated account manager", included: true },
-      { label: "Monthly usage report", included: true },
-    ],
-    cta: "Start Premium",
-    ctaVariant: "default" as const,
-  },
-];
-
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function Services() {
   const navigate = useNavigate();
-
-  const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
-
-  useEffect(() => {
-    getMySubscription().then(setSubscription);
-  }, []);
-
-  const currentPlanId = subscription?.planType?.toLowerCase();
 
   // selected + qty per service
   const [selected, setSelected] = useState<Record<string, number>>({});
@@ -375,151 +316,6 @@ export default function Services() {
               </motion.div>
             </div>
           </div>
-        </div>
-
-        {/* ── Subscription Plans ── */}
-        <div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <span className="inline-flex items-center gap-2 rounded-full bg-amber-100 text-amber-700 text-sm font-semibold px-4 py-1.5 mb-4">
-              <Crown className="w-4 h-4" />
-              Subscription Plans
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">
-              Choose Your Plan
-            </h2>
-            <p className="text-slate-500 max-w-xl mx-auto">
-              Start for free and upgrade anytime. Premium members get exclusive discounts, priority service and more.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-            {PLANS.map((plan, i) => (
-              <motion.div
-                key={plan.id}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.5, delay: i * 0.12 }}
-                className={`relative rounded-2xl p-8 flex flex-col border-2 transition-all duration-300
-                  ${plan.highlight
-                    ? "bg-gradient-to-br from-teal-600 to-teal-700 border-teal-500 shadow-2xl shadow-teal-500/20 text-white"
-                    : "bg-white border-slate-200 shadow-md text-slate-900"
-                  }`}
-              >
-                {plan.badge && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg whitespace-nowrap flex items-center gap-1">
-                    <Star className="w-3 h-3 fill-white" />
-                    {plan.badge}
-                  </div>
-                )}
-
-                {/* Plan header */}
-                <div className="mb-6">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${plan.highlight ? "bg-white/20" : "bg-teal-50"}`}>
-                    {plan.highlight
-                      ? <Crown className="w-6 h-6 text-white" />
-                      : <Sparkles className="w-6 h-6 text-teal-600" />
-                    }
-                  </div>
-                  <h3 className={`text-2xl font-extrabold mb-1 ${plan.highlight ? "text-white" : "text-slate-900"}`}>
-                    {plan.name}
-                  </h3>
-                  <p className={`text-sm mb-4 ${plan.highlight ? "text-teal-100" : "text-slate-500"}`}>
-                    {plan.description}
-                  </p>
-                  <div className="flex items-end gap-1">
-                    <span className={`text-4xl font-extrabold ${plan.highlight ? "text-white" : "text-slate-900"}`}>
-                      {plan.price === 0 ? "Free" : `₱${plan.price}`}
-                    </span>
-                    {plan.price > 0 && (
-                      <span className={`text-sm mb-1 ${plan.highlight ? "text-teal-100" : "text-slate-400"}`}>
-                        /{plan.billing}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Feature list */}
-                <ul className="space-y-3 flex-1 mb-8">
-                  {plan.features.map((feat) => (
-                    <li key={feat.label} className="flex items-start gap-3">
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5
-                        ${feat.included
-                          ? plan.highlight ? "bg-white/20" : "bg-teal-100"
-                          : plan.highlight ? "bg-white/10" : "bg-slate-100"
-                        }`}
-                      >
-                        {feat.included
-                          ? <Check className={`w-3 h-3 ${plan.highlight ? "text-white" : "text-teal-600"}`} />
-                          : <Minus className={`w-3 h-3 ${plan.highlight ? "text-white/40" : "text-slate-300"}`} />
-                        }
-                      </div>
-                      <span className={`text-sm ${feat.included
-                        ? plan.highlight ? "text-white" : "text-slate-700"
-                        : plan.highlight ? "text-white/40" : "text-slate-300 line-through"
-                      }`}>
-                        {feat.label}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* CTA */}
-                {plan.id === currentPlanId ? (
-                  <div className={`w-full h-11 flex items-center justify-center gap-2 rounded-lg font-semibold text-sm
-                    ${plan.highlight
-                      ? "bg-white/20 text-white border border-white/40"
-                      : "bg-teal-50 text-teal-600 border border-teal-200"
-                    }`}
-                  >
-                    <Check className="w-4 h-4" />
-                    Current Plan
-                  </div>
-                ) : currentPlanId && plan.id === "free" ? null : (
-                  <Link to="/register">
-                    <Button
-                      className={`w-full h-11 font-semibold transition-all duration-200
-                        ${plan.highlight
-                          ? "bg-white text-teal-700 hover:bg-teal-50 shadow-lg"
-                          : "bg-teal-600 text-white hover:bg-teal-700"
-                        }`}
-                    >
-                      {plan.cta}
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
-                )}
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Plan comparison note */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="mt-8 text-center"
-          >
-            <div className="inline-flex items-center gap-6 bg-white rounded-2xl border border-slate-200 shadow-sm px-8 py-4 flex-wrap justify-center gap-y-3">
-              {[
-                { icon: Headphones, text: "Cancel anytime" },
-                { icon: Shield, text: "No hidden fees" },
-                { icon: BadgePercent, text: "Premium saves up to 10% per order" },
-              ].map(({ icon: Icon, text }) => (
-                <div key={text} className="flex items-center gap-2 text-sm text-slate-500">
-                  <Icon className="w-4 h-4 text-teal-600" />
-                  {text}
-                </div>
-              ))}
-            </div>
-          </motion.div>
         </div>
 
       </div>

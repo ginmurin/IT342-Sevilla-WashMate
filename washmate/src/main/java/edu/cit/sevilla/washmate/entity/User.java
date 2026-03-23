@@ -49,10 +49,6 @@ public class User {
     @Builder.Default
     private String role = "CUSTOMER";
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subscription_id")
-    private Subscription subscription;
-
     @Column(name = "status", nullable = false)
     @Builder.Default
     private String status = "ACTIVE";
