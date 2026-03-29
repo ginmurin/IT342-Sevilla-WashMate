@@ -83,6 +83,18 @@ export default function ScheduleAddress() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // ── Initialize default dates and times if not already set ─────────────────
+  useEffect(() => {
+    if (!orderData.pickupDate || !orderData.pickupTime || !orderData.deliveryDate || !orderData.deliveryTime) {
+      setOrderData({
+        pickupDate: orderData.pickupDate || defaultPickupStr,
+        pickupTime: orderData.pickupTime || timeSlots[0],
+        deliveryDate: orderData.deliveryDate || defaultDeliveryStr,
+        deliveryTime: orderData.deliveryTime || timeSlots[0],
+      });
+    }
+  }, []);
+
   // ── Nominatim autocomplete (500 ms debounce, Philippines only) ───────────
   useEffect(() => {
     if (searchQuery.length < 3) {
@@ -170,6 +182,11 @@ export default function ScheduleAddress() {
     const newErrors: Record<string, string> = {};
     if (!orderData.address) newErrors.address = "Please select or enter an address.";
     if (!orderData.phoneNumber) newErrors.phone = "Phone number is required.";
+    if (!orderData.pickupDate) newErrors.pickupDate = "Pickup date is required.";
+    if (!orderData.pickupTime) newErrors.pickupTime = "Pickup time is required.";
+    if (!orderData.deliveryDate) newErrors.deliveryDate = "Delivery date is required.";
+    if (!orderData.deliveryTime) newErrors.deliveryTime = "Delivery time is required.";
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;

@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router";
 import { MainLayout } from "./layouts/MainLayout";
+import { RouterProviders } from "./components/RouterProviders";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 import { Home } from "./pages/Home";
@@ -32,10 +33,19 @@ import SubscriptionUpgradeSuccess from "./pages/SubscriptionUpgradeSuccess";
 import SubscriptionManagement from "./pages/SubscriptionManagement";
 import SubscriptionHistory from "./pages/SubscriptionHistory";
 
+// Wrapper component that provides router-dependent contexts to MainLayout
+function AppWithProviders() {
+  return (
+    <RouterProviders>
+      <MainLayout />
+    </RouterProviders>
+  );
+}
+
 export const router = createBrowserRouter([
   {
     path: "/",
-    Component: MainLayout,
+    Component: AppWithProviders,
     children: [
       {
         index: true,

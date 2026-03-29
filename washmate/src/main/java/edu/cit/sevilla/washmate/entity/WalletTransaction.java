@@ -48,6 +48,12 @@ public class WalletTransaction {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "balance_before", precision = 12, scale = 2)
+    private BigDecimal balanceBefore;
+
+    @Column(name = "balance_after", precision = 12, scale = 2)
+    private BigDecimal balanceAfter;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

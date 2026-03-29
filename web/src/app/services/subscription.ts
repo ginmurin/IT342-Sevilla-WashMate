@@ -67,11 +67,16 @@ export async function initiateUpgrade(planType: string): Promise<{
   }
 }
 
-export async function confirmUpgrade(userSubscriptionId: string, paymentId: string): Promise<UserSubscriptionData> {
+export async function confirmUpgrade(userSubscriptionId: string, paymentId: string, paymentMethod?: string): Promise<UserSubscriptionData> {
   try {
-    const res = await api.post<UserSubscriptionData>(
-      `/api/subscriptions/confirm-upgrade/${userSubscriptionId}/${paymentId}`
-    );
+    // Add paymentMethod as query parameter with fallback to CARD
+    const params = new URLSearchParams();
+    if (paymentMethod) {
+      params.append('paymentMethod', paymentMethod);
+    }
+
+    const url = `/api/subscriptions/confirm-upgrade/${userSubscriptionId}/${paymentId}${params.toString() ? `?${params}` : ''}`;
+    const res = await api.post<UserSubscriptionData>(url);
     return res.data;
   } catch (error) {
     console.error('Error confirming upgrade:', error);

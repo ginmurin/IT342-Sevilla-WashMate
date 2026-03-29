@@ -23,15 +23,16 @@ public class DotenvEnvironmentPostProcessor implements EnvironmentPostProcessor 
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
         String workingDir = System.getProperty("user.dir");
-
-        // Check working dir first, then a washmate/ subdirectory (when launched from project root)
-        File envFile = new File(workingDir, ENV_FILE);
-        if (!envFile.exists()) {
-            envFile = new File(workingDir + "/washmate", ENV_FILE);
-        }
-        if (!envFile.exists()) {
+        
+        // Robust search for .env file
+        File envFile = findEnvFile(workingDir);
+        
+        if (envFile == null) {
+            System.out.println("⚠️ .env file not found. Skipping dotenv loading.");
             return;
         }
+
+        System.out.println("✅ Loading .env from: " + envFile.getAbsolutePath());
 
         Map<String, Object> props = new HashMap<>();
         try {
@@ -47,6 +48,29 @@ public class DotenvEnvironmentPostProcessor implements EnvironmentPostProcessor 
                 }
                 String key = trimmed.substring(0, idx).trim();
                 String value = trimmed.substring(idx + 1).trim();
+                
+                // Automatically append SSL mode for Supabase connections if missing
+                if ("DB_URL".equals(key) && value.contains("supabase.com")) {
+                    boolean modified = false;
+                    
+                    if (!value.contains("sslmode=")) {
+                        if (value.contains("?")) value += "&sslmode=require";
+                        else value += "?sslmode=require";
+                        modified = true;
+                    }
+                    
+                    // Transaction pooler requires disabling prepared statements
+                    if (value.contains("pooler") && !value.contains("prepareThreshold=")) {
+                        if (value.contains("?")) value += "&prepareThreshold=0";
+                        else value += "?prepareThreshold=0";
+                        modified = true;
+                    }
+                    
+                    if (modified) {
+                        System.out.println("ℹ️ Auto-fixed DB_URL for Supabase compatibility: " + value);
+                    }
+                }
+                
                 props.put(key, value);
             }
         } catch (IOException e) {
@@ -54,8 +78,28 @@ public class DotenvEnvironmentPostProcessor implements EnvironmentPostProcessor 
         }
 
         if (!props.isEmpty()) {
+            // Add with HIGHEST precedence to ensure it overrides defaults
             environment.getPropertySources()
-                    .addLast(new MapPropertySource(PROPERTY_SOURCE_NAME, props));
+                    .addFirst(new MapPropertySource(PROPERTY_SOURCE_NAME, props));
         }
+    }
+
+    private File findEnvFile(String startDir) {
+        // 1. Check current directory
+        File file = new File(startDir, ENV_FILE);
+        if (file.exists()) return file;
+
+        // 2. Check washmate subdirectory (standard structure)
+        file = new File(startDir + "/washmate", ENV_FILE);
+        if (file.exists()) return file;
+        
+        // 3. Check parent directory (if running from inside a module)
+        File parent = new File(startDir).getParentFile();
+        if (parent != null) {
+             file = new File(parent, ENV_FILE);
+             if (file.exists()) return file;
+        }
+
+        return null;
     }
 }

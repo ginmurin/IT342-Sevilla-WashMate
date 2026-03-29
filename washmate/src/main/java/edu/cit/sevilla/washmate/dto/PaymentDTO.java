@@ -8,8 +8,10 @@ import java.time.LocalDateTime;
 @Data
 public class PaymentDTO {
     private Long paymentId;
-    private Long orderId;
-    private String orderNumber;
+    private Long orderId;  // Legacy field for backward compatibility
+    private String orderNumber;  // Legacy field for backward compatibility
+    private String referenceType;  // Polymorphic reference type (ORDER, SUBSCRIPTION, WALLET_TOPUP)
+    private Long referenceId;      // Polymorphic reference ID
     private BigDecimal amount;
     private String paymentMethod;
     private String paymentStatus;

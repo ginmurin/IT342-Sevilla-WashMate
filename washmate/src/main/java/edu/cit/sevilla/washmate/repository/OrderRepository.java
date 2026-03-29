@@ -9,6 +9,6 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long> {
     Optional<Order> findByOrderNumber(String orderNumber);
     List<Order> findByCustomerUserId(Long customerId);
-    List<Order> findByShopShopId(Long shopId);
+    // Removed findByShopShopId - single shop system doesn't need shop filtering
     List<Order> findByStatus(String status);
 }

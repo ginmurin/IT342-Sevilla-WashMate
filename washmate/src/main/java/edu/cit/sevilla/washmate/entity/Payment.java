@@ -22,8 +22,19 @@ public class Payment {
     @Column(name = "payment_id")
     private Long paymentId;
 
+    // Polymorphic reference fields (following WalletTransaction pattern)
+    /** Reference type: ORDER | SUBSCRIPTION | WALLET_TOPUP */
+    @Column(name = "reference_type")
+    private String referenceType;
+
+    /** ID of the referenced entity (order_id, user_subscription_id, or wallet_transaction_id) */
+    @Column(name = "reference_id")
+    private Long referenceId;
+
+    // Keep existing order relationship temporarily for backward compatibility
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false, unique = true)
+    @JoinColumn(name = "order_id", nullable = true)
+    @Deprecated // Mark for future removal after migration
     private Order order;
 
     @Column(name = "amount", precision = 10, scale = 2, nullable = false)

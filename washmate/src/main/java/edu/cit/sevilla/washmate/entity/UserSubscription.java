@@ -39,9 +39,12 @@ public class UserSubscription {
     @Builder.Default
     private String status = "ACTIVE";  // ACTIVE, CANCELLED, EXPIRED
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_id")
-    private Payment payment;
+    // Removed direct Payment FK - now uses polymorphic Payment references
+    // Payment relationship handled via Payment.referenceType="SUBSCRIPTION" and Payment.referenceId=userSubscriptionId
+
+    /** PayMongo payment reference for external payment tracking */
+    @Column(name = "paymongo_payment_id")
+    private String paymongoPaymentId;
 
     @CreationTimestamp
     @Column(name = "created_at")

@@ -64,20 +64,34 @@ public class SubscriptionController {
     public ResponseEntity<Map<String, Object>> initiateUpgrade(
             @PathVariable String planType,
             @AuthenticationPrincipal Jwt jwt) {
-        String oauthId = jwt.getSubject();
-        User user = userRepository.findByOauthId(oauthId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        UserSubscription newSub = subscriptionService.initiateSubscriptionUpgrade(user.getUserId(), user, planType);
+        try {
+            String oauthId = jwt.getSubject();
+            User user = userRepository.findByOauthId(oauthId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Map<String, Object> response = Map.of(
-                "userSubscriptionId", newSub.getUserSubscriptionId(),
-                "planType", newSub.getSubscription().getPlanType(),
-                "amount", newSub.getSubscription().getPlanPrice(),
-                "expiryDate", newSub.getExpiryDate()
-        );
+            System.out.println("DEBUG - Initiating upgrade for user: " + user.getUserId() + ", plan: " + planType);
 
-        return ResponseEntity.ok(response);
+            UserSubscription newSub = subscriptionService.initiateSubscriptionUpgrade(user.getUserId(), user, planType);
+
+            System.out.println("DEBUG - Created UserSubscription with ID: " + newSub.getUserSubscriptionId());
+            System.out.println("DEBUG - UserSubscription details: " + newSub);
+
+            Map<String, Object> response = Map.of(
+                    "userSubscriptionId", newSub.getUserSubscriptionId(),
+                    "planType", newSub.getSubscription().getPlanType(),
+                    "amount", newSub.getSubscription().getPlanPrice(),
+                    "expiryDate", newSub.getExpiryDate()
+            );
+
+            System.out.println("DEBUG - Response being sent: " + response);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("ERROR in initiateUpgrade: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to initiate subscription upgrade: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -86,9 +100,21 @@ public class SubscriptionController {
     @PostMapping("/confirm-upgrade/{userSubscriptionId}/{paymentId}")
     public ResponseEntity<UserSubscriptionDTO> confirmUpgrade(
             @PathVariable Long userSubscriptionId,
-            @PathVariable Long paymentId) {
-        UserSubscription confirmed = subscriptionService.confirmSubscriptionUpgrade(userSubscriptionId, paymentId);
-        return ResponseEntity.ok(subscriptionService.toUserSubscriptionDTO(confirmed));
+            @PathVariable String paymentId,
+            @RequestParam(required = false, defaultValue = "CARD") String paymentMethod) {
+
+        try {
+            System.out.println("DEBUG - userSubscriptionId: " + userSubscriptionId);
+            System.out.println("DEBUG - paymentId: " + paymentId);
+            System.out.println("DEBUG - paymentMethod: " + paymentMethod);
+
+            UserSubscription confirmed = subscriptionService.confirmSubscriptionUpgrade(userSubscriptionId, paymentId, paymentMethod);
+            return ResponseEntity.ok(subscriptionService.toUserSubscriptionDTO(confirmed));
+        } catch (Exception e) {
+            System.err.println("ERROR in confirmUpgrade: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to confirm subscription upgrade: " + e.getMessage(), e);
+        }
     }
 
     /**

@@ -7,6 +7,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "orders")
@@ -29,9 +31,10 @@ public class Order {
     @JoinColumn(name = "customer_id", nullable = false)
     private User customer;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shop_id", nullable = false)
-    private Shop shop;
+    // Multiple services per order via junction table
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<OrderServiceDetail> orderServices = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pickup_address_id")
@@ -65,9 +68,9 @@ public class Order {
     @Builder.Default
     private Boolean isRushOrder = false;
 
-    @Column(name = "rush_fee", precision = 8, scale = 2)
+    @Column(name = "delivery_fee", precision = 8, scale = 2)
     @Builder.Default
-    private BigDecimal rushFee = BigDecimal.ZERO;
+    private BigDecimal deliveryFee = BigDecimal.ZERO;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

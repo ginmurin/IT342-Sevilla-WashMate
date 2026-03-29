@@ -2,6 +2,7 @@ package edu.cit.sevilla.washmate.service;
 
 import edu.cit.sevilla.washmate.dto.SubscriptionDTO;
 import edu.cit.sevilla.washmate.dto.UserSubscriptionDTO;
+import edu.cit.sevilla.washmate.entity.Payment;
 import edu.cit.sevilla.washmate.entity.Subscription;
 import edu.cit.sevilla.washmate.entity.User;
 import edu.cit.sevilla.washmate.entity.UserSubscription;
@@ -24,6 +25,7 @@ public class SubscriptionService {
     private final SubscriptionRepository subscriptionRepository;
     private final UserSubscriptionRepository userSubscriptionRepository;
     private final UserRepository userRepository;
+    private final PaymentService paymentService; // Added PaymentService injection
 
     /** Returns the FREE plan, creating it if it doesn't exist yet. */
     public Subscription getOrCreateFreePlan() {
@@ -86,14 +88,45 @@ public class SubscriptionService {
         return userSubscriptionRepository.save(newSub);
     }
 
-    /** Confirms subscription upgrade by linking the payment. */
-    public UserSubscription confirmSubscriptionUpgrade(Long userSubscriptionId, Long paymentId) {
+    /** Confirms subscription upgrade by linking the payment using polymorphic pattern. */
+    public UserSubscription confirmSubscriptionUpgrade(Long userSubscriptionId, String paymentId, String paymentMethod) {
         UserSubscription sub = userSubscriptionRepository.findById(userSubscriptionId)
                 .orElseThrow(() -> new IllegalArgumentException("Subscription not found"));
 
-        // Link the payment (paymentId gets converted to Payment entity by caller if needed)
-        // For now, we just mark it as confirmed by the presence of paymentId
+        // Check if polymorphic Payment record already exists for this PayMongo payment
+        Optional<Payment> existingPayment = paymentService.getPaymentByPaymongoIntentId(paymentId);
+
+        Payment payment;
+        if (existingPayment.isPresent()) {
+            payment = existingPayment.get();
+            // Ensure it's linked to this subscription using polymorphic reference
+            if (!"SUBSCRIPTION".equals(payment.getReferenceType()) ||
+                !userSubscriptionId.equals(payment.getReferenceId())) {
+
+                payment.setReferenceType("SUBSCRIPTION");
+                payment.setReferenceId(userSubscriptionId);
+                payment = paymentService.savePayment(payment);
+            }
+        } else {
+            // Create new polymorphic Payment record for subscription payment
+            payment = Payment.builder()
+                    .referenceType("SUBSCRIPTION")        // Polymorphic type
+                    .referenceId(userSubscriptionId)       // Polymorphic reference
+                    .amount(sub.getSubscription().getPlanPrice())
+                    .paymentMethod(paymentMethod)
+                    .paymentStatus("COMPLETED")
+                    .paymongoPaymentIntentId(paymentId)
+                    .paymentDate(LocalDateTime.now())
+                    .build();
+
+            payment = paymentService.savePayment(payment);
+        }
+
+        // Update UserSubscription (no direct Payment FK, only PayMongo reference)
+        sub.setPaymongoPaymentId(paymentId);  // Keep PayMongo reference for external tracking
         sub.setStatus("ACTIVE");
+        // Note: No sub.setPayment(payment) - removed direct FK relationship
+
         return userSubscriptionRepository.save(sub);
     }
 
@@ -154,5 +187,28 @@ public class SubscriptionService {
         }
 
         return initializedCount;
+    }
+
+    // ===== POLYMORPHIC PAYMENT QUERY METHODS =====
+
+    /**
+     * Get payments for a specific subscription using polymorphic pattern.
+     */
+    public List<Payment> getSubscriptionPayments(Long userSubscriptionId) {
+        return paymentService.getSubscriptionPayments(userSubscriptionId);
+    }
+
+    /**
+     * Get completed payment for a specific subscription using polymorphic pattern.
+     */
+    public Optional<Payment> getCompletedSubscriptionPayment(Long userSubscriptionId) {
+        return paymentService.getCompletedSubscriptionPayment(userSubscriptionId);
+    }
+
+    /**
+     * Check if a subscription has a completed payment.
+     */
+    public boolean hasCompletedPayment(Long userSubscriptionId) {
+        return getCompletedSubscriptionPayment(userSubscriptionId).isPresent();
     }
 }

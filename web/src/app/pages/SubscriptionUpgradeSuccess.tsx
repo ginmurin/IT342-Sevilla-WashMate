@@ -38,7 +38,17 @@ export default function SubscriptionUpgradeSuccess() {
           throw new Error('Missing subscription ID');
         }
 
-        const confirmed = await subscriptionService.confirmUpgrade(userSubId, paymentId);
+        // Log the values for debugging
+        console.log('Debug - userSubId:', userSubId);
+        console.log('Debug - paymentId:', paymentId);
+        console.log('Debug - All search params:', Object.fromEntries(searchParams));
+
+        // Check if userSubId is actually a number
+        if (!/^\d+$/.test(userSubId)) {
+          throw new Error(`Invalid subscription ID format: "${userSubId}". Expected a number.`);
+        }
+
+        const confirmed = await subscriptionService.confirmUpgrade(userSubId, paymentId, 'CARD');
         setSubscriptionData(confirmed);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to confirm upgrade';

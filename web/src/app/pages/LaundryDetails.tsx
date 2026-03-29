@@ -3,32 +3,25 @@ import { useNavigate } from "react-router";
 import { useOrder, ServiceType } from "../contexts/OrderContext";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/Card";
 import { Button } from "../components/Button";
-import { Settings, WashingMachine, FoldHorizontal, Zap, Wind, Check, AlertCircle, Plus, Minus, Crown } from "lucide-react";
+import { Settings, WashingMachine, FoldHorizontal, Zap, Wind, Check, AlertCircle, Plus, Minus, Crown, Loader } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { getMySubscription, type SubscriptionData } from "../services/subscription";
+import { getServices, type ServiceResponse } from "../services/service";
 
-// ── Service definitions ──────────────────────────────────────────────────────
-const SERVICES: {
-  type: ServiceType;
-  name: string;
+// ── Service UI definitions (icons and colors, separate from API data) ───────
+const SERVICE_UI_CONFIG: Record<string, {
   icon: React.ElementType;
   description: string;
-  price: number;
-  unit: string;
-  accentBorder: string;   // border color class when selected
-  accentShadow: string;   // shadow class when selected
-  accentBg: string;       // card bg when selected
-  accentIcon: string;     // icon bg when selected
-  accentText: string;     // icon + price color when selected
-  checkBg: string;        // checkmark circle bg
-}[] = [
-  {
-    type: "wash",
-    name: "Wash",
+  accentBorder: string;
+  accentShadow: string;
+  accentBg: string;
+  accentIcon: string;
+  accentText: string;
+  checkBg: string;
+}> = {
+  "wash-dry-fold": {
     icon: WashingMachine,
     description: "Deep clean with eco-friendly detergents, colour-sorted for fabric safety.",
-    price: 35,
-    unit: "kg",
     accentBorder: "border-blue-500",
     accentShadow: "shadow-blue-100",
     accentBg: "bg-blue-50",
@@ -36,27 +29,9 @@ const SERVICES: {
     accentText: "text-blue-600",
     checkBg: "bg-blue-500",
   },
-  {
-    type: "fold",
-    name: "Fold",
-    icon: FoldHorizontal,
-    description: "KonMari-style neat folding and packaging, sorted by outfit.",
-    price: 20,
-    unit: "kg",
-    accentBorder: "border-teal-500",
-    accentShadow: "shadow-teal-100",
-    accentBg: "bg-teal-50",
-    accentIcon: "bg-teal-100",
-    accentText: "text-teal-600",
-    checkBg: "bg-teal-500",
-  },
-  {
-    type: "iron",
-    name: "Iron",
+  "iron": {
     icon: Zap,
     description: "Professional steam-pressing for a crisp, wrinkle-free finish.",
-    price: 25,
-    unit: "piece",
     accentBorder: "border-amber-500",
     accentShadow: "shadow-amber-100",
     accentBg: "bg-amber-50",
@@ -64,13 +39,9 @@ const SERVICES: {
     accentText: "text-amber-600",
     checkBg: "bg-amber-500",
   },
-  {
-    type: "dry_clean",
-    name: "Dry Clean",
+  "dry-clean": {
     icon: Wind,
     description: "Specialist solvent cleaning for delicate fabrics, suits and dress wear.",
-    price: 150,
-    unit: "piece",
     accentBorder: "border-purple-500",
     accentShadow: "shadow-purple-100",
     accentBg: "bg-purple-50",
@@ -78,66 +49,200 @@ const SERVICES: {
     accentText: "text-purple-600",
     checkBg: "bg-purple-500",
   },
-];
+};
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function LaundryDetails() {
   const navigate = useNavigate();
   const { orderData, setOrderData, nextStep } = useOrder();
 
+  const [services, setServices] = useState<ServiceResponse[]>([]);
+  const [loading, setLoading] = useState(true);
   const [localWeight, setLocalWeight] = useState(orderData.weight ?? 5);
   const [pieceQty, setPieceQty] = useState<Record<string, number>>(
     orderData.serviceQuantities ?? {}
   );
+  const [selectedVariants, setSelectedVariants] = useState<Record<number, number>>(
+    orderData.selectedVariants ?? {}
+  );
   const [showError, setShowError] = useState(false);
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
 
+  // Fetch services from API on mount
   useEffect(() => {
-    getMySubscription().then(setSubscription);
+    const fetchData = async () => {
+      try {
+        const [servicesData, subData] = await Promise.all([
+          getServices(),
+          getMySubscription(),
+        ]);
+        setServices(servicesData);
+        setSubscription(subData);
+
+        // Store services in OrderContext for later use in submitOrder
+        setOrderData({ availableServices: servicesData });
+
+        // Auto-select services marked as auto-selected
+        const autoSelected = new Map<string, number>();
+        servicesData.forEach((svc) => {
+          if (svc.isAutoSelected) {
+            const qty = svc.unitType === "kg" ? localWeight : 1;
+            autoSelected.set(svc.serviceName, qty);
+          }
+        });
+        if (autoSelected.size > 0) {
+          setOrderData({ selectedServices: autoSelected });
+        }
+      } catch (error) {
+        console.error("Failed to fetch services:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const isPremium = subscription?.planType === "PREMIUM";
   const discountPct = isPremium ? (subscription?.discountPercentage ?? 15) : 0;
 
-  const adjustPiece = (type: string, delta: number) => {
-    setPieceQty((prev) => ({
-      ...prev,
-      [type]: Math.max(1, (prev[type] ?? 1) + delta),
-    }));
+  const adjustPiece = (serviceName: string, delta: number) => {
+    const newQty = Math.max(1, (pieceQty[serviceName] ?? 1) + delta);
+    const updated = {
+      ...pieceQty,
+      [serviceName]: newQty,
+    };
+    setPieceQty(updated);
+
+    // Also update selectedServices Map (this is what gets submitted to backend)
+    const updatedSelected = new Map(selected);
+    if (updatedSelected.has(serviceName)) {
+      updatedSelected.set(serviceName, newQty);
+    }
+
+    // Persist both to OrderContext
+    setOrderData({
+      serviceQuantities: updated,
+      selectedServices: updatedSelected
+    });
   };
 
-  // ── Toggle a service in the selectedServices array ─────────────────────────
-  const selected = orderData.selectedServices ?? [];
+  // ── Determine UI display name for service ─────────────────────────────────────
+  const getDisplayName = (service: ServiceResponse): string => {
+    if (service.serviceName === "Wash & Dry & Fold") {
+      return "Wash & Dry & Fold";
+    }
+    return service.serviceName;
+  };
 
-  const toggleService = (type: ServiceType) => {
+  // ── Get UI config for service ────────────────────────────────────────────────
+  const getServiceUI = (service: ServiceResponse) => {
+    if (service.serviceName === "Wash & Dry & Fold") {
+      return SERVICE_UI_CONFIG["wash-dry-fold"];
+    } else if (service.serviceName === "Iron") {
+      return SERVICE_UI_CONFIG["iron"];
+    } else if (service.serviceName === "Dry Clean") {
+      return SERVICE_UI_CONFIG["dry-clean"];
+    }
+    return SERVICE_UI_CONFIG["wash-dry-fold"]; // Default fallback
+  };
+
+  // ── Toggle service selection (prevent auto-selected from being deselected) ────
+  const selected = orderData.selectedServices ?? new Map();
+
+  const toggleService = (service: ServiceResponse) => {
     setShowError(false);
-    const next = selected.includes(type)
-      ? selected.filter((s) => s !== type)
-      : [...selected, type];
-    setOrderData({ selectedServices: next });
+
+    // Prevent deselecting auto-selected services
+    if (service.isAutoSelected && selected.has(service.serviceName)) {
+      return;
+    }
+
+    const newSelected = new Map(selected);
+    const newVariants = { ...selectedVariants };
+
+    if (newSelected.has(service.serviceName)) {
+      // Deselecting the service
+      newSelected.delete(service.serviceName);
+      // Clear associated variants when service is deselected
+      if (service.hasVariants) {
+        delete newVariants[service.serviceId];
+      }
+    } else {
+      // Selecting the service
+      const qty = service.unitType === "kg" ? localWeight : 1;
+      newSelected.set(service.serviceName, qty);
+      // Auto-select first variant if service has variants
+      if (service.hasVariants && service.variants && service.variants.length > 0) {
+        newVariants[service.serviceId] = service.variants[0].variantId;
+      }
+    }
+
+    setOrderData({ selectedServices: newSelected });
+    if (Object.keys(newVariants).length > 0 || service.hasVariants) {
+      setSelectedVariants(newVariants);
+    }
   };
 
-  // ── Compute totals ─────────────────────────────────────────────────────────
-  const lineItems = SERVICES.filter((s) => selected.includes(s.type)).map((s) => {
-    const qty = s.unit === "kg" ? localWeight : (pieceQty[s.type] ?? 1);
-    return { ...s, qty, subtotal: s.price * qty };
-  });
+  // ── Calculate line items from selected services ────────────────────────────────
+  const lineItems = services
+    .filter((s) => selected.has(s.serviceName))
+    .map((s) => {
+      const qty = s.unitType === "kg" ? localWeight : (pieceQty[s.serviceName] ?? 1);
 
-  const subtotalAmount = lineItems.reduce((sum, li) => sum + li.subtotal, 0);
+      // Determine price (base or variant)
+      let price = s.basePricePerUnit;
+      if (s.hasVariants && selectedVariants[s.serviceId]) {
+        const selectedVariant = s.variants?.find(
+          (v) => v.variantId === selectedVariants[s.serviceId]
+        );
+        if (selectedVariant) {
+          price = selectedVariant.variantPrice;
+        }
+      }
+
+      return {
+        serviceName: s.serviceName,
+        unitType: s.unitType,
+        qty,
+        price,
+        subtotal: price * qty,
+        icon: getServiceUI(s).icon,
+        accentText: getServiceUI(s).accentText,
+      };
+    });
+
+  // ── Calculate delivery fee (conditional) ────────────────────────────────────
+  // Exclude delivery from subtotal for fee calculation
+  const subtotalWithoutDelivery = lineItems
+    .filter(li => li.serviceName !== "Delivery")
+    .reduce((sum, li) => sum + li.subtotal, 0);
+
+  // Free delivery if: premium user OR order >= ₱400
+  const isEligibleForFreeDelivery = isPremium || subtotalWithoutDelivery >= 400;
+  const deliveryFee = isEligibleForFreeDelivery ? 0 : 50;
+
+  // Calculate final totals
+  const subtotalAmount = subtotalWithoutDelivery + deliveryFee;
   const discountAmount = Math.round(subtotalAmount * discountPct / 100);
   const estimatedPrice = subtotalAmount - discountAmount;
 
+  // ── Validation: at least one service ────────────────────────────────────────
+  // Variants are now auto-selected when service is selected, so no need to validate them separately
+
   // ── Proceed to next step ───────────────────────────────────────────────────
   const handleNext = () => {
-    if (selected.length === 0) {
+    if (selected.size === 0) {
       setShowError(true);
       return;
     }
     setOrderData({
       weight: localWeight,
       serviceQuantities: pieceQty,
+      selectedVariants,
       estimatedPrice,
       subtotal: subtotalAmount,
+      deliveryFee,  // Include calculated delivery fee
       discountPercentage: discountPct,
       discountAmount,
       isRushOrder: isPremium,
@@ -145,6 +250,19 @@ export default function LaundryDetails() {
     nextStep();
     navigate("/order/schedule-address");
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 pt-24 pb-12 flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+        >
+          <Loader className="w-8 h-8 text-teal-600" />
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 pt-24 pb-12">
@@ -220,21 +338,25 @@ export default function LaundryDetails() {
                     )}
                   </AnimatePresence>
 
-                  {SERVICES.map((service) => {
-                    const Icon = service.icon;
-                    const isSelected = selected.includes(service.type);
+                  {services.map((service) => {
+                    const ui = getServiceUI(service);
+                    const Icon = ui.icon;
+                    const isSelected = selected.has(service.serviceName);
+                    const isAutoSelected = service.isAutoSelected;
 
                     return (
                       <motion.button
-                        key={service.type}
-                        onClick={() => toggleService(service.type)}
+                        key={service.serviceId}
+                        onClick={() => toggleService(service)}
                         whileTap={{ scale: 0.985 }}
+                        disabled={isAutoSelected && isSelected}
                         className={`
                           w-full p-4 rounded-xl text-left transition-all duration-150 relative
                           ${isSelected
-                            ? `border-[3px] ${service.accentBorder} ${service.accentBg} shadow-lg ${service.accentShadow}`
+                            ? `border-[3px] ${ui.accentBorder} ${ui.accentBg} shadow-lg ${ui.accentShadow}`
                             : "border-2 border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
                           }
+                          ${isAutoSelected && isSelected ? "cursor-default" : "cursor-pointer"}
                         `}
                       >
                         {/* Selected check badge */}
@@ -246,7 +368,7 @@ export default function LaundryDetails() {
                               animate={{ scale: 1, opacity: 1 }}
                               exit={{ scale: 0, opacity: 0 }}
                               transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                              className={`absolute top-3 right-3 w-6 h-6 rounded-full ${service.checkBg} flex items-center justify-center shadow-sm`}
+                              className={`absolute top-3 right-3 w-6 h-6 rounded-full ${ui.checkBg} flex items-center justify-center shadow-sm`}
                             >
                               <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
                             </motion.span>
@@ -257,11 +379,11 @@ export default function LaundryDetails() {
                           {/* Icon */}
                           <div
                             className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-150
-                              ${isSelected ? service.accentIcon : "bg-slate-100"}`}
+                              ${isSelected ? `${ui.accentIcon}` : "bg-slate-100"}`}
                           >
                             <Icon
                               className={`w-6 h-6 transition-colors duration-150
-                                ${isSelected ? service.accentText : "text-slate-500"}`}
+                                ${isSelected ? ui.accentText : "text-slate-500"}`}
                             />
                           </div>
 
@@ -269,18 +391,29 @@ export default function LaundryDetails() {
                           <div className="flex-1">
                             <div className="flex items-baseline gap-2 mb-0.5">
                               <span className={`font-bold text-base transition-colors duration-150 ${isSelected ? "text-slate-900" : "text-slate-700"}`}>
-                                {service.name}
+                                {getDisplayName(service)}
                               </span>
-                              <span className={`text-sm font-semibold transition-colors duration-150 ${isSelected ? service.accentText : "text-slate-400"}`}>
-                                ₱{service.price}/{service.unit}
+                              <span className={`text-sm font-semibold transition-colors duration-150 ${isSelected ? ui.accentText : "text-slate-400"}`}>
+                                {service.hasVariants ? (
+                                  selectedVariants[service.serviceId] ? (
+                                    `₱${service.variants?.find(v => v.variantId === selectedVariants[service.serviceId])?.variantPrice.toFixed(2)}/piece`
+                                  ) : (
+                                    "Select variant for pricing"
+                                  )
+                                ) : (
+                                  `₱${service.basePricePerUnit.toFixed(2)}/${service.unitType}`
+                                )}
                               </span>
                             </div>
-                            <p className="text-sm text-slate-500 leading-snug">{service.description}</p>
+                            <p className="text-sm text-slate-500 leading-snug">{ui.description}</p>
+                            {isAutoSelected && (
+                              <p className="text-xs text-teal-600 font-medium mt-1">Auto-selected with subscription</p>
+                            )}
                           </div>
                         </div>
 
                         {/* Piece quantity controls — only for piece-based services */}
-                        {isSelected && service.unit === "piece" && (
+                        {isSelected && service.unitType === "piece" && (
                           <div
                             className="mt-3 flex items-center justify-between bg-white rounded-xl px-4 py-2.5 border border-slate-200"
                             onPointerDown={(e) => e.stopPropagation()}
@@ -292,26 +425,67 @@ export default function LaundryDetails() {
                                 role="button"
                                 tabIndex={0}
                                 onPointerDown={(e) => e.stopPropagation()}
-                                onClick={(e) => { e.stopPropagation(); adjustPiece(service.type, -1); }}
+                                onClick={(e) => { e.stopPropagation(); adjustPiece(service.serviceName, -1); }}
                                 className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center cursor-pointer transition-colors"
                               >
                                 <Minus className="w-4 h-4 text-slate-600" />
                               </div>
                               <span className="text-lg font-bold text-slate-900 w-6 text-center">
-                                {pieceQty[service.type] ?? 1}
+                                {pieceQty[service.serviceName] ?? 1}
                               </span>
                               <div
                                 role="button"
                                 tabIndex={0}
                                 onPointerDown={(e) => e.stopPropagation()}
-                                onClick={(e) => { e.stopPropagation(); adjustPiece(service.type, 1); }}
+                                onClick={(e) => { e.stopPropagation(); adjustPiece(service.serviceName, 1); }}
                                 className="w-8 h-8 rounded-full bg-teal-100 hover:bg-teal-200 flex items-center justify-center cursor-pointer transition-colors"
                               >
                                 <Plus className="w-4 h-4 text-teal-700" />
                               </div>
                               <span className="text-sm font-semibold text-teal-700 min-w-[56px] text-right">
-                                ₱{(service.price * (pieceQty[service.type] ?? 1)).toFixed(2)}
+                                ₱{((() => {
+                                  // Determine price: use variant if available, otherwise base price
+                                  if (service.hasVariants && selectedVariants[service.serviceId]) {
+                                    const variant = service.variants?.find(v => v.variantId === selectedVariants[service.serviceId]);
+                                    return (variant?.variantPrice ?? service.basePricePerUnit) * (pieceQty[service.serviceName] ?? 1);
+                                  }
+                                  return service.basePricePerUnit * (pieceQty[service.serviceName] ?? 1);
+                                })()).toFixed(2)}
                               </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Variant selector for Dry Clean */}
+                        {isSelected && service.hasVariants && service.variants && service.variants.length > 0 && (
+                          <div
+                            className="mt-3 bg-white rounded-xl px-4 py-3 border border-slate-200"
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <p className="text-sm font-medium text-slate-700 mb-2">Select item type (required)</p>
+                            <div className="space-y-2">
+                              {service.variants.map((variant) => (
+                                <label key={variant.variantId} className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                                  <input
+                                    type="radio"
+                                    name={`variant-${service.serviceId}`}
+                                    checked={selectedVariants[service.serviceId] === variant.variantId}
+                                    onChange={() => {
+                                      const updated = {
+                                        ...selectedVariants,
+                                        [service.serviceId]: variant.variantId,
+                                      };
+                                      setSelectedVariants(updated);
+                                      // Persist variant selection to OrderContext
+                                      setOrderData({ selectedVariants: updated });
+                                    }}
+                                    className="w-4 h-4 text-teal-600"
+                                  />
+                                  <span className="flex-1 text-sm text-slate-700">{variant.variantName}</span>
+                                  <span className="text-sm font-semibold text-teal-700">₱{variant.variantPrice.toFixed(2)}</span>
+                                </label>
+                              ))}
                             </div>
                           </div>
                         )}
@@ -321,16 +495,16 @@ export default function LaundryDetails() {
 
                   {/* Selected summary pill */}
                   <AnimatePresence>
-                    {selected.length > 0 && (
+                    {selected.size > 0 && (
                       <motion.p
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="text-xs text-slate-500 text-center pt-1"
                       >
-                        {selected.length} service{selected.length > 1 ? "s" : ""} selected
+                        {selected.size} service{selected.size > 1 ? "s" : ""} selected
                         {" — "}
-                        {SERVICES.filter((s) => selected.includes(s.type)).map((s) => s.name).join(" + ")}
+                        {Array.from(selected.keys()).join(" + ")}
                       </motion.p>
                     )}
                   </AnimatePresence>
@@ -343,7 +517,7 @@ export default function LaundryDetails() {
               <Card className="border-slate-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-lg">Laundry Weight</CardTitle>
-                  <p className="text-sm text-slate-500 mt-0.5">For Wash &amp; Fold — priced per kg</p>
+                  <p className="text-sm text-slate-500 mt-0.5">For Wash &amp; Dry &amp; Fold — priced per kg</p>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
@@ -357,8 +531,21 @@ export default function LaundryDetails() {
                       max="50"
                       value={localWeight}
                       onChange={(e) => {
-                        setLocalWeight(Number(e.target.value));
-                        setOrderData({ weight: Number(e.target.value) });
+                        const newWeight = Number(e.target.value);
+                        setLocalWeight(newWeight);
+
+                        // CRITICAL: Update selectedServices in OrderContext using orderData directly
+                        // (not the closure-captured 'selected' which is stale)
+                        const updatedSelected = new Map(orderData.selectedServices ?? new Map());
+                        if (updatedSelected.has("Wash & Dry & Fold")) {
+                          updatedSelected.set("Wash & Dry & Fold", newWeight);
+                        }
+
+                        // Single call to ensure both weight and selectedServices are updated together
+                        setOrderData({
+                          weight: newWeight,
+                          selectedServices: updatedSelected
+                        });
                       }}
                       className="w-full h-2 rounded-lg appearance-none cursor-pointer"
                       style={{
@@ -430,11 +617,11 @@ export default function LaundryDetails() {
                       {lineItems.map((li) => {
                         const Icon = li.icon;
                         return (
-                          <li key={li.type} className="flex items-center justify-between text-sm">
+                          <li key={li.serviceName} className="flex items-center justify-between text-sm">
                             <span className="flex items-center gap-2 text-teal-800">
                               <Icon className={`w-4 h-4 ${li.accentText}`} />
-                              {li.name}
-                              <span className="text-teal-600 text-xs">× {li.qty} {li.unit}{li.unit === "piece" && li.qty !== 1 ? "s" : ""}</span>
+                              {li.serviceName}
+                              <span className="text-teal-600 text-xs">× {li.qty} {li.unitType}{li.unitType === "piece" && li.qty !== 1 ? "s" : ""}</span>
                             </span>
                             <span className="font-semibold text-teal-900">₱{li.subtotal.toFixed(2)}</span>
                           </li>
@@ -466,6 +653,30 @@ export default function LaundryDetails() {
                     </span>
                   </div>
 
+                  {/* Delivery fee info and upsell message */}
+                  {lineItems.length > 0 && (
+                    <div className="space-y-2">
+                      {/* Show delivery fee status */}
+                      <div className="flex justify-between text-sm text-slate-600 px-2">
+                        <span>Delivery Fee:</span>
+                        <span className={deliveryFee === 0 ? "text-teal-600 font-semibold" : "text-slate-700"}>
+                          {deliveryFee === 0 ? "FREE ✓" : `₱${deliveryFee.toFixed(2)}`}
+                        </span>
+                      </div>
+
+                      {/* Upsell message when applicable */}
+                      {!isPremium && subtotalWithoutDelivery > 0 && subtotalWithoutDelivery < 400 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-teal-50 border border-teal-200 rounded-lg px-3 py-2 text-xs font-medium text-teal-700"
+                        >
+                          Add ₱{(400 - subtotalWithoutDelivery).toFixed(2)} more to get FREE delivery
+                        </motion.div>
+                      )}
+                    </div>
+                  )}
+
                   {isPremium && (
                     <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs font-semibold text-amber-700">
                       <Zap className="w-3.5 h-3.5 shrink-0" />
@@ -474,7 +685,7 @@ export default function LaundryDetails() {
                   )}
 
                   <div className="bg-white rounded-lg p-3 space-y-1 text-xs text-slate-600">
-                    <p>✓ Free delivery for orders above ₱200</p>
+                    <p>✓ {isPremium ? "FREE delivery (Premium)" : "Free delivery for orders above ₱400"}</p>
                     <p>✓ Pickup within 24 hours</p>
                     <p>✓ Delivery in 2–3 days</p>
                   </div>
