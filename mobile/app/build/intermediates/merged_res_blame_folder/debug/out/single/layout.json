@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "com.example.washmate.app-mergeDebugResources-30:/layout/activity_register.xml",
+        "source": "com.example.washmate.app-main-33:/layout/activity_register.xml"
+    },
+    {
+        "merged": "com.example.washmate.app-mergeDebugResources-30:/layout/activity_login.xml",
+        "source": "com.example.washmate.app-main-33:/layout/activity_login.xml"
+    },
+    {
+        "merged": "com.example.washmate.app-mergeDebugResources-30:/layout/activity_dashboard.xml",
+        "source": "com.example.washmate.app-main-33:/layout/activity_dashboard.xml"
+    }
+]
