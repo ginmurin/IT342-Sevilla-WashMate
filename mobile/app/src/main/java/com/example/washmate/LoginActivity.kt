@@ -3,16 +3,22 @@ package com.example.washmate
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.util.Patterns
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.washmate.api.LoginRequest
+import androidx.lifecycle.lifecycleScope
 import com.example.washmate.api.RetrofitClient
+import com.example.washmate.api.SyncRequest
+import com.example.washmate.auth.SupabaseManager
 import com.example.washmate.databinding.ActivityLoginBinding
-import kotlinx.coroutines.CoroutineScope
+import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.gotrue.providers.builtin.Email
+import io.github.jan.supabase.exceptions.RestException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.jsonPrimitive
 
 class LoginActivity : AppCompatActivity() {
 
@@ -20,9 +26,13 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Initialize Supabase and Retrofit
+        SupabaseManager.init(this)
+        RetrofitClient.init(this)
 
         // Check if already logged in
         val sharedPref = getSharedPreferences("WashMatePrefs", Context.MODE_PRIVATE)
@@ -43,60 +53,105 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun performLogin() {
-        val email = binding.etEmail.text.toString().trim()
+        val emailOrUsername = binding.etEmail.text.toString().trim()
         val password = binding.etPassword.text.toString()
 
-        if (email.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "Please enter email and password", Toast.LENGTH_SHORT).show()
-            return
-        }
-        
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            Toast.makeText(this, "Invalid email format", Toast.LENGTH_SHORT).show()
+        if (emailOrUsername.isEmpty() || password.isEmpty()) {
+            Toast.makeText(this, "Please enter email/username and password", Toast.LENGTH_SHORT).show()
             return
         }
 
         binding.btnLogin.isEnabled = false
 
-        val request = LoginRequest(email, password)
-
-        CoroutineScope(Dispatchers.IO).launch {
+        lifecycleScope.launch {
             try {
-                val response = RetrofitClient.instance.login(request)
-                withContext(Dispatchers.Main) {
-                    binding.btnLogin.isEnabled = true
-                    
-                    if (response.isSuccessful && response.body() != null) {
-                        val authResponse = response.body()!!
-                        
-                        // Save token securely (here using regular SharedPreferences for simplicity)
-                        val sharedPref = getSharedPreferences("WashMatePrefs", Context.MODE_PRIVATE)
-                        with (sharedPref.edit()) {
-                            putString("JWT_TOKEN", authResponse.token)
-                            putString("USER_EMAIL", authResponse.email)
-                            putString("USER_ROLE", authResponse.role)
-                            apply()
-                        }
-                        
-                        startDashboard()
-                    } else if (response.code() == 401) {
-                        Toast.makeText(this@LoginActivity, "Invalid email or password", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this@LoginActivity, "Login failed: ${response.code()}", Toast.LENGTH_SHORT).show()
+                // Step 1: Authenticate with Supabase using Email provider
+                withContext(Dispatchers.IO) {
+                    SupabaseManager.client.auth.signInWith(Email) {
+                        email = emailOrUsername
+                        this.password = password
                     }
                 }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
+
+                val session = SupabaseManager.client.auth.currentSessionOrNull()
+                val user = SupabaseManager.client.auth.currentUserOrNull()
+
+                if (session == null || user == null) {
                     binding.btnLogin.isEnabled = true
-                    Toast.makeText(this@LoginActivity, "Network error: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@LoginActivity, "Authentication failed", Toast.LENGTH_SHORT).show()
+                    return@launch
                 }
+
+                // Step 2: Sync with backend
+                val syncRequest = SyncRequest(
+                    email = user.email ?: emailOrUsername,
+                    firstName = user.userMetadata?.get("first_name")?.jsonPrimitive?.content ?: "",
+                    lastName = user.userMetadata?.get("last_name")?.jsonPrimitive?.content ?: "",
+                    username = user.userMetadata?.get("username")?.jsonPrimitive?.content,
+                    phoneNumber = user.userMetadata?.get("phone")?.jsonPrimitive?.content,
+                    role = "CUSTOMER"
+                )
+
+                val syncResponse = withContext(Dispatchers.IO) {
+                    RetrofitClient.instance.sync(syncRequest)
+                }
+
+                binding.btnLogin.isEnabled = true
+
+                if (syncResponse.isSuccessful && syncResponse.body() != null) {
+                    val authData = syncResponse.body()!!
+
+                    // Save token and user info
+                    val sharedPref = getSharedPreferences("WashMatePrefs", Context.MODE_PRIVATE)
+                    with(sharedPref.edit()) {
+                        putString("JWT_TOKEN", session.accessToken)
+                        putString("USER_EMAIL", authData.email)
+                        putString("USER_ROLE", authData.role)
+                        putString("USER_ID", authData.userId.toString())
+                        apply()
+                    }
+
+                    val userRole = authData.role.uppercase()
+
+                    // Navigate based on role
+                    if (userRole == "CUSTOMER") {
+                        startDashboard()
+                    } else {
+                        // Show role selection for SHOPOWNER/ADMIN
+                        val intent = Intent(this@LoginActivity, RoleSelectActivity::class.java)
+                        intent.putExtra("user_role", userRole)
+                        startActivity(intent)
+                        finish()
+                    }
+                } else {
+                    Toast.makeText(
+                        this@LoginActivity,
+                        "Sync failed: ${syncResponse.code()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } catch (e: RestException) {
+                binding.btnLogin.isEnabled = true
+                Log.e("LoginActivity", "Authentication error: ${e.message}", e)
+                Toast.makeText(
+                    this@LoginActivity,
+                    "Invalid credentials. Please try again.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } catch (e: Exception) {
+                binding.btnLogin.isEnabled = true
+                Log.e("LoginActivity", "Login error: ${e.message}", e)
+                Toast.makeText(
+                    this@LoginActivity,
+                    "Network error: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }
 
     private fun startDashboard() {
         val intent = Intent(this, DashboardActivity::class.java)
-        // Clear back stack so they can't go back to login screen
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()

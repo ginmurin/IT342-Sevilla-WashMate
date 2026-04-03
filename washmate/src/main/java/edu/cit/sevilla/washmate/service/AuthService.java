@@ -22,21 +22,24 @@ public class AuthService {
     private final SubscriptionService subscriptionService;
 
     public AuthResponse syncUser(RegisterRequest request, String oauthId, String tokenValue) {
-        // Find existing user by oauthId or create a new one
-        User user = userRepository.findByOauthId(oauthId).orElse(null);
+        // Find existing user by oauthId (if provided) or by email
+        User user = null;
+
+        if (oauthId != null) {
+            user = userRepository.findByOauthId(oauthId).orElse(null);
+        }
 
         if (user == null) {
-            // Check by email if the user was created before Supabase migration but not linked yet
+            // Check by email if the user was created before or already exists
             user = userRepository.findByEmail(request.getEmail()).orElse(null);
-            
-            if (user != null) {
+
+            if (user != null && oauthId != null) {
                 // Link the existing user with the Supabase UUID
                 user.setOauthId(oauthId);
                 user.setOauthProvider("SUPABASE");
                 userRepository.save(user);
-                // Initialize UserSubscription if not exists
                 initializeUserSubscription(user);
-            } else {
+            } else if (user == null) {
                 // Completely new user — assign FREE plan
                 String role = (request.getRole() != null && !request.getRole().isBlank())
                         ? request.getRole().toUpperCase()
@@ -47,15 +50,14 @@ public class AuthService {
                         .firstName(request.getFirstName())
                         .lastName(request.getLastName())
                         .email(request.getEmail())
-                        .oauthId(oauthId)
-                        .oauthProvider("SUPABASE")
+                        .oauthId(oauthId)  // May be null if not provided
+                        .oauthProvider(oauthId != null ? "SUPABASE" : null)
                         .phoneNumber(request.getPhoneNumber())
                         .role(role)
-                        .emailVerified(true)
+                        .emailVerified(oauthId != null)  // Only mark as verified if OAuth authenticated
                         .build();
 
                 user = userRepository.save(newUser);
-                // Initialize UserSubscription for new user
                 initializeUserSubscription(user);
             }
         }

@@ -7,7 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,14 +22,24 @@ public class AuthController {
 
     /**
      * POST /api/auth/register
-     * Sync endpoint for Supabase users. Expects a valid Supabase JWT Bearer token.
+     * Sync endpoint for Supabase users. The JWT is optional as this is a public endpoint.
      */
     @PostMapping("/register")
     public ResponseEntity<?> register(
             @Valid @RequestBody RegisterRequest request,
-            @AuthenticationPrincipal Jwt jwt) {
+            Authentication authentication) {
         try {
-            AuthResponse response = authService.syncUser(request, jwt.getSubject(), jwt.getTokenValue());
+            // JWT may be null since this is a permitAll() endpoint
+            String supabaseId = null;
+            String tokenValue = null;
+
+            if (authentication != null && authentication.getPrincipal() instanceof Jwt) {
+                Jwt jwt = (Jwt) authentication.getPrincipal();
+                supabaseId = jwt.getSubject();
+                tokenValue = jwt.getTokenValue();
+            }
+
+            AuthResponse response = authService.syncUser(request, supabaseId, tokenValue);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT)

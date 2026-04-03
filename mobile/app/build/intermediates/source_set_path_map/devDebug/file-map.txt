@@ -1,0 +1,43 @@
+com.example.washmate.app-jetified-lifecycle-runtime-ktx-release-0 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\059b29cc084934830dd115a972e8a8d5\transformed\jetified-lifecycle-runtime-ktx-release\res
+com.example.washmate.app-appcompat-1.6.1-1 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\0d10d363e1b3931109f358dedb6aa742\transformed\appcompat-1.6.1\res
+com.example.washmate.app-jetified-annotation-experimental-1.4.0-2 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\0e8ef7700a24ddda44c11fb3bbd627e2\transformed\jetified-annotation-experimental-1.4.0\res
+com.example.washmate.app-jetified-lifecycle-livedata-core-ktx-2.8.4-3 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\111c8d05456418c2979755cc00628d7f\transformed\jetified-lifecycle-livedata-core-ktx-2.8.4\res
+com.example.washmate.app-jetified-core-ktx-1.13.1-4 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\18797caa19a80382d446b1d905966715\transformed\jetified-core-ktx-1.13.1\res
+com.example.washmate.app-coordinatorlayout-1.1.0-5 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\22106b363f7604d3efa2f657d01bc849\transformed\coordinatorlayout-1.1.0\res
+com.example.washmate.app-drawerlayout-1.1.1-6 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\2581c02f87d4694c0367ae4a3031a713\transformed\drawerlayout-1.1.1\res
+com.example.washmate.app-core-1.13.1-7 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\2845200ed1c322d48bc9b960c626b4ca\transformed\core-1.13.1\res
+com.example.washmate.app-cardview-1.0.0-8 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\31f9d639e9d767db9d24f8588c9fb349\transformed\cardview-1.0.0\res
+com.example.washmate.app-jetified-startup-runtime-1.1.1-9 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\3830f56e8ffddf8d56082d95221a8b9d\transformed\jetified-startup-runtime-1.1.1\res
+com.example.washmate.app-material-1.12.0-10 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\58540bdc5ba467d81fd4cde815e00c00\transformed\material-1.12.0\res
+com.example.washmate.app-jetified-lifecycle-runtime-release-11 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\5d109798cfc63f95b0adbc03911f7a31\transformed\jetified-lifecycle-runtime-release\res
+com.example.washmate.app-jetified-viewpager2-1.0.0-12 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\676de12b325e8abb35e26e979107e960\transformed\jetified-viewpager2-1.0.0\res
+com.example.washmate.app-core-runtime-2.2.0-13 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\712dd7da477eeb195fab4d72f9b1bb05\transformed\core-runtime-2.2.0\res
+com.example.washmate.app-jetified-emoji2-1.2.0-14 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\7c6967a2f3011cb9f9e20b0c9bd83bf3\transformed\jetified-emoji2-1.2.0\res
+com.example.washmate.app-recyclerview-1.1.0-15 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\81e184eb77e5623be9d6618e926a4534\transformed\recyclerview-1.1.0\res
+com.example.washmate.app-jetified-appcompat-resources-1.6.1-16 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\85c53e865bfd626284493b0cd8485241\transformed\jetified-appcompat-resources-1.6.1\res
+com.example.washmate.app-browser-1.8.0-17 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\864c5b0d09c251224831f63fda71ed14\transformed\browser-1.8.0\res
+com.example.washmate.app-jetified-activity-1.9.1-18 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\941da4beab9dab2397781ef7ad8e023b\transformed\jetified-activity-1.9.1\res
+com.example.washmate.app-jetified-lifecycle-process-2.8.4-19 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\955da6e97a108e5dd70de6fe84e5c82e\transformed\jetified-lifecycle-process-2.8.4\res
+com.example.washmate.app-jetified-lifecycle-viewmodel-ktx-2.8.4-20 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\9683cc5072ad346a4571c1c4ff82ccc3\transformed\jetified-lifecycle-viewmodel-ktx-2.8.4\res
+com.example.washmate.app-jetified-savedstate-1.2.1-21 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\9a11d4554b6eeafc5a48feb3f359631f\transformed\jetified-savedstate-1.2.1\res
+com.example.washmate.app-fragment-1.3.6-22 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\9f1c9e5119df4ea3d3cd03fe382ab6c1\transformed\fragment-1.3.6\res
+com.example.washmate.app-jetified-security-crypto-1.1.0-alpha06-23 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\9ff165f6f6b6429daf5cc612828ee474\transformed\jetified-security-crypto-1.1.0-alpha06\res
+com.example.washmate.app-jetified-emoji2-views-helper-1.2.0-24 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\bf315723c26c2fb9f6a278273cddfd04\transformed\jetified-emoji2-views-helper-1.2.0\res
+com.example.washmate.app-constraintlayout-2.1.4-25 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\bf89afb24284a3f2771080513e6eb37b\transformed\constraintlayout-2.1.4\res
+com.example.washmate.app-jetified-profileinstaller-1.3.1-26 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\bfa09e7aa1ec7dbb9eac54c7d37c39c2\transformed\jetified-profileinstaller-1.3.1\res
+com.example.washmate.app-jetified-lifecycle-viewmodel-savedstate-2.8.4-27 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\c99dc1adc25f52242a7d5f6f17e0c46f\transformed\jetified-lifecycle-viewmodel-savedstate-2.8.4\res
+com.example.washmate.app-lifecycle-livedata-core-2.8.4-28 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\d95f83c8445c6657e908856dffb419fb\transformed\lifecycle-livedata-core-2.8.4\res
+com.example.washmate.app-transition-1.5.0-29 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\df03bc710c367386c0dccedc5d072b52\transformed\transition-1.5.0\res
+com.example.washmate.app-lifecycle-livedata-2.8.4-30 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\f4f9a46bf5f002aed895fd1127238a91\transformed\lifecycle-livedata-2.8.4\res
+com.example.washmate.app-jetified-activity-ktx-1.9.1-31 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\fdb7c674b030fba16cf881919e167d62\transformed\jetified-activity-ktx-1.9.1\res
+com.example.washmate.app-jetified-savedstate-ktx-1.2.1-32 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\fdc0c01d3220250db0b8d17000aa8eb0\transformed\jetified-savedstate-ktx-1.2.1\res
+com.example.washmate.app-jetified-lifecycle-viewmodel-release-33 C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\fe513435af508f0bd8d72697f9c48ca5\transformed\jetified-lifecycle-viewmodel-release\res
+com.example.washmate.app-dev-34 C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\build\generated\res\pngs\dev\debug
+com.example.washmate.app-dev-35 C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\build\generated\res\resValues\dev\debug
+com.example.washmate.app-packageDevDebugResources-36 C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\build\intermediates\incremental\devDebug\packageDevDebugResources\merged.dir
+com.example.washmate.app-packageDevDebugResources-37 C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\build\intermediates\incremental\devDebug\packageDevDebugResources\stripped.dir
+com.example.washmate.app-merged_res-38 C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\build\intermediates\merged_res\devDebug
+com.example.washmate.app-debug-39 C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\debug\res
+com.example.washmate.app-dev-40 C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\dev\res
+com.example.washmate.app-devDebug-41 C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\devDebug\res
+com.example.washmate.app-main-42 C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\res

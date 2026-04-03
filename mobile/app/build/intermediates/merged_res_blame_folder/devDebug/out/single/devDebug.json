@@ -1,0 +1,22 @@
+[
+    {
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-38:\\layout_activity_dashboard.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-42:\\layout\\activity_dashboard.xml"
+    },
+    {
+        "merged": "com.example.washmate.app-merged_res-38:/xml_network_security_config.xml.flat",
+        "source": "com.example.washmate.app-main-42:/xml/network_security_config.xml"
+    },
+    {
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-38:\\layout_activity_login.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-42:\\layout\\activity_login.xml"
+    },
+    {
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-38:\\layout_activity_role_select.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-42:\\layout\\activity_role_select.xml"
+    },
+    {
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-38:\\layout_activity_register.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-42:\\layout\\activity_register.xml"
+    }
+]
