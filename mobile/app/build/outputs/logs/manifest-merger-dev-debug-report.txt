@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:2:1-28:12
-INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:2:1-28:12
-INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:2:1-28:12
-INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:2:1-28:12
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:2:1-29:12
+INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:2:1-29:12
+INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:2:1-29:12
+INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:2:1-29:12
 MERGED from [androidx.databinding:viewbinding:8.2.0] C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\aaa9884b697baef71a5ae3888d35a6a3\transformed\jetified-viewbinding-8.2.0\AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\58540bdc5ba467d81fd4cde815e00c00\transformed\material-1.12.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\bf89afb24284a3f2771080513e6eb37b\transformed\constraintlayout-2.1.4\AndroidManifest.xml:2:1-11:12
@@ -79,8 +79,8 @@ ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashM
 	android:name
 		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:5:22-64
 application
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:7:5-26:19
-INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:7:5-26:19
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:7:5-27:19
+INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:7:5-27:19
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\58540bdc5ba467d81fd4cde815e00c00\transformed\material-1.12.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\58540bdc5ba467d81fd4cde815e00c00\transformed\material-1.12.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\bf89afb24284a3f2771080513e6eb37b\transformed\constraintlayout-2.1.4\AndroidManifest.xml:9:5-20
@@ -139,14 +139,18 @@ activity#com.example.washmate.RegisterActivity
 ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:23:9-54
 	android:name
 		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:23:19-51
+activity#com.example.washmate.OtpVerificationActivity
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:24:9-61
+	android:name
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:24:19-58
 activity#com.example.washmate.RoleSelectActivity
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:24:9-56
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:25:9-56
 	android:name
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:24:19-53
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:25:19-53
 activity#com.example.washmate.DashboardActivity
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:25:9-55
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:26:9-55
 	android:name
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:25:19-52
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:26:19-52
 uses-sdk
 INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml

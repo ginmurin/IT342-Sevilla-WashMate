@@ -22,5 +22,7 @@ data class SyncRequest(
     val lastName: String,
     val username: String? = null,
     val phoneNumber: String? = null,
-    val role: String = "CUSTOMER"
+    val role: String = "CUSTOMER",
+    val oauthId: String? = null,
+    val oauthProvider: String? = null
 )

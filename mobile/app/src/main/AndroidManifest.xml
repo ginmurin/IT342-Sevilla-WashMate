@@ -21,6 +21,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".RegisterActivity" />
+        <activity android:name=".OtpVerificationActivity" />
         <activity android:name=".RoleSelectActivity" />
         <activity android:name=".DashboardActivity" />
     </application>

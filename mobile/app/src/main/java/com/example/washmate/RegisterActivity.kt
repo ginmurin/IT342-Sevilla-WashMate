@@ -48,10 +48,11 @@ class RegisterActivity : AppCompatActivity() {
         val firstName = binding.etFirstName.text.toString().trim()
         val lastName = binding.etLastName.text.toString().trim()
         val email = binding.etEmail.text.toString().trim()
+        val username = binding.etUsername.text.toString().trim()
         val phone = binding.etPhone.text.toString().trim()
         val password = binding.etPassword.text.toString()
 
-        if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || password.isEmpty()) {
+        if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || username.isEmpty() || password.isEmpty()) {
             Toast.makeText(this, "Please fill in all required fields", Toast.LENGTH_SHORT).show()
             return
         }
@@ -78,15 +79,15 @@ class RegisterActivity : AppCompatActivity() {
                         data = buildJsonObject {
                             put("first_name", firstName)
                             put("last_name", lastName)
+                            put("username", username)
                             put("phone", phone)
                         }
                     }
                 }
 
-                val session = SupabaseManager.client.auth.currentSessionOrNull()
                 val user = SupabaseManager.client.auth.currentUserOrNull()
 
-                if (session == null || user == null) {
+                if (user == null) {
                     binding.btnRegister.isEnabled = true
                     Toast.makeText(
                         this@RegisterActivity,
@@ -96,49 +97,20 @@ class RegisterActivity : AppCompatActivity() {
                     return@launch
                 }
 
-                // Step 2: Sync with backend
-                val syncRequest = SyncRequest(
-                    email = user.email ?: email,
-                    firstName = firstName,
-                    lastName = lastName,
-                    phoneNumber = phone.ifEmpty { null },
-                    username = user.userMetadata?.get("username")?.jsonPrimitive?.content,
-                    role = "CUSTOMER"
-                )
-
-                val syncResponse = withContext(Dispatchers.IO) {
-                    RetrofitClient.instance.sync(syncRequest)
-                }
-
                 binding.btnRegister.isEnabled = true
 
-                if (syncResponse.isSuccessful && syncResponse.body() != null) {
-                    val authData = syncResponse.body()!!
-
-                    // Save token and user info
-                    val sharedPref = getSharedPreferences("WashMatePrefs", Context.MODE_PRIVATE)
-                    with(sharedPref.edit()) {
-                        putString("JWT_TOKEN", session.accessToken)
-                        putString("USER_EMAIL", authData.email)
-                        putString("USER_ROLE", authData.role)
-                        putString("USER_ID", authData.userId.toString())
-                        apply()
-                    }
-
-                    Toast.makeText(this@RegisterActivity, "Registration Successful!", Toast.LENGTH_SHORT).show()
-
-                    // Navigate to Dashboard
-                    val intent = Intent(this@RegisterActivity, DashboardActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    startActivity(intent)
-                    finish()
-                } else {
-                    Toast.makeText(
-                        this@RegisterActivity,
-                        "Sync failed: ${syncResponse.code()}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                // Navigate to OTP verification (Supabase will send OTP to email)
+                val intent = Intent(this@RegisterActivity, OtpVerificationActivity::class.java).apply {
+                    putExtra(OtpVerificationActivity.EMAIL_EXTRA, email)
+                    putExtra(OtpVerificationActivity.FIRST_NAME_EXTRA, firstName)
+                    putExtra(OtpVerificationActivity.LAST_NAME_EXTRA, lastName)
+                    putExtra(OtpVerificationActivity.USERNAME_EXTRA, username)
+                    putExtra(OtpVerificationActivity.PHONE_EXTRA, phone)
+                    putExtra(OtpVerificationActivity.PASSWORD_EXTRA, password)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 }
+                startActivity(intent)
+                finish()
             } catch (e: RestException) {
                 binding.btnRegister.isEnabled = true
                 Log.e("RegisterActivity", "Signup error: ${e.message}", e)
