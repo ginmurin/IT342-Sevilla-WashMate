@@ -112,8 +112,8 @@ class OtpVerificationActivity : AppCompatActivity() {
                     phoneNumber = phone.ifEmpty { null },
                     username = username,
                     role = "CUSTOMER",
-                    oauthId = user.id ?: "", // Supabase user ID
-                    oauthProvider = "SUPABASE"
+                    oauthId = user.id,  // Supabase user UUID
+                    oauthProvider = "SUPABASE"  // Email signup uses SUPABASE provider
                 )
 
                 val syncResponse = withContext(Dispatchers.IO) {

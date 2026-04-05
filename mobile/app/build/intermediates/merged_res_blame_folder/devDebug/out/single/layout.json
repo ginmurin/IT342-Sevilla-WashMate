@@ -1,22 +1,22 @@
 [
     {
-        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-mergeDevDebugResources-37:\\layout\\activity_register.xml",
-        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-42:\\layout\\activity_register.xml"
+        "merged": "com.example.washmate.app-mergeDevDebugResources-40:/layout/activity_role_select.xml",
+        "source": "com.example.washmate.app-main-45:/layout/activity_role_select.xml"
     },
     {
-        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-mergeDevDebugResources-37:\\layout\\activity_dashboard.xml",
-        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-42:\\layout\\activity_dashboard.xml"
+        "merged": "com.example.washmate.app-mergeDevDebugResources-40:/layout/activity_login.xml",
+        "source": "com.example.washmate.app-main-45:/layout/activity_login.xml"
     },
     {
-        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-mergeDevDebugResources-37:\\layout\\activity_login.xml",
-        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-42:\\layout\\activity_login.xml"
+        "merged": "com.example.washmate.app-mergeDevDebugResources-40:/layout/activity_otp_verification.xml",
+        "source": "com.example.washmate.app-main-45:/layout/activity_otp_verification.xml"
     },
     {
-        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-mergeDevDebugResources-37:\\layout\\activity_role_select.xml",
-        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-42:\\layout\\activity_role_select.xml"
+        "merged": "com.example.washmate.app-mergeDevDebugResources-40:/layout/activity_dashboard.xml",
+        "source": "com.example.washmate.app-main-45:/layout/activity_dashboard.xml"
     },
     {
-        "merged": "com.example.washmate.app-mergeDevDebugResources-37:/layout/activity_otp_verification.xml",
-        "source": "com.example.washmate.app-main-42:/layout/activity_otp_verification.xml"
+        "merged": "com.example.washmate.app-mergeDevDebugResources-40:/layout/activity_register.xml",
+        "source": "com.example.washmate.app-main-45:/layout/activity_register.xml"
     }
 ]

@@ -13,6 +13,8 @@ drawable otp_input_bg
 id btnAdminPanel
 id btnBack
 id btnCustomer
+id btnGoogleSignIn
+id btnGoogleSignUp
 id btnLogin
 id btnLogout
 id btnRegister
@@ -24,6 +26,7 @@ id etFirstName
 id etLastName
 id etPassword
 id etPhone
+id etUsername
 id otpInput
 id tvEmailAddress
 id tvLogin

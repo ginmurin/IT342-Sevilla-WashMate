@@ -22,6 +22,9 @@ public final class ActivityRegisterBinding implements ViewBinding {
   private final LinearLayout rootView;
 
   @NonNull
+  public final Button btnGoogleSignUp;
+
+  @NonNull
   public final Button btnRegister;
 
   @NonNull
@@ -40,18 +43,24 @@ public final class ActivityRegisterBinding implements ViewBinding {
   public final EditText etPhone;
 
   @NonNull
+  public final EditText etUsername;
+
+  @NonNull
   public final TextView tvLogin;
 
-  private ActivityRegisterBinding(@NonNull LinearLayout rootView, @NonNull Button btnRegister,
-      @NonNull EditText etEmail, @NonNull EditText etFirstName, @NonNull EditText etLastName,
-      @NonNull EditText etPassword, @NonNull EditText etPhone, @NonNull TextView tvLogin) {
+  private ActivityRegisterBinding(@NonNull LinearLayout rootView, @NonNull Button btnGoogleSignUp,
+      @NonNull Button btnRegister, @NonNull EditText etEmail, @NonNull EditText etFirstName,
+      @NonNull EditText etLastName, @NonNull EditText etPassword, @NonNull EditText etPhone,
+      @NonNull EditText etUsername, @NonNull TextView tvLogin) {
     this.rootView = rootView;
+    this.btnGoogleSignUp = btnGoogleSignUp;
     this.btnRegister = btnRegister;
     this.etEmail = etEmail;
     this.etFirstName = etFirstName;
     this.etLastName = etLastName;
     this.etPassword = etPassword;
     this.etPhone = etPhone;
+    this.etUsername = etUsername;
     this.tvLogin = tvLogin;
   }
 
@@ -82,6 +91,12 @@ public final class ActivityRegisterBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.btnGoogleSignUp;
+      Button btnGoogleSignUp = ViewBindings.findChildViewById(rootView, id);
+      if (btnGoogleSignUp == null) {
+        break missingId;
+      }
+
       id = R.id.btnRegister;
       Button btnRegister = ViewBindings.findChildViewById(rootView, id);
       if (btnRegister == null) {
@@ -118,14 +133,20 @@ public final class ActivityRegisterBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.etUsername;
+      EditText etUsername = ViewBindings.findChildViewById(rootView, id);
+      if (etUsername == null) {
+        break missingId;
+      }
+
       id = R.id.tvLogin;
       TextView tvLogin = ViewBindings.findChildViewById(rootView, id);
       if (tvLogin == null) {
         break missingId;
       }
 
-      return new ActivityRegisterBinding((LinearLayout) rootView, btnRegister, etEmail, etFirstName,
-          etLastName, etPassword, etPhone, tvLogin);
+      return new ActivityRegisterBinding((LinearLayout) rootView, btnGoogleSignUp, btnRegister,
+          etEmail, etFirstName, etLastName, etPassword, etPhone, etUsername, tvLogin);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

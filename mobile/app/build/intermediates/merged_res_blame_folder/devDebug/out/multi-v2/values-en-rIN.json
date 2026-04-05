@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.washmate.app-mergeDevDebugResources-36:/values-en-rIN/values-en-rIN.xml",
+            "outputFile": "com.example.washmate.app-mergeDevDebugResources-39:/values-en-rIN/values-en-rIN.xml",
             "map": [
                 {
                     "source": "C:\\Users\\John\\.gradle\\caches\\9.0-milestone-1\\transforms\\2845200ed1c322d48bc9b960c626b4ca\\transformed\\core-1.13.1\\res\\values-en-rIN\\values-en-rIN.xml",

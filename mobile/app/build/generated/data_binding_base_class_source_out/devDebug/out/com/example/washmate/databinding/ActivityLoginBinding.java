@@ -22,6 +22,9 @@ public final class ActivityLoginBinding implements ViewBinding {
   private final LinearLayout rootView;
 
   @NonNull
+  public final Button btnGoogleSignIn;
+
+  @NonNull
   public final Button btnLogin;
 
   @NonNull
@@ -33,9 +36,11 @@ public final class ActivityLoginBinding implements ViewBinding {
   @NonNull
   public final TextView tvRegister;
 
-  private ActivityLoginBinding(@NonNull LinearLayout rootView, @NonNull Button btnLogin,
-      @NonNull EditText etEmail, @NonNull EditText etPassword, @NonNull TextView tvRegister) {
+  private ActivityLoginBinding(@NonNull LinearLayout rootView, @NonNull Button btnGoogleSignIn,
+      @NonNull Button btnLogin, @NonNull EditText etEmail, @NonNull EditText etPassword,
+      @NonNull TextView tvRegister) {
     this.rootView = rootView;
+    this.btnGoogleSignIn = btnGoogleSignIn;
     this.btnLogin = btnLogin;
     this.etEmail = etEmail;
     this.etPassword = etPassword;
@@ -69,6 +74,12 @@ public final class ActivityLoginBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.btnGoogleSignIn;
+      Button btnGoogleSignIn = ViewBindings.findChildViewById(rootView, id);
+      if (btnGoogleSignIn == null) {
+        break missingId;
+      }
+
       id = R.id.btnLogin;
       Button btnLogin = ViewBindings.findChildViewById(rootView, id);
       if (btnLogin == null) {
@@ -93,8 +104,8 @@ public final class ActivityLoginBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityLoginBinding((LinearLayout) rootView, btnLogin, etEmail, etPassword,
-          tvRegister);
+      return new ActivityLoginBinding((LinearLayout) rootView, btnGoogleSignIn, btnLogin, etEmail,
+          etPassword, tvRegister);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android") // Remove version here
@@ -14,8 +17,19 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-        buildConfigField("String", "SUPABASE_URL", "\"https://hjjcgurxearnkniuxnqd.supabase.co\"")
-        buildConfigField("String", "SUPABASE_ANON_KEY", "\"sb_publishable_iuB5PF-p5rfTT40iI45t3g_R_Z6bY7V\"")
+
+        val properties = Properties()
+        val propertiesFile = project.rootProject.file("local.properties")
+        if (propertiesFile.exists()) {
+            properties.load(FileInputStream(propertiesFile))
+        }
+        val googleId = properties.getProperty("GOOGLE_WEB_CLIENT_ID") ?: ""
+        val supabaseUrl = properties.getProperty("SUPABASE_URL") ?: ""
+        val supabaseAnonKey = properties.getProperty("SUPABASE_ANON_KEY") ?: ""
+
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleId\"")
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
     }
 
     flavorDimensions += "environment"
@@ -55,6 +69,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+
+    // Google Sign-In
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
 
     // Retrofit (Stable 2.x - 3.x is still very new/beta)
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
