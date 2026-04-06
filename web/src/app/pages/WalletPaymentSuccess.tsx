@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams, useLocation } from "react-router";
 import { usePayment } from "../contexts/PaymentContext";
 import { useWallet } from "../contexts/WalletContext";
+import { walletAPI } from "../utils/walletAPI";
 import { Card, CardContent } from "../components/Card";
 import { Button } from "../components/Button";
 import {
@@ -15,21 +16,69 @@ import { motion } from "motion/react";
 
 export default function WalletPaymentSuccess() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { addToWallet } = usePayment();
+  const { refetchWalletData } = usePayment();
   const { topUpData } = useWallet();
-  const hasAddedBalance = useRef(false);
+  const hasConfirmedPayment = useRef(false);
 
-  const topUpId = searchParams.get("topUpId") || `TOPUP-${Date.now()}`;
-  const amount = parseFloat(searchParams.get("amount") || "0") || topUpData.amount || 0;
+  // Handle both state (from navigate) and query params (from 3DS redirect)
+  const state = (location.state as {
+    topUpId?: string;
+    amount?: number;
+    paymentId?: number;
+    paymongoPaymentIntentId?: string;
+  }) ?? {};
+
+  const topUpId = searchParams.get("topUpId") || state.topUpId || `TOPUP-${Date.now()}`;
+  const paymentId = searchParams.get("paymentId") || state.paymentId?.toString();
+  const amount = parseFloat(searchParams.get("amount") || "0") || state.amount || topUpData.amount || 0;
+  const paymongoPaymentIntentId = searchParams.get("paymongoPaymentIntentId") || state.paymongoPaymentIntentId;
+
+  // Debug logging on mount
+  useEffect(() => {
+    console.log("📍 WalletPaymentSuccess Mounted:", {
+      fromSearchParams: {
+        topUpId: searchParams.get("topUpId"),
+        paymentId: searchParams.get("paymentId"),
+        amount: searchParams.get("amount"),
+        paymongoPaymentIntentId: searchParams.get("paymongoPaymentIntentId"),
+      },
+      fromState: state,
+      resolved: {
+        topUpId,
+        paymentId,
+        amount,
+        paymongoPaymentIntentId,
+      },
+    });
+  }, []);
 
   useEffect(() => {
-    // Only add balance once
-    if (amount > 0 && !hasAddedBalance.current) {
-      addToWallet(amount);
-      hasAddedBalance.current = true;
+    // Confirm wallet top-up with backend only once
+    if (paymentId && !hasConfirmedPayment.current) {
+      hasConfirmedPayment.current = true;
+
+      console.log("🔍 Confirming payment:", {
+        paymentId,
+        amount,
+        paymongoPaymentIntentId,
+      });
+
+      walletAPI
+        .confirmTopup(Number(paymentId), amount, paymongoPaymentIntentId || undefined)
+        .then((response) => {
+          console.log("✅ Wallet top-up confirmed successfully", response.data);
+          // Refetch wallet data to get updated balance
+          refetchWalletData();
+        })
+        .catch((error) => {
+          console.error("❌ Failed to confirm wallet top-up:", error);
+          console.error("Error status:", error.response?.status);
+          console.error("Error details:", error.response?.data || error.message);
+        });
     }
-  }, [amount, addToWallet]);
+  }, [paymentId, amount, paymongoPaymentIntentId]);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(topUpId);

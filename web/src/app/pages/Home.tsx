@@ -221,7 +221,6 @@ export function Home() {
 
   if (isAuthenticated && user) {
     if (user.role === "CUSTOMER") return <Navigate to="/customer" replace />;
-    if (user.role === "SHOPOWNER") return <Navigate to="/shop" replace />;
     if (user.role === "ADMIN") return <Navigate to="/admin" replace />;
   }
 

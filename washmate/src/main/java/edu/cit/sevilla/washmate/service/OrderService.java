@@ -391,7 +391,6 @@ public class OrderService {
         dto.setPaymentMethod(payment.getPaymentMethod());
         dto.setPaymentStatus(payment.getPaymentStatus());
         dto.setPaymongoPaymentIntentId(payment.getPaymongoPaymentIntentId());
-        dto.setTransactionId(payment.getTransactionId());
         dto.setPaymentDate(payment.getPaymentDate());
         dto.setCreatedAt(payment.getCreatedAt());
 

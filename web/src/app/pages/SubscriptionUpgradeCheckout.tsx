@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
@@ -38,7 +38,15 @@ function formatExpiry(value: string) {
 // ── Component ────────────────────────────────────────────────────────────────
 export default function SubscriptionUpgradeCheckout() {
   const navigate = useNavigate();
-  const { upgradeData, submitUpgrade } = useSubscription();
+  const location = useLocation();
+  const { upgradeData } = useSubscription();
+
+  const state = location.state as {
+    userSubscriptionId?: number;
+    paymentId?: number;
+    amount?: number;
+    paymentMethod?: string;
+  };
 
   const [cardNumber, setCardNumber] = useState('');
   const [cardName, setCardName] = useState('');
@@ -51,10 +59,10 @@ export default function SubscriptionUpgradeCheckout() {
 
   const isPremium = upgradeData.newPlan === 'PREMIUM';
 
-  if (!upgradeData.paymentMethod || upgradeData.paymentMethod !== 'card') {
+  if (!state?.paymentId || !state?.userSubscriptionId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Invalid payment method. Please select card payment.</p>
+        <p className="text-gray-500">Invalid payment data. Please start over.</p>
       </div>
     );
   }
@@ -91,8 +99,7 @@ export default function SubscriptionUpgradeCheckout() {
     setIsProcessing(true);
 
     try {
-      const response = await submitUpgrade();
-      const { id: intentId, clientKey } = await createPaymentIntent(upgradeData.amount);
+      const { id: intentId, clientKey } = await createPaymentIntent(state.amount || upgradeData.amount);
       const paymentMethodId = await createCardPaymentMethod({
         number: rawNumber,
         expMonth,
@@ -102,7 +109,7 @@ export default function SubscriptionUpgradeCheckout() {
         email: cardEmail,
       });
 
-      const returnUrl = `${window.location.origin}/subscription/upgrade-success?userSubscriptionId=${response.userSubscriptionId}&paymentId=${intentId}`;
+      const returnUrl = `${window.location.origin}/subscription/upgrade-success?userSubscriptionId=${state.userSubscriptionId}&paymentId=${state.paymentId}&amount=${state.amount || upgradeData.amount}&paymongoPaymentIntentId=${intentId}`;
       const { status, redirectUrl } = await attachPaymentMethod(
         intentId,
         paymentMethodId,
@@ -110,14 +117,17 @@ export default function SubscriptionUpgradeCheckout() {
         returnUrl
       );
 
+      console.log('💳 Card payment processing:', { intentId, userSubscriptionId: state.userSubscriptionId, paymentId: state.paymentId });
+
       if (status === 'awaiting_next_action' && redirectUrl) {
         window.location.href = redirectUrl;
       } else {
         navigate(
-          `/subscription/upgrade-success?userSubscriptionId=${response.userSubscriptionId}&paymentId=${intentId}`
+          `/subscription/upgrade-success?userSubscriptionId=${state.userSubscriptionId}&paymentId=${state.paymentId}&amount=${state.amount || upgradeData.amount}&paymongoPaymentIntentId=${intentId}`
         );
       }
     } catch (err) {
+      console.error('❌ Card payment error:', err);
       setError(
         err instanceof Error ? err.message : 'Payment processing failed. Please try again.'
       );

@@ -11,8 +11,6 @@ public class FeedbackDTO {
     private String orderNumber;
     private Long customerId;
     private String customerName;
-    private Long shopId;
-    private String shopName;
     private Integer starRating;
     private String feedbackType;
     private String commentText;

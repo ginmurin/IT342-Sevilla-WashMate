@@ -41,10 +41,19 @@ export default function WalletPaymentReview() {
     const topUpId = `TOPUP-${Date.now()}`;
 
     try {
+      // Step 1: Initiate wallet top-up (creates Payment record in backend)
+      const paymentData = await submitTopUp();
+      const paymentId = paymentData?.paymentId;
+
+      if (!paymentId) {
+        setPaymentError("Failed to initiate payment. Please try again.");
+        setIsProcessing(false);
+        return;
+      }
+
       if (topUpData.paymentMethod === "card") {
-        await submitTopUp();
         navigate("/wallet/payment-checkout", {
-          state: { topUpId, amount, paymentMethod: "card" },
+          state: { topUpId, amount, paymentId, paymentMethod: "card" },
         });
         return;
       }
@@ -56,7 +65,7 @@ export default function WalletPaymentReview() {
         return;
       }
 
-      const successUrl = `${window.location.origin}/wallet/payment-success?topUpId=${topUpId}&amount=${amount}`;
+      const successUrl = `${window.location.origin}/wallet/payment-success?topUpId=${topUpId}&amount=${amount}&paymentId=${paymentId}`;
       const failedUrl = `${window.location.origin}/wallet/payment-error`;
 
       const checkoutUrl = await createSource(
@@ -65,7 +74,6 @@ export default function WalletPaymentReview() {
         successUrl,
         failedUrl
       );
-      await submitTopUp();
       window.location.href = checkoutUrl;
     } catch (err) {
       setPaymentError(

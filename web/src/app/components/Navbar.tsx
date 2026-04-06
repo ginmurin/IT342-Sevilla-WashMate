@@ -28,12 +28,10 @@ export function Navbar() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
-  // Derive nav context from current path so ADMIN/SHOPOWNER
+  // Derive nav context from current path so ADMIN
   // viewing /customer still get the customer nav links.
   const currentView = location.pathname.startsWith("/admin")
     ? "admin"
-    : location.pathname.startsWith("/shop")
-    ? "shopowner"
     : "customer";
 
   const navItems =
@@ -44,13 +42,6 @@ export function Navbar() {
           { label: "Subscriptions", icon: Crown, href: "/subscriptions" },
           { label: "My Orders", icon: Clock, href: "/my-orders" },
           { label: "Wallet", icon: WalletIcon, href: "/wallet" },
-        ]
-      : currentView === "shopowner"
-      ? [
-          { label: "Dashboard", icon: Home, href: "/shop" },
-          { label: "Orders", icon: ShoppingBag, href: "/shop/orders" },
-          { label: "Analytics", icon: Heart, href: "/shop/analytics" },
-          { label: "Settings", icon: Settings, href: "/shop/settings" },
         ]
       : [
           { label: "Dashboard", icon: Home, href: "/admin" },
@@ -77,7 +68,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to={currentView === "customer" ? "/customer" : currentView === "shopowner" ? "/shop" : "/admin"} className="flex items-center gap-2.5">
+          <Link to={currentView === "customer" ? "/customer" : "/admin"} className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-md shadow-teal-200">
               <Droplets className="w-5 h-5 text-white" />
             </div>
@@ -204,22 +195,6 @@ export function Navbar() {
                             className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                           >
                             Payment Methods
-                          </a>
-                        </>
-                      )}
-                      {currentView === "shopowner" && (
-                        <>
-                          <a
-                            href="#"
-                            className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                          >
-                            Shop Settings
-                          </a>
-                          <a
-                            href="#"
-                            className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                          >
-                            Financial Reports
                           </a>
                         </>
                       )}

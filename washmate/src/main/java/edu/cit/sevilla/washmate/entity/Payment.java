@@ -31,12 +31,6 @@ public class Payment {
     @Column(name = "reference_id")
     private Long referenceId;
 
-    // Keep existing order relationship temporarily for backward compatibility
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = true)
-    @Deprecated // Mark for future removal after migration
-    private Order order;
-
     @Column(name = "amount", precision = 10, scale = 2, nullable = false)
     private BigDecimal amount;
 
@@ -51,9 +45,6 @@ public class Payment {
 
     @Column(name = "paymongo_payment_intent_id", unique = true)
     private String paymongoPaymentIntentId;
-
-    @Column(name = "transaction_id")
-    private String transactionId;
 
     @Column(name = "payment_date")
     private LocalDateTime paymentDate;

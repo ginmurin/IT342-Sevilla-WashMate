@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import * as subscriptionService from '../services/subscription';
+import { subscriptionAPI } from '../utils/subscriptionAPI';
 import { Card, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
 import {
@@ -25,6 +25,9 @@ export default function SubscriptionUpgradeSuccess() {
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
 
   const userSubId = searchParams.get('userSubscriptionId') || '';
+  const paymentId = searchParams.get('paymentId') || '';
+  const amount = searchParams.get('amount');
+  const paymongoPaymentIntentId = searchParams.get('paymongoPaymentIntentId') || '';
 
   useEffect(() => {
     const confirmUpgrade = async () => {
@@ -32,35 +35,43 @@ export default function SubscriptionUpgradeSuccess() {
       hasConfirmed.current = true;
 
       try {
-        const paymentId = searchParams.get('paymentId') || '1';
-
         if (!userSubId) {
           throw new Error('Missing subscription ID');
         }
 
+        if (!paymentId) {
+          throw new Error('Missing payment ID');
+        }
+
         // Log the values for debugging
-        console.log('Debug - userSubId:', userSubId);
-        console.log('Debug - paymentId:', paymentId);
-        console.log('Debug - All search params:', Object.fromEntries(searchParams));
+        console.log('💳 Subscription confirmation:', { userSubId, paymentId, amount, paymongoPaymentIntentId });
 
         // Check if userSubId is actually a number
         if (!/^\d+$/.test(userSubId)) {
           throw new Error(`Invalid subscription ID format: "${userSubId}". Expected a number.`);
         }
 
-        const confirmed = await subscriptionService.confirmUpgrade(userSubId, paymentId, 'CARD');
-        setSubscriptionData(confirmed);
+        const confirmed = await subscriptionAPI.confirmUpgrade(
+          Number(userSubId),
+          paymentId,
+          'card',
+          amount ? Number(amount) : undefined,
+          paymongoPaymentIntentId || undefined
+        );
+
+        console.log('✅ Subscription upgrade confirmed:', confirmed);
+        setSubscriptionData(confirmed.data);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to confirm upgrade';
         setError(message);
-        console.error('Error confirming upgrade:', err);
+        console.error('❌ Error confirming upgrade:', err);
       } finally {
         setLoading(false);
       }
     };
 
     confirmUpgrade();
-  }, [searchParams, userSubId]);
+  }, [userSubId, paymentId, amount, paymongoPaymentIntentId]);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(userSubId);

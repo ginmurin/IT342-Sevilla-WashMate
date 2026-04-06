@@ -12,8 +12,6 @@ import java.util.Optional;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
-    // Legacy methods (keep for backward compatibility)
-    Optional<Payment> findByOrderOrderId(Long orderId);
     Optional<Payment> findByPaymongoPaymentIntentId(String paymongoPaymentIntentId);
 
     // ===== NEW POLYMORPHIC QUERY METHODS =====
@@ -38,12 +36,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      * Find payments by reference type and payment status.
      */
     List<Payment> findByReferenceTypeAndPaymentStatus(String referenceType, String paymentStatus);
-
-    /**
-     * Find payments that need to be migrated (have order but no referenceType).
-     */
-    @Query("SELECT p FROM Payment p WHERE p.referenceType IS NULL AND p.order IS NOT NULL")
-    List<Payment> findByReferenceTypeIsNullAndOrderIsNotNull();
 
     // ===== CONVENIENCE METHODS WITH DEFAULT IMPLEMENTATIONS =====
 

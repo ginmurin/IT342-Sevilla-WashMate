@@ -116,6 +116,13 @@ public class PaymentService {
         return paymentRepository.findByPaymongoPaymentIntentId(paymongoPaymentIntentId);
     }
 
+    /**
+     * Get payment by database ID.
+     */
+    public Optional<Payment> getPaymentById(Long paymentId) {
+        return paymentRepository.findById(paymentId);
+    }
+
     // ===== CONVENIENCE METHODS FOR SPECIFIC ENTITY TYPES =====
 
     /**
@@ -179,21 +186,4 @@ public class PaymentService {
         return paymentRepository.save(payment);
     }
 
-    // ===== MIGRATION SUPPORT =====
-
-    /**
-     * Migrate existing payments to use polymorphic pattern.
-     * Call this during application startup or as needed.
-     */
-    public int migrateExistingPayments() {
-        List<Payment> unmigrated = paymentRepository.findByReferenceTypeIsNullAndOrderIsNotNull();
-
-        for (Payment payment : unmigrated) {
-            payment.setReferenceType("ORDER");
-            payment.setReferenceId(payment.getOrder().getOrderId());
-            paymentRepository.save(payment);
-        }
-
-        return unmigrated.size();
-    }
 }

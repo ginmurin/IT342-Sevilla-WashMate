@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { subscriptionAPI } from '../utils/subscriptionAPI';
 import * as subscriptionService from '../services/subscription';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
@@ -14,6 +15,7 @@ import {
   Loader2,
   Sparkles,
   Crown,
+  Wallet,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -45,6 +47,13 @@ const PAYMENT_METHODS = [
     icon: Smartphone,
     description: 'Pay through GrabPay',
     color: 'from-green-500 to-emerald-500',
+  },
+  {
+    id: 'wallet',
+    name: 'Wallet',
+    icon: Wallet,
+    description: 'Pay using your WashMate wallet balance',
+    color: 'from-teal-500 to-cyan-500',
   },
 ];
 
@@ -94,10 +103,35 @@ export default function SubscriptionUpgradeReview() {
     setLoading(true);
     setUpgradeData({ paymentMethod: selectedMethod as any });
 
-    if (selectedMethod === 'card') {
-      navigate('/subscription/upgrade-checkout');
-    } else {
-      navigate('/subscription/upgrade-checkout');
+    try {
+      // 1. Initiate upgrade with backend to get userSubscriptionId and paymentId
+      const upgradeResponse = await subscriptionAPI.initiateUpgrade(upgradeData.newPlan);
+      console.log('📝 Subscription upgrade API response:', upgradeResponse);
+
+      const { userSubscriptionId, amount, paymentId } = upgradeResponse.data || upgradeResponse;
+
+      if (!userSubscriptionId) {
+        throw new Error('Failed to get userSubscriptionId from upgrade initiation');
+      }
+
+      console.log('📝 Subscription upgrade initiated:', { userSubscriptionId, amount, paymentId, paymentMethod: selectedMethod });
+
+      // 2. Handle wallet payment (direct success, no checkout)
+      if (selectedMethod === 'wallet') {
+        navigate('/subscription/upgrade-success', {
+          state: { userSubscriptionId, amount, paymentId, paymentMethod: 'wallet' },
+        });
+        return;
+      }
+
+      // 3. Handle other payment methods (need checkout/gateway)
+      navigate('/subscription/upgrade-checkout', {
+        state: { userSubscriptionId, amount, paymentId, paymentMethod: selectedMethod },
+      });
+    } catch (err) {
+      console.error('❌ Upgrade initiation error:', err);
+      setPaymentError(err instanceof Error ? err.message : 'Failed to initiate upgrade. Please try again.');
+      setLoading(false);
     }
   };
 

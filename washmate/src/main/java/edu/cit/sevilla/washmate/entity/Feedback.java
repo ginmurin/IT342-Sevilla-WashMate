@@ -29,9 +29,6 @@ public class Feedback {
     @JoinColumn(name = "customer_id", nullable = false)
     private User customer;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shop_id", nullable = false)
-    private Shop shop;
 
     @Column(name = "star_rating", nullable = false)
     private Integer starRating;

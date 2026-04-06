@@ -3,7 +3,7 @@ import { authAPI } from "../utils/api";
 import { supabase } from "../../lib/supabase";
 import type { User as ApiUser } from "../types";
 
-export type Role = "CUSTOMER" | "SHOPOWNER" | "ADMIN";
+export type Role = "CUSTOMER" | "ADMIN";
 
 export type User = ApiUser;
 

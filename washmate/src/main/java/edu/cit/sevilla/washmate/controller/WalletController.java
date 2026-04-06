@@ -83,14 +83,17 @@ public class WalletController {
         User user = userRepository.findByOauthId(oauthId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+        if (request == null || request.getAmount() == null || request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Top-up amount must be positive");
         }
+
+        // Normalize payment method to uppercase
+        String paymentMethod = request.getPaymentMethod() != null ? request.getPaymentMethod().toUpperCase() : "CARD";
 
         Payment payment = walletService.initiateWalletTopup(
                 user.getUserId(),
                 request.getAmount(),
-                request.getPaymentMethod()
+                paymentMethod
         );
 
         return ResponseEntity.ok(toPaymentDTO(payment));
@@ -115,11 +118,25 @@ public class WalletController {
             amount = new BigDecimal(request.get("amount").toString());
         }
 
+        // Get PayMongo payment intent ID if provided
+        String paymongoPaymentIntentId = null;
+        if (request != null && request.containsKey("paymongoPaymentIntentId")) {
+            Object paymongo = request.get("paymongoPaymentIntentId");
+            if (paymongo != null && !paymongo.toString().isEmpty()) {
+                paymongoPaymentIntentId = paymongo.toString();
+            }
+        }
+
         try {
-            WalletTransaction transaction = walletService.confirmWalletTopup(user.getUserId(), paymentId, amount);
+            System.out.println("DEBUG: Confirming wallet top-up for paymentId=" + paymentId + ", amount=" + amount + ", paymongoPaymentIntentId=" + paymongoPaymentIntentId);
+            System.out.println("DEBUG: Full request body: " + request);
+            WalletTransaction transaction = walletService.confirmWalletTopup(user.getUserId(), paymentId, amount, paymongoPaymentIntentId);
             Wallet wallet = walletService.getOrCreateWallet(user.getUserId());
+            System.out.println("DEBUG: Wallet after confirmation - balance=" + wallet.getAvailableBalance());
             return ResponseEntity.ok(walletService.toWalletDTO(wallet));
         } catch (Exception e) {
+            System.out.println("ERROR confirming wallet top-up: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("Failed to confirm wallet top-up: " + e.getMessage());
         }
     }
@@ -247,7 +264,6 @@ public class WalletController {
         dto.setPaymentMethod(payment.getPaymentMethod());
         dto.setPaymentStatus(payment.getPaymentStatus());
         dto.setPaymongoPaymentIntentId(payment.getPaymongoPaymentIntentId());
-        dto.setTransactionId(payment.getTransactionId());
         dto.setPaymentDate(payment.getPaymentDate());
         dto.setCreatedAt(payment.getCreatedAt());
 
@@ -286,6 +302,9 @@ public class WalletController {
         private BigDecimal amount;
         private String paymentMethod = "CARD";
 
+        // Default constructor for JSON deserialization
+        public WalletTopupRequest() {}
+
         // Getters and setters
         public BigDecimal getAmount() { return amount; }
         public void setAmount(BigDecimal amount) { this.amount = amount; }
@@ -297,6 +316,9 @@ public class WalletController {
         private BigDecimal amount;
         private String referenceType;
         private Long referenceId;
+
+        // Default constructor for JSON deserialization
+        public WalletDebitRequest() {}
 
         // Getters and setters
         public BigDecimal getAmount() { return amount; }
