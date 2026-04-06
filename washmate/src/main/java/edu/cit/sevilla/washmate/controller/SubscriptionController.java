@@ -2,6 +2,7 @@ package edu.cit.sevilla.washmate.controller;
 
 import edu.cit.sevilla.washmate.dto.SubscriptionDTO;
 import edu.cit.sevilla.washmate.dto.UserSubscriptionDTO;
+import edu.cit.sevilla.washmate.entity.Payment;
 import edu.cit.sevilla.washmate.entity.Subscription;
 import edu.cit.sevilla.washmate.entity.User;
 import edu.cit.sevilla.washmate.entity.UserSubscription;
@@ -58,7 +59,7 @@ public class SubscriptionController {
     }
 
     /**
-     * Initiate subscription upgrade. Returns upgrade details including amount.
+     * Initiate subscription upgrade. Returns upgrade details including paymentId.
      */
     @PostMapping("/upgrade/{planType}")
     public ResponseEntity<Map<String, Object>> initiateUpgrade(
@@ -77,8 +78,17 @@ public class SubscriptionController {
             System.out.println("DEBUG - Created UserSubscription with ID: " + newSub.getUserSubscriptionId());
             System.out.println("DEBUG - UserSubscription details: " + newSub);
 
+            // Get the Payment that was created during initiate
+            java.util.List<Payment> payments = subscriptionService.getSubscriptionPayments(newSub.getUserSubscriptionId());
+            Long paymentId = null;
+            if (!payments.isEmpty()) {
+                paymentId = payments.get(0).getPaymentId();
+                System.out.println("DEBUG - Payment created with ID: " + paymentId);
+            }
+
             Map<String, Object> response = Map.of(
                     "userSubscriptionId", newSub.getUserSubscriptionId(),
+                    "paymentId", paymentId != null ? paymentId : "",
                     "planType", newSub.getSubscription().getPlanType(),
                     "amount", newSub.getSubscription().getPlanPrice(),
                     "expiryDate", newSub.getExpiryDate()

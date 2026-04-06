@@ -11,26 +11,20 @@ import {
   Wallet as WalletIcon,
   History,
   CreditCard,
-  TrendingUp,
   Zap,
+  Loader,
+  AlertCircle,
 } from "lucide-react";
 import { motion } from "motion/react";
 
 export default function Wallet() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { walletBalance, transactions } = usePayment();
+  const { walletBalance, transactions, isLoading: walletLoading, error: walletError } = usePayment();
   const { setTopUpData } = useWallet();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
 
   const presetAmounts = [500, 1000, 2000, 5000];
-
-  const mockTransactions = [
-    { id: "WAL-001", type: "load", amount: 1000, description: "Wallet load", date: "2024-01-05" },
-    { id: "WAL-002", type: "deduction", amount: 250, description: "Laundry service payment", date: "2024-01-04" },
-    { id: "WAL-003", type: "load", amount: 2000, description: "Wallet load", date: "2024-01-03" },
-    { id: "WAL-004", type: "refund", amount: 150, description: "Order refund", date: "2024-01-02" },
-  ];
 
   const handleLoadMoney = (amount: number) => {
     setSelectedAmount(amount);
@@ -49,12 +43,14 @@ export default function Wallet() {
 
   const getTransactionIcon = (type: string) => {
     switch (type) {
-      case "load":
+      case "WALLET_TOPUP":
         return <Plus className="w-5 h-5 text-emerald-600" />;
-      case "deduction":
+      case "ORDER":
         return <CreditCard className="w-5 h-5 text-red-600" />;
-      case "refund":
-        return <TrendingUp className="w-5 h-5 text-blue-600" />;
+      case "SUBSCRIPTION":
+        return <Zap className="w-5 h-5 text-blue-600" />;
+      case "PROMOTION":
+        return <CreditCard className="w-5 h-5 text-purple-600" />;
       default:
         return null;
     }
@@ -95,9 +91,16 @@ export default function Wallet() {
                   <div className="flex items-start justify-between mb-12">
                     <div>
                       <p className="text-teal-100 text-sm mb-2">Current Balance</p>
-                      <p className="text-5xl font-bold">
-                        ₱{(walletBalance || 0).toFixed(2)}
-                      </p>
+                      {walletLoading ? (
+                        <div className="flex items-center gap-2">
+                          <Loader className="w-6 h-6 animate-spin" />
+                          <p className="text-xl font-semibold">Loading...</p>
+                        </div>
+                      ) : (
+                        <p className="text-5xl font-bold">
+                          ₱{(walletBalance || 0).toFixed(2)}
+                        </p>
+                      )}
                     </div>
                     <WalletIcon className="w-12 h-12 text-teal-100 opacity-50" />
                   </div>
@@ -188,43 +191,15 @@ export default function Wallet() {
             </motion.div>
           </div>
 
-          {/* Sidebar: Payment Methods & History */}
-          <div className="lg:col-span-1 space-y-8">
-            {/* Payment Methods */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-            >
-              <Card className="border-slate-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <CreditCard className="w-5 h-5 text-teal-600" />
-                    Payment Methods
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="p-3 border border-slate-300 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
-                    <p className="text-sm font-medium text-slate-900">Visa •••• 4242</p>
-                    <p className="text-xs text-slate-500 mt-1">Expires 12/25</p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="w-full flex items-center justify-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Payment Method
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Recent Transactions */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
+          {/* Sidebar: Recent Activity */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="lg:col-span-1"
+          >
+            <div className="sticky top-24 space-y-4">
+              {/* Recent Transactions */}
               <Card className="border-slate-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -233,38 +208,56 @@ export default function Wallet() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {mockTransactions.map((txn, idx) => (
-                      <motion.div
-                        key={txn.id}
-                        initial={{ opacity: 0, x: -16 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.3 + idx * 0.05 }}
-                        className="flex items-center justify-between pb-3 border-b border-slate-100 last:border-0"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
-                            {getTransactionIcon(txn.type)}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-slate-900">
-                              {txn.description}
-                            </p>
-                            <p className="text-xs text-slate-500">{txn.date}</p>
-                          </div>
-                        </div>
-                        <span
-                          className={`font-semibold text-sm ${
-                            txn.type === "deduction"
-                              ? "text-red-600"
-                              : "text-emerald-600"
-                          }`}
+                  {walletLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader className="w-5 h-5 animate-spin text-teal-600" />
+                    </div>
+                  ) : walletError ? (
+                    <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg border border-red-200">
+                      <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                      <p className="text-sm text-red-600">{walletError}</p>
+                    </div>
+                  ) : transactions.length === 0 ? (
+                    <p className="text-sm text-slate-500 text-center py-8">
+                      No transactions yet
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {transactions.slice(0, 5).map((txn, idx) => (
+                        <motion.div
+                          key={txn.id}
+                          initial={{ opacity: 0, x: -16 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.25 + idx * 0.05 }}
+                          className="flex items-center justify-between pb-3 border-b border-slate-100 last:border-0"
                         >
-                          {txn.type === "deduction" ? "-" : "+"}₱{txn.amount}
-                        </span>
-                      </motion.div>
-                    ))}
-                  </div>
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                              {getTransactionIcon(txn.serviceType)}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-slate-900">
+                                {txn.serviceType ? txn.serviceType.replace(/_/g, " ") : "Transaction"}
+                              </p>
+                              <p className="text-xs text-slate-500">{txn.date}</p>
+                            </div>
+                          </div>
+                          <span
+                            className={`font-semibold text-sm ${
+                              txn.status === "completed"
+                                ? txn.serviceType === "ORDER"
+                                  ? "text-red-600"
+                                  : "text-emerald-600"
+                                : "text-slate-500"
+                            }`}
+                          >
+                            {txn.serviceType === "ORDER" ? "-" : "+"}₱
+                            {txn.amount.toFixed(2)}
+                          </span>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
                   <Button
                     onClick={() => navigate("/payment/history")}
                     variant="ghost"
@@ -274,8 +267,8 @@ export default function Wallet() {
                   </Button>
                 </CardContent>
               </Card>
-            </motion.div>
-          </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>

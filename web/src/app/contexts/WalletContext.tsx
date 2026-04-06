@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from "react";
+import { walletAPI } from "../utils/walletAPI";
 
 export interface WalletTopUpData {
   amount: number;
@@ -26,8 +27,27 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   };
 
   const submitTopUp = async () => {
-    console.log("Submitting wallet top-up:", topUpData);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (!topUpData.amount || topUpData.amount <= 0) {
+      throw new Error("Invalid top-up amount");
+    }
+
+    if (!topUpData.paymentMethod) {
+      throw new Error("Payment method not selected");
+    }
+
+    try {
+      // Call API to initiate wallet top-up and create payment record
+      const response = await walletAPI.initiateTopup(
+        topUpData.amount,
+        topUpData.paymentMethod
+      );
+
+      console.log("Wallet top-up initiated:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to initiate wallet top-up:", error);
+      throw error;
+    }
   };
 
   return (

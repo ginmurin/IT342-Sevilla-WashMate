@@ -16,7 +16,6 @@ public class PaymentDTO {
     private String paymentMethod;
     private String paymentStatus;
     private String paymongoPaymentIntentId;
-    private String transactionId;
     private LocalDateTime paymentDate;
     private LocalDateTime createdAt;
 }

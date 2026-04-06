@@ -40,7 +40,6 @@ export default function AuthCallback() {
 
         const role = String(syncResult.user.role).toUpperCase();
         if (role === "CUSTOMER") navigate("/customer", { replace: true });
-        else if (role === "SHOPOWNER") navigate("/shop", { replace: true });
         else if (role === "ADMIN") navigate("/admin", { replace: true });
         else navigate("/", { replace: true });
       } catch (err) {

@@ -1,4 +1,6 @@
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
+import { orderAPI } from "../utils/orderAPI";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/Card";
 import { Button } from "../components/Button";
 import {
@@ -8,6 +10,8 @@ import {
   Clock,
   MapPin,
   DollarSign,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { motion } from "motion/react";
 
@@ -15,12 +19,54 @@ export default function PaymentSuccess() {
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as any;
+  const hasConfirmed = useRef(false);
 
   // Support both location.state (card/internal) and URL query params (PayMongo redirect)
   const searchParams = new URLSearchParams(location.search);
-  const orderId = state?.orderId ?? searchParams.get("orderId") ?? `ORD-${Date.now()}`;
+  const orderId = state?.orderId ?? searchParams.get("orderId");
+  const paymentId = state?.paymentId ?? searchParams.get("paymentId");
   const amount = state?.amount ?? parseFloat(searchParams.get("amount") ?? "0");
+  const paymongoPaymentIntentId = state?.paymongoPaymentIntentId ?? searchParams.get("paymongoPaymentIntentId") ?? "";
   const serviceType = state?.serviceType ?? "laundry_service";
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const confirmPayment = async () => {
+      if (hasConfirmed.current) return;
+      hasConfirmed.current = true;
+
+      try {
+        if (!orderId) {
+          throw new Error('Missing order ID');
+        }
+
+        if (!paymentId) {
+          throw new Error('Missing payment ID');
+        }
+
+        console.log('💳 Order payment confirmation:', { orderId, paymentId, amount, paymongoPaymentIntentId });
+
+        await orderAPI.confirmPayment(
+          Number(orderId),
+          String(paymentId),
+          amount,
+          paymongoPaymentIntentId || undefined
+        );
+
+        console.log('✅ Order payment confirmed');
+        setLoading(false);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to confirm payment';
+        setError(message);
+        console.error('❌ Error confirming payment:', err);
+        setLoading(false);
+      }
+    };
+
+    confirmPayment();
+  }, [orderId, paymentId, amount, paymongoPaymentIntentId]);
 
   // Confetti animation component
   const Confetti = () => (
@@ -51,6 +97,52 @@ export default function PaymentSuccess() {
       ))}
     </div>
   );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-slate-50 to-blue-50">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center mx-auto mb-4">
+            <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+          </div>
+          <p className="text-slate-600 font-medium">Confirming your payment...</p>
+          <p className="text-slate-500 text-sm mt-1">This may take a moment</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-slate-50 to-blue-50 px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full"
+        >
+          <Card className="border-red-200 shadow-lg">
+            <CardContent className="pt-8 pb-8 text-center">
+              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-8 h-8 text-red-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900 mb-2">Payment Confirmation Failed</h1>
+              <p className="text-slate-600 mb-6">{error}</p>
+              <Button
+                onClick={() => navigate("/customer")}
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white h-11 rounded-lg font-medium"
+              >
+                Back to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 min-h-screen bg-gradient-to-br from-teal-50 via-slate-50 to-blue-50 pt-20 pb-12">

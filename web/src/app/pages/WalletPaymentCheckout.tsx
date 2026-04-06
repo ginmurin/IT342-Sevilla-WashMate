@@ -35,10 +35,12 @@ export default function WalletPaymentCheckout() {
   const state = (location.state as {
     topUpId?: string;
     amount?: number;
+    paymentId?: number;
   }) ?? {};
 
   const topUpId = state.topUpId ?? `TOPUP-${Date.now()}`;
   const amount = state.amount ?? 0;
+  const paymentId = state.paymentId;
 
   const [cardNumber, setCardNumber] = useState("");
   const [cardName, setCardName] = useState("");
@@ -82,7 +84,11 @@ export default function WalletPaymentCheckout() {
 
     try {
       // 1. Create PaymentIntent
-      const { id: intentId, clientKey } = await createPaymentIntent(amount);
+      const intentResponse = await createPaymentIntent(amount);
+      const intentId = intentResponse.id;
+      const clientKey = intentResponse.clientKey;
+
+      console.log("🔑 PayMongo Intent Created:", { intentId, clientKey, amount });
 
       // 2. Create PaymentMethod from card details
       const paymentMethodId = await createCardPaymentMethod({
@@ -94,21 +100,30 @@ export default function WalletPaymentCheckout() {
         email: cardEmail,
       });
 
+      console.log("💳 Payment Method Created:", { paymentMethodId });
+
       // 3. Attach — triggers 3DS if needed
-      const returnUrl = `${window.location.origin}/wallet/payment-success?topUpId=${topUpId}&amount=${amount}`;
-      const { status, redirectUrl } = await attachPaymentMethod(
+      const returnUrl = `${window.location.origin}/wallet/payment-success?topUpId=${topUpId}&amount=${amount}&paymentId=${paymentId}&paymongoPaymentIntentId=${intentId}`;
+      console.log("🔗 Return URL:", returnUrl);
+
+      const attachResponse = await attachPaymentMethod(
         intentId,
         paymentMethodId,
         clientKey,
         returnUrl
       );
 
+      const { status, redirectUrl } = attachResponse;
+      console.log("📤 Attach Response:", { status, redirectUrl, intentId });
+
       if (status === "awaiting_next_action" && redirectUrl) {
         // Redirect to bank's 3DS authentication page
+        console.log("🔄 Redirecting to 3DS:", redirectUrl);
         window.location.href = redirectUrl;
       } else {
         // succeeded or other terminal status
-        navigate("/wallet/payment-success", { state: { topUpId, amount } });
+        console.log("✅ Direct success, navigating with state:", { topUpId, amount, paymentId, paymongoPaymentIntentId: intentId });
+        navigate("/wallet/payment-success", { state: { topUpId, amount, paymentId, paymongoPaymentIntentId: intentId } });
       }
     } catch (err) {
       setError(

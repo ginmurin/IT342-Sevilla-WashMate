@@ -85,7 +85,19 @@ public class SubscriptionService {
                 .status("ACTIVE")
                 .build();
 
-        return userSubscriptionRepository.save(newSub);
+        UserSubscription savedSub = userSubscriptionRepository.save(newSub);
+
+        // Create Payment record (PENDING) for this subscription upgrade
+        Payment payment = Payment.builder()
+                .referenceType("SUBSCRIPTION")
+                .referenceId(savedSub.getUserSubscriptionId())
+                .amount(newPlan.getPlanPrice())
+                .paymentStatus("PENDING")
+                .build();
+
+        paymentService.savePayment(payment);
+
+        return savedSub;
     }
 
     /** Confirms subscription upgrade by linking the payment using polymorphic pattern. */

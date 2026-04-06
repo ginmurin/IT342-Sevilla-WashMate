@@ -31,14 +31,6 @@ const menuItems = {
     { icon: MessageSquare, label: 'Feedback', path: '/customer/feedback' },
     { icon: Settings, label: 'Settings', path: '/customer/settings' },
   ],
-  SHOPOWNER: [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/shop/dashboard' },
-    { icon: Package, label: "Today's Orders", path: '/shop/today' },
-    { icon: FileText, label: 'All Orders', path: '/shop/orders' },
-    { icon: Calendar, label: 'Schedule', path: '/shop/schedule' },
-    { icon: Store, label: 'Shop Settings', path: '/shop/settings' },
-    { icon: BarChart3, label: 'Performance', path: '/shop/performance' },
-  ],
   ADMIN: [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: Users, label: 'User Management', path: '/admin/users' },

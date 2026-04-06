@@ -73,6 +73,7 @@ public class WalletService {
                 .wallet(wallet)
                 .amount(amount)
                 .transactionType("CREDIT")
+                .referenceType("WALLET_TOPUP")
                 .status("PENDING")
                 .description("Wallet top-up via " + paymentMethod)
                 .balanceBefore(wallet.getAvailableBalance())
@@ -82,22 +83,31 @@ public class WalletService {
         transaction = walletTransactionRepository.save(transaction);
 
         // Create polymorphic payment referencing the wallet transaction
-        return paymentService.createAndSaveWalletTopupPayment(
+        Payment payment = paymentService.createAndSaveWalletTopupPayment(
                 transaction.getTransactionId(),
                 amount,
                 paymentMethod
         );
+
+        // Update transaction to reference the payment (bidirectional link)
+        transaction.setReferenceId(payment.getPaymentId());
+        walletTransactionRepository.save(transaction);
+
+        return payment;
     }
 
     /**
      * Confirm wallet top-up and update balance.
      */
     @Transactional
-    public WalletTransaction confirmWalletTopup(Long userId, String paymentId, BigDecimal amount) {
+    public WalletTransaction confirmWalletTopup(Long userId, String paymentId, BigDecimal amount, String paymongoPaymentIntentId) {
+        System.out.println("🔍 WalletService.confirmWalletTopup called with: paymentId=" + paymentId + ", amount=" + amount + ", paymongoPaymentIntentId=" + paymongoPaymentIntentId);
+
         Wallet wallet = getOrCreateWallet(userId);
 
-        // Find polymorphic payment by PayMongo ID
-        Payment payment = paymentService.getPaymentByPaymongoIntentId(paymentId)
+        // Find payment by database ID
+        Long paymentDbId = Long.parseLong(paymentId);
+        Payment payment = paymentService.getPaymentById(paymentDbId)
                 .orElseThrow(() -> new IllegalArgumentException("Payment not found"));
 
         if (!"WALLET_TOPUP".equals(payment.getReferenceType())) {
@@ -108,23 +118,31 @@ public class WalletService {
         WalletTransaction transaction = walletTransactionRepository.findById(payment.getReferenceId())
                 .orElseThrow(() -> new IllegalArgumentException("Wallet transaction not found"));
 
-        // Validate amount matches
-        if (amount.compareTo(payment.getAmount()) != 0) {
+        // Validate amount matches (if amount is provided)
+        if (amount != null && amount.compareTo(payment.getAmount()) != 0) {
             throw new IllegalArgumentException("Amount mismatch");
         }
 
         // Update wallet balance
-        wallet.setAvailableBalance(wallet.getAvailableBalance().add(amount));
+        wallet.setAvailableBalance(wallet.getAvailableBalance().add(payment.getAmount()));
         walletRepository.save(wallet);
 
         // Update transaction status and final balance
         transaction.setStatus("COMPLETED");
         transaction.setBalanceAfter(wallet.getAvailableBalance());
 
-        // Update payment status
+        // Update payment status and store PayMongo intent ID
         payment.setPaymentStatus("COMPLETED");
         payment.setPaymentDate(LocalDateTime.now());
+        System.out.println("💾 Setting paymongoPaymentIntentId: " + paymongoPaymentIntentId + " (null=" + (paymongoPaymentIntentId == null) + ", empty=" + (paymongoPaymentIntentId != null && paymongoPaymentIntentId.isEmpty()) + ")");
+        if (paymongoPaymentIntentId != null && !paymongoPaymentIntentId.isEmpty()) {
+            payment.setPaymongoPaymentIntentId(paymongoPaymentIntentId);
+            System.out.println("✅ PayMongo intent ID set on payment");
+        } else {
+            System.out.println("⚠️ PayMongo intent ID NOT set - null or empty");
+        }
         paymentService.savePayment(payment);
+        System.out.println("💾 Payment saved with paymongoPaymentIntentId: " + payment.getPaymongoPaymentIntentId());
 
         return walletTransactionRepository.save(transaction);
     }

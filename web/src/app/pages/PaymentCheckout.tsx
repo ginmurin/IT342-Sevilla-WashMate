@@ -25,10 +25,12 @@ function formatExpiry(value: string) {
 export default function PaymentCheckout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const state = (location.state as { orderId?: string; amount?: number }) ?? {};
-
-  const orderId = state.orderId ?? `ORD-${Date.now()}`;
-  const amount = state.amount ?? 0;
+  const state = (location.state as {
+    orderId?: number;
+    paymentId?: number;
+    amount?: number;
+    paymentMethod?: string;
+  }) ?? {};
 
   const [cardNumber, setCardNumber] = useState("");
   const [cardName, setCardName] = useState("");
@@ -38,6 +40,14 @@ export default function PaymentCheckout() {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  if (!state.paymentId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500">Invalid payment data. Please start over.</p>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +82,7 @@ export default function PaymentCheckout() {
 
     try {
       // 1. Create PaymentIntent
-      const { id: intentId, clientKey } = await createPaymentIntent(amount);
+      const { id: intentId, clientKey } = await createPaymentIntent(state.amount || 0);
 
       // 2. Create PaymentMethod from card details
       const paymentMethodId = await createCardPaymentMethod({
@@ -85,7 +95,7 @@ export default function PaymentCheckout() {
       });
 
       // 3. Attach — triggers 3DS if needed
-      const returnUrl = `${window.location.origin}/payment/success?orderId=${orderId}&amount=${amount}`;
+      const returnUrl = `${window.location.origin}/payment/success?orderId=${state.orderId}&paymentId=${state.paymentId}&amount=${state.amount}&paymongoPaymentIntentId=${intentId}`;
       const { status, redirectUrl } = await attachPaymentMethod(
         intentId,
         paymentMethodId,
@@ -93,14 +103,19 @@ export default function PaymentCheckout() {
         returnUrl
       );
 
+      console.log('💳 Card payment processing:', { intentId, orderId: state.orderId, paymentId: state.paymentId });
+
       if (status === "awaiting_next_action" && redirectUrl) {
         // Redirect to bank's 3DS authentication page
         window.location.href = redirectUrl;
       } else {
         // succeeded or other terminal status
-        navigate("/payment/success", { state: { orderId, amount } });
+        navigate("/payment/success", {
+          state: { orderId: state.orderId, paymentId: state.paymentId, amount: state.amount, paymongoPaymentIntentId: intentId },
+        });
       }
     } catch (err) {
+      console.error('❌ Card payment error:', err);
       setError(err instanceof Error ? err.message : "Payment processing failed. Please try again.");
       setIsProcessing(false);
     }
@@ -127,11 +142,11 @@ export default function PaymentCheckout() {
             <CardContent className="pt-5 pb-5 flex items-center justify-between">
               <div>
                 <p className="text-teal-100 text-sm">Order Reference</p>
-                <p className="font-mono font-semibold text-teal-100 text-sm">{orderId}</p>
+                <p className="font-mono font-semibold text-teal-100 text-sm">{state.orderId}</p>
               </div>
               <div className="text-right">
                 <p className="text-teal-100 text-sm">Amount Due</p>
-                <p className="text-3xl font-bold">₱{amount.toFixed(2)}</p>
+                <p className="text-3xl font-bold">₱{(state.amount ?? 0).toFixed(2)}</p>
               </div>
             </CardContent>
           </Card>
@@ -240,7 +255,7 @@ export default function PaymentCheckout() {
                   {isProcessing ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> Processing…</>
                   ) : (
-                    `Pay ₱${amount.toFixed(2)}`
+                    `Pay ₱${(state.amount ?? 0).toFixed(2)}`
                   )}
                 </Button>
               </form>

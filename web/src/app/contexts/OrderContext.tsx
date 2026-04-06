@@ -37,6 +37,9 @@ export interface OrderData {
   // Step 3: Payment & Review
   paymentMethod?: "gcash" | "maya" | "card" | "grab_pay" | "wallet";
   totalAmount?: number;
+
+  // Order ID from backend after submission
+  orderId?: number;
 }
 
 interface OrderContextType {
@@ -47,7 +50,7 @@ interface OrderContextType {
   nextStep: () => void;
   prevStep: () => void;
   resetOrder: () => void;
-  submitOrder: () => Promise<void>;
+  submitOrder: () => Promise<any>;
   isSubmitting: boolean;
   submitError: string | null;
 }
@@ -102,7 +105,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
     setCurrentStep(1);
   };
 
-  const submitOrder = async (): Promise<void> => {
+  const submitOrder = async (): Promise<any> => {
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -196,6 +199,19 @@ export function OrderProvider({ children }: { children: ReactNode }) {
 
       const response = await orderAPI.createOrder(request);
       console.log('Order created successfully:', response);
+
+      // Extract orderId from axios response.data (AxiosResponse wraps actual data in .data property)
+      const orderId = response?.orderId
+
+      if (!orderId) {
+        console.error('❌ No orderId found in response:', response);
+        throw new Error('Failed to get orderId from order creation');
+      }
+
+      console.log('✅ Order submitted with ID:', orderId);
+
+      // Store orderId in orderData for payment processing
+      setOrderData({ orderId });
 
       // Navigate to payment review page with order details
       navigate(`/order/payment-review`);

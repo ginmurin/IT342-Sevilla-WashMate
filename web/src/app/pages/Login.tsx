@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -96,7 +96,7 @@ function buildRoleOptions(dbRole: string): RoleOption[] {
 }
 
 export function Login() {
-  const { login } = useAuth();
+  const { login, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [error, setError] = useState<string | null>(null);
@@ -112,6 +112,19 @@ export function Login() {
     resolver: zodResolver(loginSchema),
     defaultValues: { emailOrUsername: "", password: "", rememberMe: false },
   });
+
+  // Redirect already-authenticated users to prevent infinite loops
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (user.role === "CUSTOMER") {
+        navigate("/customer", { replace: true });
+      } else if (user.role === "ADMIN") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+    }
+  }, [isAuthenticated, user, navigate]);
 
   // ── Step 1: authenticate → check role from DB ──────────────────────────────
   const onSubmit = async (data: LoginFormValues) => {

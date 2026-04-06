@@ -24,7 +24,6 @@ import PaymentReview from "./pages/PaymentReview";
 import MyOrders from "./pages/MyOrders";
 import Services from "./pages/Services";
 import { CustomerDashboard } from "./pages/CustomerDashboard";
-import { ShopDashboard } from "./pages/ShopDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import SubscriptionPlans from "./pages/SubscriptionPlans";
 import SubscriptionUpgradeReview from "./pages/SubscriptionUpgradeReview";
@@ -127,23 +126,13 @@ export const router = createBrowserRouter([
         path: "services",
         Component: Services,
       },
-      // Customer Routes — also accessible by SHOPOWNER and ADMIN
+      // Customer Routes — also accessible by ADMIN
       {
-        element: <ProtectedRoute allowedRoles={["CUSTOMER", "SHOPOWNER", "ADMIN"]} />,
+        element: <ProtectedRoute allowedRoles={["CUSTOMER", "ADMIN"]} />,
         children: [
           {
             path: "customer",
             Component: CustomerDashboard,
-          },
-        ],
-      },
-      // Shop Owner Routes — also accessible by ADMIN
-      {
-        element: <ProtectedRoute allowedRoles={["SHOPOWNER", "ADMIN"]} />,
-        children: [
-          {
-            path: "shop",
-            Component: ShopDashboard,
           },
         ],
       },
@@ -159,7 +148,7 @@ export const router = createBrowserRouter([
       },
       // Subscription Routes — accessible by all authenticated users
       {
-        element: <ProtectedRoute allowedRoles={["CUSTOMER", "SHOPOWNER", "ADMIN"]} />,
+        element: <ProtectedRoute allowedRoles={["CUSTOMER", "ADMIN"]} />,
         children: [
           {
             path: "subscriptions",
