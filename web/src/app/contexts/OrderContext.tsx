@@ -200,8 +200,8 @@ export function OrderProvider({ children }: { children: ReactNode }) {
       const response = await orderAPI.createOrder(request);
       console.log('Order created successfully:', response);
 
-      // Extract orderId from response (response.data is the OrderResponse object)
-      const orderId = response?.orderId || response?.data?.orderId;
+      // Extract orderId from axios response.data (AxiosResponse wraps actual data in .data property)
+      const orderId = response?.orderId
 
       if (!orderId) {
         console.error('❌ No orderId found in response:', response);
@@ -215,9 +215,6 @@ export function OrderProvider({ children }: { children: ReactNode }) {
 
       // Navigate to payment review page with order details
       navigate(`/order/payment-review`);
-
-      // Return the response so caller can access orderId
-      return { orderId, ...response };
     } catch (error) {
       console.error('Order creation failed:', error);
       setSubmitError(error instanceof Error ? error.message : 'Order creation failed');
