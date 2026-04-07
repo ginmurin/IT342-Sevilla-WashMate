@@ -38,8 +38,10 @@ export default function PaymentReview() {
 
     try {
       // 1. Submit order to backend
-      const submitResult = await submitOrder();
-      const orderId = submitResult?.orderId;
+      await submitOrder();
+
+      // 2. Get orderId from orderData (submitted by submitOrder)
+      const orderId = orderData.orderId;
 
       if (!orderId) {
         throw new Error("Failed to get order ID from submission - check console for details");
@@ -51,7 +53,7 @@ export default function PaymentReview() {
       const paymentResponse = await orderAPI.initiatePayment(orderId, selectedMethod);
       console.log("💳 Payment API response:", paymentResponse);
 
-      const paymentId = paymentResponse.data?.paymentId || paymentResponse?.paymentId;
+      const paymentId = paymentResponse.data.paymentId;
 
       if (!paymentId) {
         console.error("❌ No paymentId in response:", paymentResponse);
