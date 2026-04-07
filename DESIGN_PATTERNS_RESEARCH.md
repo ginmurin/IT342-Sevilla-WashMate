@@ -1,6 +1,15 @@
 # Design Patterns Research Document
 ## WashMate Project - IT342 Phase 3
 
+**Repository:** https://github.com/ginmurin/IT342-Sevilla-WashMate
+**Branch:** feature/design-patterns-refactor
+**Recent Commits:**
+- [70c3083](https://github.com/ginmurin/IT342-Sevilla-WashMate/commit/70c3083) - Add comprehensive design patterns research and refactoring documentation
+- [77afa4b](https://github.com/ginmurin/IT342-Sevilla-WashMate/commit/77afa4b) - Implement SubscriptionPlanCache Singleton
+- [4109bc2](https://github.com/ginmurin/IT342-Sevilla-WashMate/commit/4109bc2) - Implement OrderFacade for Order-Payment Orchestration
+- [29c9fd1](https://github.com/ginmurin/IT342-Sevilla-WashMate/commit/29c9fd1) - Apply Observer Pattern for Payment Confirmation Side-Effects
+- [44901b4](https://github.com/ginmurin/IT342-Sevilla-WashMate/commit/44901b4) - Apply Strategy Pattern for Payment Methods + Create Status Enums
+
 ---
 
 ## Executive Summary

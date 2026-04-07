@@ -102,8 +102,8 @@ public class DTOConverter {
         if (wallet != null) {
             dto.setWalletId(wallet.getWalletId());
             dto.setUserId(wallet.getUser().getUserId());
-            dto.setBalance(wallet.getBalance());
-            dto.setCreatedAt(wallet.getCreatedAt());
+            dto.setAvailableBalance(wallet.getAvailableBalance());
+            dto.setCurrency(wallet.getCurrency());
             dto.setUpdatedAt(wallet.getUpdatedAt());
         }
         return dto;

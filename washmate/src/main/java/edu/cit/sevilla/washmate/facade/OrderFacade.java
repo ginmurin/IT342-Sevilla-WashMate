@@ -68,7 +68,8 @@ public class OrderFacade {
     @Transactional
     public PaymentDTO initiatePayment(Long orderId, String paymentMethod) {
         // Fetch the order to get amount
-        Order order = orderService.getOrderById(orderId);
+        Order order = orderService.getOrderById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
 
         // Create payment using factory
         Payment payment = orderPaymentFactory.createPayment(orderId, order.getTotalAmount(), paymentMethod);
@@ -107,7 +108,8 @@ public class OrderFacade {
      * @return OrderDTO with order details
      */
     public OrderDTO getOrder(Long orderId) {
-        Order order = orderService.getOrderById(orderId);
+        Order order = orderService.getOrderById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
         return dtoConverter.toOrderDTO(order);
     }
 
