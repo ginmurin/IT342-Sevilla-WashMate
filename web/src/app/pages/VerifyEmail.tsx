@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent, ClipboardEvent } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
-import { supabase } from "../../lib/supabase";
 import { authAPI } from "../utils/api";
 import { Button } from "../components/Button";
 import {
@@ -109,7 +108,7 @@ type Step = "verify" | "success";
 export default function VerifyEmail() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, verifyEmail, login, logout } = useAuth();
+  const { user, login, logout } = useAuth();
 
   const email = location.state?.email || user?.email || "your email";
   const fromRegister = location.state?.fromRegister || false;
@@ -136,7 +135,7 @@ export default function VerifyEmail() {
       const dashPath =
         user.role === "CUSTOMER"
           ? "/customer"
-          : user.role === "SHOPOWNER"
+          : user.role === "SHOP_OWNER"
           ? "/shop"
           : user.role === "ADMIN"
           ? "/admin"
@@ -160,55 +159,40 @@ export default function VerifyEmail() {
     }
 
     setIsLoading(true);
-    const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
-      email,
-      token: code,
-      type: "signup",
-    });
+    try {
+      // Get user ID from state or AuthContext
+      const userId = location.state?.userId || user?.id;
+      if (!userId) {
+        setError("User ID not found. Please try again.");
+        setIsLoading(false);
+        return;
+      }
 
-    if (verifyError || !verifyData.session || !verifyData.user) {
+      const response = await authAPI.verifyEmail(userId, code);
+      login(response.user);
+
+      setIsLoading(false);
+      setOtpError(false);
+      setStep("success");
+    } catch (err: any) {
       setIsLoading(false);
       setOtpError(true);
-      setError("Invalid verification code. Please try again.");
-      return;
+      setError(err.message || "Invalid verification code. Please try again.");
     }
-
-    // Sync with Spring Boot — creates public.users record immediately so
-    // username login works right away
-    try {
-      const syncResult = await authAPI.sync({
-        email: verifyData.user.email!,
-        uuid: verifyData.user.id,
-        jwt: verifyData.session.access_token,
-        user_metadata: verifyData.user.user_metadata,
-      });
-      login(syncResult.user);
-    } catch (syncErr) {
-      console.error('Backend sync failed after OTP verification:', syncErr);
-      // Non-fatal: OTP was verified in Supabase, full sync will happen on next login
-    }
-
-    setIsLoading(false);
-    verifyEmail();
-    setOtpError(false);
-    setStep("success");
   };
 
   const handleResendEmail = async () => {
     setIsResending(true);
     setError(null);
     setOtpError(false);
-    const { error: resendError } = await supabase.auth.resend({
-      type: "signup",
-      email,
-    });
-    setIsResending(false);
-    if (!resendError) {
+    try {
+      await authAPI.resendOtp(email);
       setOtp(Array(6).fill(""));
       setCooldown(60);
-    } else {
-      setError("Failed to resend code. Please try again.");
+    } catch (err: any) {
+      setError(err.message || "Failed to resend code. Please try again.");
     }
+    setIsResending(false);
   };
 
   const handleGoToDashboard = () => {
@@ -219,7 +203,7 @@ export default function VerifyEmail() {
     const dashPath =
       user.role === "CUSTOMER"
         ? "/customer"
-        : user.role === "SHOPOWNER"
+        : user.role === "SHOP_OWNER"
         ? "/shop"
         : user.role === "ADMIN"
         ? "/admin"

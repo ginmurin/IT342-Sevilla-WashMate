@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../contexts/AuthContext";
-import { supabase } from "../../lib/supabase";
 import { authAPI } from "../utils/api";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
@@ -24,7 +23,7 @@ import { motion, AnimatePresence } from "motion/react";
 import laundryHero from "../../assets/laundry-hero.png";
 import type { User } from "../types";
 
-type Step = "credentials" | "role-select";
+type Step = "credentials" | "otp" | "role-select";
 
 const loginSchema = z.object({
   emailOrUsername: z.string().min(1, "Email or username is required"),
@@ -32,7 +31,12 @@ const loginSchema = z.object({
   rememberMe: z.boolean().optional(),
 });
 
+const otpSchema = z.object({
+  code: z.string().length(6, "OTP must be 6 digits"),
+});
+
 type LoginFormValues = z.infer<typeof loginSchema>;
+type OtpFormValues = z.infer<typeof otpSchema>;
 
 function GoogleIcon() {
   return (
@@ -70,7 +74,7 @@ function buildRoleOptions(dbRole: string): RoleOption[] {
     });
   }
 
-  if (dbRole === "ADMIN" || dbRole === "SHOPOWNER") {
+  if (dbRole === "ADMIN" || dbRole === "SHOP_OWNER") {
     options.push({
       label: "Shop Owner",
       description: "Manage your laundry shop",
@@ -103,14 +107,27 @@ export function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState<Step>("credentials");
   const [dbRole, setDbRole] = useState<string>("");
+  const [pendingUserId, setPendingUserId] = useState<number | null>(null);
+  const [pendingEmail, setPendingEmail] = useState<string>("");
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    reset: resetLoginForm,
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { emailOrUsername: "", password: "", rememberMe: false },
+  });
+
+  const {
+    register: registerOtp,
+    handleSubmit: handleOtpSubmit,
+    formState: { errors: otpErrors, isSubmitting: isOtpSubmitting },
+    reset: resetOtpForm,
+  } = useForm<OtpFormValues>({
+    resolver: zodResolver(otpSchema),
+    defaultValues: { code: "" },
   });
 
   // Redirect already-authenticated users to prevent infinite loops
@@ -126,38 +143,31 @@ export function Login() {
     }
   }, [isAuthenticated, user, navigate]);
 
-  // ── Step 1: authenticate → check role from DB ──────────────────────────────
+  // ── Step 1: Authenticate with email/password ──────────────────────────────
   const onSubmit = async (data: LoginFormValues) => {
     setError(null);
     try {
-      // Resolve username → email if no "@" present
-      let emailAddr = data.emailOrUsername;
-      if (!emailAddr.includes("@")) {
-        emailAddr = await authAPI.emailByUsername(data.emailOrUsername);
-      }
-
-      const { data: signInData, error: signInError } =
-        await supabase.auth.signInWithPassword({ email: emailAddr, password: data.password });
-
-      if (signInError) throw signInError;
-      if (!signInData.session || !signInData.user) throw new Error("Failed to create session");
-
-      // Sync with backend — returns the user entity including their role from DB
-      const syncResult = await authAPI.sync({
-        email: signInData.user.email!,
-        uuid: signInData.user.id,
-        jwt: signInData.session.access_token,
-        user_metadata: signInData.user.user_metadata,
+      const response = await authAPI.login({
+        emailOrUsername: data.emailOrUsername,
+        password: data.password,
       });
 
-      const userRole = String(syncResult.user.role).toUpperCase();
-      login(syncResult.user as User);
+      // If email verification required, show OTP screen
+      if (response.requiresEmailVerification) {
+        setPendingUserId(response.userId || null);
+        setPendingEmail(response.user.email);
+        setStep("otp");
+        resetOtpForm();
+        return;
+      }
+
+      // Email is verified, check role
+      const userRole = String(response.user.role).toUpperCase();
+      login(response.user);
 
       if (userRole === "CUSTOMER") {
-        // Customers go straight to their dashboard — no picker needed
         navigate("/customer", { replace: true });
       } else {
-        // SHOPOWNER / ADMIN → show role-select GUI
         setDbRole(userRole);
         setStep("role-select");
       }
@@ -166,13 +176,49 @@ export function Login() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  // ── Step 2: Verify OTP ─────────────────────────────────────────────────────
+  const onOtpSubmit = async (data: OtpFormValues) => {
     setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-    if (error) setError(error.message);
+    if (!pendingUserId) {
+      setError("User ID not found. Please try again.");
+      return;
+    }
+
+    try {
+      const response = await authAPI.verifyEmail(pendingUserId, data.code);
+
+      const userRole = String(response.user.role).toUpperCase();
+      login(response.user);
+
+      if (userRole === "CUSTOMER") {
+        navigate("/customer", { replace: true });
+      } else {
+        setDbRole(userRole);
+        setStep("role-select");
+      }
+    } catch (err: any) {
+      setError(err.message || "Invalid OTP. Please try again.");
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setError(null);
+    if (!pendingEmail) return;
+
+    try {
+      await authAPI.resendOtp(pendingEmail);
+      setError(null); // Clear error if any
+      // Show success message
+      alert("OTP resent to your email");
+    } catch (err: any) {
+      setError(err.message || "Failed to resend OTP.");
+    }
+  };
+
+  const handleGoogleSignIn = () => {
+    // Redirect to backend OAuth endpoint
+    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    window.location.href = `${backendUrl}/api/auth/google/login`;
   };
 
   const roleOptions = buildRoleOptions(dbRole);
@@ -225,12 +271,14 @@ export function Login() {
           {/* Title */}
           <div className="mb-8">
             <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
-              {step === "credentials" ? "Welcome Back" : "Choose Dashboard"}
+              {step === "credentials" ? "Welcome Back" : step === "otp" ? "Verify Email" : "Choose Dashboard"}
             </h1>
             <p className="text-slate-500 mt-1.5 text-sm">
               {step === "credentials"
                 ? "Sign in with your email or username."
-                : `You're signed in as ${dbRole === "ADMIN" ? "Admin" : "Shop Owner"}. Where would you like to go?`}
+                : step === "otp"
+                  ? "Enter the code sent to your email."
+                  : `You're signed in as ${dbRole === "ADMIN" ? "Admin" : "Shop Owner"}. Where would you like to go?`}
             </p>
           </div>
 
@@ -352,6 +400,79 @@ export function Login() {
                   <GoogleIcon />
                   Sign in with Google
                 </Button>
+              </motion.form>
+            )}
+
+            {/* ── Step 1.5: OTP Verification ── */}
+            {step === "otp" && (
+              <motion.form
+                key="otp"
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+                onSubmit={handleOtpSubmit(onOtpSubmit)}
+                className="space-y-5"
+              >
+                <p className="text-sm text-slate-600">
+                  We found an account for <strong>{pendingEmail}</strong>. Enter the 6-digit OTP sent to your email.
+                </p>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-700" htmlFor="otp-code">
+                    Verification Code
+                  </label>
+                  <Input
+                    id="otp-code"
+                    type="text"
+                    placeholder="000000"
+                    maxLength={6}
+                    inputMode="numeric"
+                    {...registerOtp("code")}
+                    className={`text-center tracking-widest text-lg font-mono ${
+                      otpErrors.code ? "border-red-400 focus-visible:ring-red-400" : ""
+                    }`}
+                  />
+                  {otpErrors.code && (
+                    <p className="text-xs text-red-500">{otpErrors.code.message}</p>
+                  )}
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isOtpSubmitting}
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white h-11 rounded-lg"
+                >
+                  {isOtpSubmitting ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                      className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                    />
+                  ) : "Verify"}
+                </Button>
+
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+                  >
+                    Resend OTP
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep("credentials");
+                      setPendingUserId(null);
+                      setPendingEmail("");
+                      resetLoginForm();
+                      resetOtpForm();
+                    }}
+                    className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                  >
+                    <ArrowLeft className="w-3 h-3" /> Back to login
+                  </button>
+                </div>
               </motion.form>
             )}
 

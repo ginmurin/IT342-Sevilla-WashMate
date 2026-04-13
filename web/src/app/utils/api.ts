@@ -1,44 +1,86 @@
 import axios from 'axios';
 import type { AuthResponse, LoginCredentials, RegisterData } from '../types';
 
-const BASE_URL = '';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
-// Create axios instance — requests go through Vite proxy to Spring Boot
+// Create axios instance
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Attach JWT token to every request (skip for auth endpoints)
+// Request interceptor: Attach JWT token to every request
 api.interceptors.request.use((config) => {
   const url = config.url ?? '';
+
+  // Don't attach token to auth endpoints or Google OAuth endpoints
   if (!url.startsWith('/api/auth/')) {
-    const token = localStorage.getItem('washmate_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const accessToken = localStorage.getItem('washmate_access_token');
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
   }
+
   return config;
 });
 
-// Handle API errors globally
+// Response interceptor: Handle token refresh on 401
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    const requestUrl = error.config?.url ?? '';
-    if (error.response?.status === 401 && !requestUrl.startsWith('/api/auth/')) {
-      localStorage.removeItem('washmate_token');
-      localStorage.removeItem('washmate_user');
-      window.location.href = '/login';
-      return Promise.reject(error);
+  async (error) => {
+    const originalRequest = error.config;
+    const requestUrl = originalRequest?.url ?? '';
+
+    // If 401 and not already retrying, try to refresh token
+    if (
+      error.response?.status === 401 &&
+      !requestUrl.startsWith('/api/auth/') &&
+      !originalRequest._retry
+    ) {
+      originalRequest._retry = true;
+
+      try {
+        const refreshToken = localStorage.getItem('washmate_refresh_token');
+        if (refreshToken) {
+          // Call refresh endpoint
+          const response = await api.post('/api/auth/refresh', {
+            refreshToken,
+          });
+
+          const newAccessToken = response.data.accessToken;
+          localStorage.setItem('washmate_access_token', newAccessToken);
+
+          // Retry original request with new token
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          return api(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError);
+        // Clear tokens and redirect to login
+        localStorage.removeItem('washmate_access_token');
+        localStorage.removeItem('washmate_refresh_token');
+        sessionStorage.removeItem('washmate_user');
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
     }
+
+    // Handle other 401 errors (no refresh token available)
+    if (error.response?.status === 401 && !requestUrl.startsWith('/api/auth/')) {
+      localStorage.removeItem('washmate_access_token');
+      localStorage.removeItem('washmate_refresh_token');
+      sessionStorage.removeItem('washmate_user');
+      window.location.href = '/login';
+    }
+
     // Surface the backend error message if available
     const backendMessage = error.response?.data?.error || error.response?.data?.message;
     if (backendMessage) {
       return Promise.reject(new Error(backendMessage));
     }
+
     return Promise.reject(error);
   }
 );
@@ -46,6 +88,9 @@ api.interceptors.response.use(
 // ── Auth API ───────────────────────────────────────────────────────────────────
 
 export const authAPI = {
+  /**
+   * Login with email/username and password
+   */
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     const response = await api.post('/api/auth/login', {
       emailOrUsername: credentials.emailOrUsername,
@@ -53,35 +98,47 @@ export const authAPI = {
     });
 
     const data = response.data;
-    const token: string = data.token;
 
-    // Persist token
-    localStorage.setItem('washmate_token', token);
+    // Check if email verification is required
+    if (data.requiresEmailVerification) {
+      return {
+        token: '', // No token yet
+        user: {
+          id: data.userId,
+          email: data.email,
+          username: null,
+          firstName: '',
+          lastName: '',
+          role: 'CUSTOMER',
+        },
+        requiresEmailVerification: true,
+        userId: data.userId,
+      };
+    }
 
-    // Map backend response → frontend AuthResponse shape
+    // Store tokens
+    localStorage.setItem('washmate_access_token', data.accessToken);
+    localStorage.setItem('washmate_refresh_token', data.refreshToken);
+
+    // Map backend response to frontend shape
     return {
-      token,
+      token: data.accessToken,
       user: {
         id: data.userId,
         username: data.username ?? null,
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
-        role: data.role.toUpperCase() as AuthResponse['user']['role'],
+        role: data.role.toUpperCase(),
       },
     };
   },
 
-  register: async (data: RegisterData): Promise<AuthResponse> => {
-    const response = await api.post<{
-      token: string;
-      userId: number;
-      username: string | null;
-      firstName: string;
-      lastName: string;
-      email: string;
-      role: string;
-    }>('/api/auth/register', {
+  /**
+   * Register with email, username, and password
+   */
+  register: async (data: RegisterData): Promise<{ userId: number; email: string; requiresEmailVerification: boolean }> => {
+    const response = await api.post('/api/auth/register', {
       username: data.username || null,
       firstName: data.firstName,
       lastName: data.lastName,
@@ -91,70 +148,155 @@ export const authAPI = {
       role: data.role ? data.role.toUpperCase() : 'CUSTOMER',
     });
 
-    const d = response.data;
-    localStorage.setItem('washmate_token', d.token);
-
     return {
-      token: d.token,
-      user: {
-        id: d.userId,
-        username: d.username ?? null,
-        firstName: d.firstName,
-        lastName: d.lastName,
-        email: d.email,
-        role: d.role.toUpperCase() as AuthResponse['user']['role'],
-      },
+      userId: response.data.userId,
+      email: response.data.email,
+      requiresEmailVerification: response.data.requiresEmailVerification,
     };
   },
 
-  sync: async (data: { email: string; uuid: string; jwt: string; user_metadata: any; }): Promise<AuthResponse> => {
-    // We send the Supabase JWT in the Authorization header to authenticate the request
-    const response = await api.post<{
-      userId: number;
-      username: string | null;
-      firstName: string;
-      lastName: string;
-      email: string;
-      role: string;
-    }>('/api/auth/register', {
-      email: data.email,
-      username: data.user_metadata.username || null,
-      firstName: data.user_metadata.first_name || '',
-      lastName: data.user_metadata.last_name || '',
-      phoneNumber: data.user_metadata.phone || null,
-      role: 'CUSTOMER', // Default role for now, could be passed from metadata if you allow it
-    }, {
-      headers: {
-        Authorization: `Bearer ${data.jwt}`
-      }
+  /**
+   * Verify email with OTP code
+   */
+  verifyEmail: async (userId: number, code: string): Promise<AuthResponse> => {
+    const response = await api.post('/api/auth/verify-email', {
+      userId,
+      code,
     });
 
-    const d = response.data;
-    localStorage.setItem('washmate_token', data.jwt);
+    const data = response.data;
+
+    // Store tokens
+    localStorage.setItem('washmate_access_token', data.accessToken);
+    localStorage.setItem('washmate_refresh_token', data.refreshToken);
 
     return {
-      token: data.jwt,
+      token: data.accessToken,
       user: {
-        id: d.userId,
-        username: d.username ?? null,
-        firstName: d.firstName,
-        lastName: d.lastName,
-        email: d.email,
-        role: d.role.toUpperCase() as AuthResponse['user']['role'],
+        id: data.userId,
+        username: data.username ?? null,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        role: data.role.toUpperCase(),
       },
     };
   },
 
-  logout: async (): Promise<void> => {
-    localStorage.removeItem('washmate_token');
-    localStorage.removeItem('washmate_user');
+  /**
+   * Resend OTP code
+   */
+  resendOtp: async (email: string): Promise<{ message: string; expiresIn: number }> => {
+    const response = await api.post('/api/auth/resend-otp', { email });
+    return response.data;
   },
 
+  /**
+   * Initiate password reset
+   */
+  forgotPassword: async (email: string): Promise<{ message: string; expiresIn: number }> => {
+    const response = await api.post('/api/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  /**
+   * Reset password with code
+   */
+  resetPassword: async (email: string, code: string, newPassword: string): Promise<{ message: string }> => {
+    const response = await api.post('/api/auth/reset-password', {
+      email,
+      code,
+      newPassword,
+    });
+    return response.data;
+  },
+
+  /**
+   * Refresh access token
+   */
+  refreshToken: async (refreshToken: string): Promise<string> => {
+    const response = await api.post('/api/auth/refresh', {
+      refreshToken,
+    });
+    return response.data.accessToken;
+  },
+
+  /**
+   * Logout
+   */
+  logout: async (refreshToken?: string): Promise<void> => {
+    try {
+      if (refreshToken) {
+        await api.post('/api/auth/logout', { refreshToken });
+      }
+    } finally {
+      localStorage.removeItem('washmate_access_token');
+      localStorage.removeItem('washmate_refresh_token');
+      sessionStorage.removeItem('washmate_user');
+    }
+  },
+
+  /**
+   * Get email by username (for login form)
+   */
   emailByUsername: async (username: string): Promise<string> => {
     const response = await api.get<{ email: string }>(`/api/auth/email-by-username?username=${encodeURIComponent(username)}`);
     return response.data.email;
   },
+
+  /**
+   * Exchange OAuth redirect code for tokens
+   */
+  verifyRedirectCode: async (redirectCode: string): Promise<AuthResponse> => {
+    const response = await api.post('/api/auth/verify-redirect-code', {
+      redirectCode,
+    });
+
+    const data = response.data;
+
+    // Store tokens
+    localStorage.setItem('washmate_access_token', data.accessToken);
+    localStorage.setItem('washmate_refresh_token', data.refreshToken);
+
+    return {
+      token: data.accessToken,
+      user: {
+        id: data.userId,
+        username: data.username ?? null,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        role: data.role.toUpperCase(),
+      },
+    };
+  },
+
+  /**
+   * Google OAuth with ID token (mobile flow)
+   */
+  loginWithGoogle: async (idToken: string): Promise<AuthResponse> => {
+    const response = await api.post('/api/auth/google/mobile', {
+      idToken,
+    });
+
+    const data = response.data;
+
+    // Store tokens
+    localStorage.setItem('washmate_access_token', data.accessToken);
+    localStorage.setItem('washmate_refresh_token', data.refreshToken);
+
+    return {
+      token: data.accessToken,
+      user: {
+        id: data.userId,
+        username: data.username ?? null,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        role: data.role.toUpperCase(),
+      },
+    };
+  },
 };
 
 export default api;
-

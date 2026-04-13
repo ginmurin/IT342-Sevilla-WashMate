@@ -39,8 +39,8 @@ public class WalletController {
      */
     @GetMapping("/balance")
     public ResponseEntity<WalletDTO> getWalletBalance(@AuthenticationPrincipal Jwt jwt) {
-        String oauthId = jwt.getSubject();
-        User user = userRepository.findByOauthId(oauthId)
+        Long userId = Long.parseLong(jwt.getSubject());
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Wallet wallet = walletService.getOrCreateWallet(user.getUserId());
@@ -55,8 +55,8 @@ public class WalletController {
             @RequestParam BigDecimal amount,
             @AuthenticationPrincipal Jwt jwt) {
 
-        String oauthId = jwt.getSubject();
-        User user = userRepository.findByOauthId(oauthId)
+        Long userId = Long.parseLong(jwt.getSubject());
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         boolean hasSufficient = walletService.hasSufficientBalance(user.getUserId(), amount);
@@ -79,8 +79,8 @@ public class WalletController {
             @Validated @RequestBody WalletTopupRequest request,
             @AuthenticationPrincipal Jwt jwt) {
 
-        String oauthId = jwt.getSubject();
-        User user = userRepository.findByOauthId(oauthId)
+        Long userId = Long.parseLong(jwt.getSubject());
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (request == null || request.getAmount() == null || request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
@@ -108,8 +108,8 @@ public class WalletController {
             @RequestBody(required = false) Map<String, Object> request,
             @AuthenticationPrincipal Jwt jwt) {
 
-        String oauthId = jwt.getSubject();
-        User user = userRepository.findByOauthId(oauthId)
+        Long userId = Long.parseLong(jwt.getSubject());
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Get amount from request or from payment record
@@ -150,8 +150,8 @@ public class WalletController {
     public ResponseEntity<List<WalletTransactionDTO>> getWalletTransactions(
             @AuthenticationPrincipal Jwt jwt) {
 
-        String oauthId = jwt.getSubject();
-        User user = userRepository.findByOauthId(oauthId)
+        Long userId = Long.parseLong(jwt.getSubject());
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<WalletTransaction> transactions = walletService.getWalletTransactions(user.getUserId());
@@ -169,8 +169,8 @@ public class WalletController {
     public ResponseEntity<List<WalletTransactionDTO>> getPendingTransactions(
             @AuthenticationPrincipal Jwt jwt) {
 
-        String oauthId = jwt.getSubject();
-        User user = userRepository.findByOauthId(oauthId)
+        Long userId = Long.parseLong(jwt.getSubject());
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<WalletTransaction> transactions = walletService.getPendingTransactions(user.getUserId());
@@ -189,8 +189,8 @@ public class WalletController {
             @PathVariable String referenceType,
             @AuthenticationPrincipal Jwt jwt) {
 
-        String oauthId = jwt.getSubject();
-        User user = userRepository.findByOauthId(oauthId)
+        Long userId = Long.parseLong(jwt.getSubject());
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<WalletTransaction> transactions = walletService.getTransactionsByReferenceType(
@@ -213,8 +213,8 @@ public class WalletController {
             @RequestBody Map<String, BigDecimal> request,
             @AuthenticationPrincipal Jwt jwt) {
 
-        String oauthId = jwt.getSubject();
-        User user = userRepository.findByOauthId(oauthId)
+        Long userId = Long.parseLong(jwt.getSubject());
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         BigDecimal amount = request.get("amount");
@@ -234,8 +234,8 @@ public class WalletController {
             @RequestBody WalletDebitRequest request,
             @AuthenticationPrincipal Jwt jwt) {
 
-        String oauthId = jwt.getSubject();
-        User user = userRepository.findByOauthId(oauthId)
+        Long userId = Long.parseLong(jwt.getSubject());
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {

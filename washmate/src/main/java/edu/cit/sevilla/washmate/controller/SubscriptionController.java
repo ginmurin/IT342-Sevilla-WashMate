@@ -31,8 +31,8 @@ public class SubscriptionController {
      */
     @GetMapping("/me")
     public ResponseEntity<?> getMySubscription(@AuthenticationPrincipal Jwt jwt) {
-        String oauthId = jwt.getSubject();
-        User user = userRepository.findByOauthId(oauthId)
+        Long userId = Long.parseLong(jwt.getSubject());
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         var current = subscriptionService.getCurrentSubscription(user.getUserId());

@@ -1,83 +1,68 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
-import { supabase } from "../../lib/supabase";
-import { authAPI } from "../utils/api";
+import { useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { Droplets, AlertCircle } from "lucide-react";
 import { motion } from "motion/react";
 import { Button } from "../components/Button";
+import type { User } from "../types";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [searchParams] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let unsubscribed = false;
-
-    const syncAndRedirect = async (session: NonNullable<Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]>) => {
-      if (unsubscribed) return;
+    const handleCallback = async () => {
       try {
-        const meta = session.user.user_metadata ?? {};
+        // Get tokens and user info from query parameters
+        const accessToken = searchParams.get("accessToken");
+        const refreshToken = searchParams.get("refreshToken");
+        const userId = searchParams.get("userId");
+        const email = searchParams.get("email");
+        const firstName = searchParams.get("firstName");
+        const lastName = searchParams.get("lastName");
+        const username = searchParams.get("username");
+        const role = searchParams.get("role");
 
-        // Google sends "full_name"; split it into first/last for the backend
-        const fullName: string = meta.full_name || meta.name || "";
-        const [firstName = "", ...rest] = fullName.trim().split(" ");
-        const lastName = rest.join(" ");
+        if (!accessToken || !refreshToken || !userId) {
+          setError("Missing authentication data");
+          setIsLoading(false);
+          return;
+        }
 
-        const syncResult = await authAPI.sync({
-          email: session.user.email!,
-          uuid: session.user.id,
-          jwt: session.access_token,
-          user_metadata: {
-            ...meta,
-            first_name: meta.first_name || firstName,
-            last_name: meta.last_name || lastName,
-          },
-        });
+        // Store tokens in localStorage
+        localStorage.setItem("washmate_access_token", accessToken);
+        localStorage.setItem("washmate_refresh_token", refreshToken);
 
-        login(syncResult.user);
+        // Create user object
+        const user: User = {
+          id: parseInt(userId),
+          email: email || "",
+          username: username || null,
+          firstName: firstName || "",
+          lastName: lastName || "",
+          role: (role || "CUSTOMER") as "CUSTOMER" | "SHOP_OWNER" | "ADMIN",
+        };
 
-        const role = String(syncResult.user.role).toUpperCase();
-        if (role === "CUSTOMER") navigate("/customer", { replace: true });
-        else if (role === "ADMIN") navigate("/admin", { replace: true });
+        // Login and redirect to dashboard
+        login(user);
+        const userRole = String(role).toUpperCase();
+        if (userRole === "CUSTOMER") navigate("/customer", { replace: true });
+        else if (userRole === "ADMIN") navigate("/admin", { replace: true });
+        else if (userRole === "SHOP_OWNER") navigate("/shop", { replace: true });
         else navigate("/", { replace: true });
       } catch (err) {
-        if (!unsubscribed) {
-          setError(err instanceof Error ? err.message : "Failed to complete sign-in.");
-        }
+        const errorMessage = err instanceof Error ? err.message : "Authentication failed";
+        setError(errorMessage);
+        console.error("OAuth callback error:", err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    // Try to get an existing session first (handles implicit/PKCE exchange)
-    supabase.auth.getSession().then(({ data: { session }, error: sessionError }) => {
-      if (sessionError) {
-        setError(sessionError.message);
-        return;
-      }
-      if (session) {
-        syncAndRedirect(session);
-        return;
-      }
-
-      // Session not ready yet — listen for the SIGNED_IN event (PKCE flow)
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        if (event === "SIGNED_IN" && session) {
-          subscription.unsubscribe();
-          syncAndRedirect(session);
-        } else if (event === "SIGNED_OUT") {
-          setError("Authentication was cancelled. Please try again.");
-        }
-      });
-
-      // Clean up listener if component unmounts before auth fires
-      return () => {
-        unsubscribed = true;
-        subscription.unsubscribe();
-      };
-    });
-
-    return () => { unsubscribed = true; };
+    handleCallback();
   }, []);
 
   if (error) {
@@ -104,27 +89,31 @@ export default function AuthCallback() {
     );
   }
 
-  return (
-    <div className="flex-1 flex items-center justify-center min-h-screen">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="flex flex-col items-center gap-5"
-      >
-        {/* Logo */}
-        <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center">
-          <Droplets className="w-6 h-6 text-teal-600" />
-        </div>
-
-        {/* Spinner */}
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center min-h-screen">
         <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-          className="w-8 h-8 border-3 border-teal-200 border-t-teal-600 rounded-full"
-        />
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center gap-5"
+        >
+          {/* Logo */}
+          <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center">
+            <Droplets className="w-6 h-6 text-teal-600" />
+          </div>
 
-        <p className="text-sm text-slate-500">Completing sign-in…</p>
-      </motion.div>
-    </div>
-  );
+          {/* Spinner */}
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+            className="w-8 h-8 border-3 border-teal-200 border-t-teal-600 rounded-full"
+          />
+
+          <p className="text-sm text-slate-500">Completing sign-in…</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return null;
 }

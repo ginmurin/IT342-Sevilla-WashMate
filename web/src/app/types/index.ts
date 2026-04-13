@@ -1,4 +1,4 @@
-export type UserRole = 'CUSTOMER' | 'ADMIN';
+export type UserRole = 'CUSTOMER' | 'ADMIN' | 'SHOP_OWNER';
 
 export interface User {
   id: number;
@@ -14,6 +14,8 @@ export interface User {
 export interface AuthResponse {
   token: string;
   user: User;
+  requiresEmailVerification?: boolean;
+  userId?: number;
 }
 
 export interface LoginCredentials {

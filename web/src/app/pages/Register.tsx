@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../contexts/AuthContext";
-import { supabase } from "../../lib/supabase";
 import { authAPI } from "../utils/api";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
@@ -65,7 +64,12 @@ const registerSchema = z
     path: ["confirm_password"],
   });
 
+const otpSchema = z.object({
+  code: z.string().length(6, "OTP must be 6 digits"),
+});
+
 type RegisterFormValues = z.infer<typeof registerSchema>;
+type OtpFormValues = z.infer<typeof otpSchema>;
 
 function PasswordStrength({ password }: { password: string }) {
   const checks = [
@@ -239,8 +243,12 @@ export function Register() {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [termsModal, setTermsModal] = useState<"terms" | "privacy" | null>(null);
+  const [pendingUserId, setPendingUserId] = useState<number | null>(null);
+  const [pendingEmail, setPendingEmail] = useState<string>("");
+  const [verifiedUser, setVerifiedUser] = useState<any>(null);
+  const [pendingFormData, setPendingFormData] = useState<RegisterFormValues | null>(null);
 
   const {
     register: formRegister,
@@ -262,6 +270,15 @@ export function Register() {
     },
   });
 
+  const {
+    register: registerOtp,
+    handleSubmit: handleOtpSubmit,
+    formState: { errors: otpErrors, isSubmitting: isOtpSubmitting },
+  } = useForm<OtpFormValues>({
+    resolver: zodResolver(otpSchema),
+    defaultValues: { code: "" },
+  });
+
   const watchPassword = watch("password");
 
   const goToStep2 = async () => {
@@ -275,47 +292,27 @@ export function Register() {
     if (isValid) setStep(2);
   };
 
+  // ── Step 1 & 2: Submit registration ────────────────────────────────────────
   const onSubmit = async (data: RegisterFormValues) => {
     setError(null);
+    setPendingFormData(data);
+
     try {
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      const registerResponse = await authAPI.register({
         email: data.email,
+        username: data.username,
+        firstName: data.first_name,
+        lastName: data.last_name,
         password: data.password,
-        options: {
-          data: {
-            username: data.username,
-            first_name: data.first_name,
-            last_name: data.last_name,
-            phone: data.phone_number,
-          },
-        },
+        phone: data.phone_number,
       });
 
-      if (signUpError) {
-        throw signUpError;
-      }
+      // Store pending info for OTP verification
+      setPendingUserId(registerResponse.userId);
+      setPendingEmail(registerResponse.email);
 
-      // If Supabase returned a session (auto-confirm enabled), sync immediately
-      if (signUpData.session && signUpData.user) {
-        const syncResult = await authAPI.sync({
-          email: signUpData.user.email!,
-          uuid: signUpData.user.id,
-          jwt: signUpData.session.access_token,
-          user_metadata: signUpData.user.user_metadata,
-        });
-        login(syncResult.user);
-
-        const role = String(syncResult.user.role).toUpperCase();
-        if (role === "CUSTOMER") navigate("/customer", { replace: true });
-        else if (role === "ADMIN") navigate("/admin", { replace: true });
-        else navigate("/", { replace: true });
-      } else {
-        // OTP flow — redirect to verify-email page
-        navigate("/verify-email", {
-          state: { email: data.email, fromRegister: true },
-          replace: true,
-        });
-      }
+      // Show OTP verification step
+      setStep(3);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Registration failed. Please try again.";
       if (message.toLowerCase().includes("username")) setStep(1);
@@ -323,18 +320,46 @@ export function Register() {
     }
   };
 
-  const handleGoogleSignUp = async () => {
+  // ── Step 3: OTP Verification ───────────────────────────────────────────────
+  const onOtpSubmit = async (data: OtpFormValues) => {
     setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-    if (error) setError(error.message);
+    if (!pendingUserId) {
+      setError("User ID not found. Please try again.");
+      return;
+    }
+
+    try {
+      const response = await authAPI.verifyEmail(pendingUserId, data.code);
+      // Store user and show success screen (don't login yet)
+      setVerifiedUser(response.user);
+      setStep(4);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid OTP. Please try again.");
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setError(null);
+    if (!pendingEmail) return;
+
+    try {
+      await authAPI.resendOtp(pendingEmail);
+      alert("OTP resent to your email");
+    } catch (err: any) {
+      setError(err.message || "Failed to resend OTP.");
+    }
+  };
+
+  const handleGoogleSignUp = () => {
+    // Redirect to backend OAuth endpoint
+    window.location.href = "/api/auth/google/login";
   };
 
   const stepInfo = [
     { num: 1, label: "Your Info" },
     { num: 2, label: "Security" },
+    { num: 3, label: "Verify" },
+    { num: 4, label: "Complete" },
   ];
 
   return (
@@ -827,6 +852,126 @@ export function Register() {
                           <ArrowRight className="w-4 h-4" />
                         </>
                       )}
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+
+              {step === 3 && (
+                <motion.div
+                  key="step3"
+                  initial={{ opacity: 0, x: 24 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 24 }}
+                  transition={{ duration: 0.25 }}
+                  className="space-y-4"
+                >
+                  <p className="text-sm text-slate-600">
+                    We sent a 6-digit code to <strong>{pendingEmail}</strong>. Enter it below to verify your email.
+                  </p>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-slate-700" htmlFor="otp-code">
+                      Verification Code
+                    </label>
+                    <Input
+                      id="otp-code"
+                      type="text"
+                      placeholder="000000"
+                      maxLength={6}
+                      inputMode="numeric"
+                      {...registerOtp("code")}
+                      className={`text-center tracking-widest text-lg font-mono ${
+                        otpErrors.code ? "border-red-400 focus-visible:ring-red-400" : ""
+                      }`}
+                    />
+                    {otpErrors.code && (
+                      <p className="text-xs text-red-500">{otpErrors.code.message}</p>
+                    )}
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={handleOtpSubmit(onOtpSubmit)}
+                    disabled={isOtpSubmitting}
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-white h-11 rounded-lg"
+                  >
+                    {isOtpSubmitting ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                        className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                      />
+                    ) : "Verify Email"}
+                  </Button>
+
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+                    >
+                      Resend Code
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStep(2)}
+                      className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                    >
+                      <ArrowLeft className="w-3 h-3" /> Back to password
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {step === 4 && (
+                <motion.div
+                  key="step4"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6 text-center"
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+                    className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center mx-auto"
+                  >
+                    <CheckCircle2 className="w-8 h-8 text-teal-600" />
+                  </motion.div>
+
+                  <div>
+                    <h2 className="text-2xl font-semibold text-slate-900 mb-2">
+                      Email Verified!
+                    </h2>
+                    <p className="text-slate-600 text-sm">
+                      Your account is all set. You're ready to get started with WashMate.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 pt-4">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        login(verifiedUser);
+                        const role = String(verifiedUser?.role).toUpperCase();
+                        if (role === "CUSTOMER") navigate("/customer", { replace: true });
+                        else if (role === "ADMIN") navigate("/admin", { replace: true });
+                        else navigate("/", { replace: true });
+                      }}
+                      className="w-full bg-teal-600 hover:bg-teal-700 text-white h-11 rounded-lg"
+                    >
+                      Go to Dashboard
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => navigate("/login", { replace: true })}
+                      className="w-full text-slate-700 h-11 rounded-lg border-slate-200"
+                    >
+                      Go to Login
                     </Button>
                   </div>
                 </motion.div>

@@ -18,7 +18,7 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
     switch (user.role) {
       case "CUSTOMER":
         return <Navigate to="/customer" replace />;
-      case "SHOPOWNER":
+      case "SHOP_OWNER":
         return <Navigate to="/shop" replace />;
       case "ADMIN":
         return <Navigate to="/admin" replace />;

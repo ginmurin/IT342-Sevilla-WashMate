@@ -39,8 +39,8 @@ public class OrderController {
             @Validated @RequestBody OrderRequest request,
             @AuthenticationPrincipal Jwt jwt) {
 
-        String oauthId = jwt.getSubject();
-        User user = userRepository.findByOauthId(oauthId)
+        Long userId = Long.parseLong(jwt.getSubject());
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Order order = orderService.createOrder(request, user);
@@ -129,8 +129,8 @@ public class OrderController {
      */
     @GetMapping("/my-orders")
     public ResponseEntity<List<OrderDTO>> getMyOrders(@AuthenticationPrincipal Jwt jwt) {
-        String oauthId = jwt.getSubject();
-        User user = userRepository.findByOauthId(oauthId)
+        Long userId = Long.parseLong(jwt.getSubject());
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<Order> orders = orderService.getOrdersByCustomer(user.getUserId());
@@ -162,8 +162,8 @@ public class OrderController {
             @PathVariable String status,
             @AuthenticationPrincipal Jwt jwt) {
 
-        String oauthId = jwt.getSubject();
-        User user = userRepository.findByOauthId(oauthId)
+        Long userId = Long.parseLong(jwt.getSubject());
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<Order> allOrders = orderService.getOrdersByStatus(status);
@@ -224,8 +224,8 @@ public class OrderController {
      * Verify that the order belongs to the authenticated user.
      */
     private void verifyOrderOwnership(Long orderId, Jwt jwt) {
-        String oauthId = jwt.getSubject();
-        User user = userRepository.findByOauthId(oauthId)
+        Long userId = Long.parseLong(jwt.getSubject());
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Order order = orderService.getOrderById(orderId)

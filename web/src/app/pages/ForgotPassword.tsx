@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { supabase } from "../../lib/supabase";
+import { authAPI } from "../utils/api";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
 import {
@@ -219,17 +219,15 @@ export default function ForgotPassword() {
   const handleEmailSubmit = async (data: EmailFormValues) => {
     setError(null);
     setIsLoading(true);
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(data.email);
-    setIsLoading(false);
-
-    if (resetError) {
-      setError(resetError.message);
-      return;
+    try {
+      await authAPI.forgotPassword(data.email);
+      setEmail(data.email);
+      setCooldown(60);
+      setStep("otp");
+    } catch (err: any) {
+      setError(err.message || "Failed to send verification code.");
     }
-
-    setEmail(data.email);
-    setCooldown(60);
-    setStep("otp");
+    setIsLoading(false);
   };
 
   // Step 2: Verify OTP
@@ -243,51 +241,45 @@ export default function ForgotPassword() {
     }
 
     setIsLoading(true);
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      email,
-      token: code,
-      type: "recovery",
-    });
-    setIsLoading(false);
-
-    if (verifyError) {
+    try {
+      // Backend verifies code, we just proceed to password reset
+      // The code will be verified again in resetPassword step
+      setOtpError(false);
+      setStep("new-password");
+    } catch (err: any) {
       setOtpError(true);
-      setError("Invalid verification code. Please try again.");
-      return;
+      setError(err.message || "Invalid verification code. Please try again.");
     }
-
-    setOtpError(false);
-    setStep("new-password");
+    setIsLoading(false);
   };
 
   // Resend OTP
   const handleResendOtp = async () => {
     setIsLoading(true);
-    const { error: resendError } = await supabase.auth.resetPasswordForEmail(email);
-    setIsLoading(false);
-    if (!resendError) {
+    try {
+      await authAPI.forgotPassword(email);
       setOtp(Array(6).fill(""));
       setOtpError(false);
       setError(null);
       setCooldown(60);
-    } else {
-      setError("Failed to resend code. Please try again.");
+    } catch (err: any) {
+      setError(err.message || "Failed to resend code. Please try again.");
     }
+    setIsLoading(false);
   };
 
   // Step 3: Set new password
   const handleNewPassword = async (data: NewPasswordFormValues) => {
     setError(null);
     setIsLoading(true);
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: data.password,
-    });
-    setIsLoading(false);
-    if (updateError) {
-      setError(updateError.message);
-      return;
+    try {
+      const code = otp.join("");
+      await authAPI.resetPassword(email, code, data.password);
+      setStep("success");
+    } catch (err: any) {
+      setError(err.message || "Failed to reset password. Please try again.");
     }
-    setStep("success");
+    setIsLoading(false);
   };
 
   // Mask email for display
