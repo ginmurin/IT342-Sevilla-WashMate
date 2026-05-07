@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import edu.cit.sevilla.washmate.features.users.User;
 
 /**
  * Loads key=value pairs from a .env file located in the working directory
@@ -103,3 +104,4 @@ public class DotenvEnvironmentPostProcessor implements EnvironmentPostProcessor 
         return null;
     }
 }
+

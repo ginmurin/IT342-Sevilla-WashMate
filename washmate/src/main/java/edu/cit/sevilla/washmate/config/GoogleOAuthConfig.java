@@ -12,3 +12,4 @@ import org.springframework.context.annotation.Configuration;
 public class GoogleOAuthConfig {
     private String frontendRedirectUri;
 }
+

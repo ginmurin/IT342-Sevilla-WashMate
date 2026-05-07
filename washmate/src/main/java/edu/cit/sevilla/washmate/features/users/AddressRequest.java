@@ -1,0 +1,19 @@
+package edu.cit.sevilla.washmate.features.users;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
+@Data
+public class AddressRequest {
+
+    private String label;
+
+    @NotBlank(message = "Full address is required")
+    private String fullAddress;
+
+    private String city;
+    private Double latitude;
+    private Double longitude;
+    private Boolean isDefault = false;
+}
+

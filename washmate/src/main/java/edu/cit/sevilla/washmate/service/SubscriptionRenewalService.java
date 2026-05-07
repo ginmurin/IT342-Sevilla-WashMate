@@ -1,9 +1,9 @@
 package edu.cit.sevilla.washmate.service;
 
-import edu.cit.sevilla.washmate.entity.Subscription;
-import edu.cit.sevilla.washmate.entity.UserSubscription;
-import edu.cit.sevilla.washmate.repository.SubscriptionRepository;
-import edu.cit.sevilla.washmate.repository.UserSubscriptionRepository;
+import edu.cit.sevilla.washmate.features.subscriptions.Subscription;
+import edu.cit.sevilla.washmate.features.subscriptions.UserSubscription;
+import edu.cit.sevilla.washmate.features.subscriptions.SubscriptionRepository;
+import edu.cit.sevilla.washmate.features.subscriptions.UserSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import edu.cit.sevilla.washmate.features.users.User;
+import edu.cit.sevilla.washmate.features.wallet.Wallet;
+import edu.cit.sevilla.washmate.features.payments.Payment;
 
 @Slf4j
 @Service
@@ -65,3 +68,4 @@ public class SubscriptionRenewalService {
         }
     }
 }
+

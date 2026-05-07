@@ -1,7 +1,7 @@
 package edu.cit.sevilla.washmate.security;
 
-import edu.cit.sevilla.washmate.entity.User;
-import edu.cit.sevilla.washmate.repository.UserRepository;
+import edu.cit.sevilla.washmate.features.users.User;
+import edu.cit.sevilla.washmate.features.users.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -30,3 +30,4 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         );
     }
 }
+

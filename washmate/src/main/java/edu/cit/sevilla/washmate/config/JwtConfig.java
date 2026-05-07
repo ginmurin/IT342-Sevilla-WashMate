@@ -14,3 +14,4 @@ public class JwtConfig {
     private long accessTokenExpiration;
     private long refreshTokenExpiration;
 }
+
