@@ -33,8 +33,8 @@ function MiniBarChart({ data }: { data: RevenueDataPoint[] }) {
       {data.map((d, i) => {
         const height = (d.revenue / maxRevenue) * 100;
         return (
-          <div key={i} className="flex-1 flex flex-col items-center gap-1">
-            <div className="w-full relative group">
+          <div key={i} className="flex-1 flex flex-col items-center gap-1 h-full">
+            <div className="w-full relative group flex-1 flex items-end">
               {/* Tooltip */}
               <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                 ₱{d.revenue.toLocaleString()} · {d.orders} orders
@@ -51,7 +51,7 @@ function MiniBarChart({ data }: { data: RevenueDataPoint[] }) {
                 style={{ minHeight: "4px" }}
               />
             </div>
-            <span className="text-[10px] text-slate-400 leading-none">{d.date.split(" ")[1]}</span>
+            <span className="text-[10px] text-slate-400 leading-none h-3">{d.date.split(" ")[1]}</span>
           </div>
         );
       })}

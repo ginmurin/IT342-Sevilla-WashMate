@@ -217,6 +217,23 @@ public class OrderController {
     }
 
     /**
+     * Get all orders in the system (ADMIN/SHOP_OWNER only).
+     */
+    @GetMapping("/all")
+    public ResponseEntity<List<OrderDTO>> getAllOrders(@AuthenticationPrincipal Jwt jwt) {
+        Long userId = Long.parseLong(jwt.getSubject());
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!"ADMIN".equals(user.getRole()) && !"SHOP_OWNER".equals(user.getRole())) {
+            return ResponseEntity.status(403).build();
+        }
+
+        List<Order> orders = orderService.getAllOrders();
+        return ResponseEntity.ok(orderService.toOrderDTOs(orders));
+    }
+
+    /**
      * Get order by ID (if user owns it).
      */
     @GetMapping("/{orderId}")
@@ -306,6 +323,11 @@ public class OrderController {
         Long userId = Long.parseLong(jwt.getSubject());
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Allow access if user is ADMIN or SHOP_OWNER
+        if ("ADMIN".equals(user.getRole()) || "SHOP_OWNER".equals(user.getRole())) {
+            return;
+        }
 
         Order order = orderService.getOrderById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));

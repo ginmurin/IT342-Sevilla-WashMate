@@ -229,4 +229,14 @@ public class SubscriptionService {
     public boolean hasCompletedPayment(Long userSubscriptionId) {
         return getCompletedSubscriptionPayment(userSubscriptionId).isPresent();
     }
+
+    /**
+     * Update a subscription plan's price.
+     */
+    public Subscription updatePlanPrice(Long subscriptionId, BigDecimal newPrice) {
+        Subscription plan = subscriptionRepository.findById(subscriptionId)
+                .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + subscriptionId));
+        plan.setPlanPrice(newPrice);
+        return subscriptionRepository.save(plan);
+    }
 }

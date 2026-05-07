@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { walletAPI } from "../utils/walletAPI";
+import { walletAPI, type WalletPaymentDTO } from "../utils/walletAPI";
 
 export interface WalletTopUpData {
   amount: number;
@@ -9,7 +9,7 @@ export interface WalletTopUpData {
 interface WalletContextType {
   topUpData: WalletTopUpData;
   setTopUpData: (data: Partial<WalletTopUpData>) => void;
-  submitTopUp: () => Promise<void>;
+  submitTopUp: () => Promise<WalletPaymentDTO>;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);

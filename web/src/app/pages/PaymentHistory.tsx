@@ -73,7 +73,7 @@ export default function PaymentHistory() {
     },
   ];
 
-  const allTransactions = [...transactions, ...mockTransactions];
+  const allTransactions = [...transactions, ...mockTransactions].filter(t => t.serviceType !== 'SUBSCRIPTION');
 
   const filteredTransactions =
     statusFilter === "all"

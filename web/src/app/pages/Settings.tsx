@@ -23,7 +23,7 @@ import { motion, AnimatePresence } from "motion/react";
 export default function Settings() {
   const navigate = useNavigate();
   const { user, setUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<"account" | "security" | "subscription">("account");
+  const [activeTab, setActiveTab] = useState<"account" | "security">("account");
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -35,16 +35,13 @@ export default function Settings() {
   const [twoFACodeSent, setTwoFACodeSent] = useState(false);
   const [show2FADisableConfirm, setShow2FADisableConfirm] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [subscription, setSubscription] = useState<UserSubscriptionData | null>(null);
-  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
-  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
 
   // Account form state
   const [formData, setFormData] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
     email: user?.email || "",
-    phone: user?.phone || user?.phoneNumber || user?.phone_number || "",
+    phone: user?.phone || user?.phoneNumber || "",
   });
 
   // Security form state
@@ -85,31 +82,7 @@ export default function Settings() {
     };
   }, [user?.id, isEditing, setUser]);
 
-  useEffect(() => {
-    if (!user || activeTab !== "subscription") return;
-    let cancelled = false;
 
-    const loadSubscription = async () => {
-      setSubscriptionLoading(true);
-      setSubscriptionError(null);
-      try {
-        const data = await getCurrentSubscription();
-        if (cancelled) return;
-        setSubscription(data);
-      } catch (error) {
-        if (cancelled) return;
-        setSubscriptionError(getErrorMessage(error, "Failed to load subscription"));
-        setSubscription(null);
-      } finally {
-        if (!cancelled) setSubscriptionLoading(false);
-      }
-    };
-
-    loadSubscription();
-    return () => {
-      cancelled = true;
-    };
-  }, [activeTab, user?.id]);
 
   const formatDate = (value?: string | null) => {
     if (!value) return "—";
@@ -122,9 +95,7 @@ export default function Settings() {
     });
   };
 
-  const isFreePlan = subscription
-    ? subscription.planType?.toUpperCase() === "FREE" || Number(subscription.planPrice) === 0
-    : false;
+
 
   const handleAccountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -323,16 +294,7 @@ export default function Settings() {
           >
             Security
           </button>
-          <button
-            onClick={() => setActiveTab("subscription")}
-            className={`pb-3 font-medium transition-colors border-b-2 ${
-              activeTab === "subscription"
-                ? "border-teal-600 text-teal-600"
-                : "border-transparent text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Subscription
-          </button>
+
         </div>
 
         {/* Account Tab */}
@@ -721,73 +683,7 @@ export default function Settings() {
           </motion.div>
         )}
 
-        {/* Subscription Tab */}
-        {activeTab === "subscription" && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
-          >
-            <div className="backdrop-blur-md bg-white/60 border border-white/40 rounded-2xl shadow-lg overflow-hidden">
-              <div className="px-8 py-6 border-b border-white/20 bg-white/40">
-                <h2 className="text-xl font-semibold text-slate-900">
-                  Subscription Information
-                </h2>
-              </div>
-              <div className="px-8 py-8">
-                {subscriptionLoading && (
-                  <p className="text-sm text-slate-500">Loading subscription…</p>
-                )}
-                {!subscriptionLoading && subscriptionError && (
-                  <p className="text-sm text-red-600">{subscriptionError}</p>
-                )}
-                {!subscriptionLoading && !subscriptionError && !subscription && (
-                  <p className="text-sm text-slate-500">No active subscription found.</p>
-                )}
-                {!subscriptionLoading && !subscriptionError && subscription && (
-                  <div className="space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                          Plan
-                        </p>
-                        <p className="text-lg font-medium text-slate-900">
-                          {subscription.planType}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                          Status
-                        </p>
-                        <p className="text-lg font-medium text-slate-900">
-                          {subscription.status}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                          Discount
-                        </p>
-                        <p className="text-lg font-medium text-slate-900">
-                          {subscription.discountPercentage ?? 0}%
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                          Expiry
-                        </p>
-                        <p className="text-lg font-medium text-slate-900">
-                          {isFreePlan ? "No expiry" : formatDate(subscription.expiryDate)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        )}
+
 
         {/* Error/Success Messages */}
         <AnimatePresence>

@@ -239,4 +239,18 @@ public class SubscriptionController {
 
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * Update a subscription plan's price (ADMIN only).
+     */
+    @PutMapping("/plans/{subscriptionId}/price")
+    public ResponseEntity<SubscriptionDTO> updatePlanPrice(
+            @PathVariable Long subscriptionId,
+            @RequestBody Map<String, BigDecimal> request) {
+        
+        BigDecimal newPrice = request.get("planPrice");
+        Subscription updated = subscriptionService.updatePlanPrice(subscriptionId, newPrice);
+        return ResponseEntity.ok(subscriptionService.getSubscriptionDTO(updated)
+                .orElseThrow(() -> new RuntimeException("Updated plan not found")));
+    }
 }

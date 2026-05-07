@@ -31,7 +31,7 @@ export const shopAPI = {
    */
   getAllOrders: async (): Promise<OrderResponse[]> => {
     try {
-      const response = await api.get<OrderResponse[]>('/api/orders/my-orders');
+      const response = await api.get<OrderResponse[]>('/api/orders/all');
       return response.data;
     } catch {
       return [];
@@ -113,16 +113,23 @@ export const shopAPI = {
   getRevenueData: (orders: OrderResponse[], days: number = 7): RevenueDataPoint[] => {
     const data: RevenueDataPoint[] = [];
     const now = new Date();
+    // Normalize now to start of day for comparison
+    now.setHours(0, 0, 0, 0);
 
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
+      date.setDate(now.getDate() - i);
+      
       const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-      const dayOrders = orders.filter(o =>
-        o.createdAt?.startsWith(dateStr) && o.status?.toUpperCase() !== 'CANCELLED'
-      );
+      const dayOrders = orders.filter(o => {
+        if (!o.createdAt) return false;
+        const oDate = new Date(o.createdAt);
+        return oDate.getFullYear() === date.getFullYear() &&
+               oDate.getMonth() === date.getMonth() &&
+               oDate.getDate() === date.getDate() &&
+               o.status?.toUpperCase() !== 'CANCELLED';
+      });
 
       data.push({
         date: label,

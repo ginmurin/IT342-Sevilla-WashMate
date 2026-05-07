@@ -27,6 +27,8 @@ import Services from "./pages/Services";
 import Notifications from "./pages/Notifications";
 import { CustomerDashboard } from "./pages/CustomerDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
+import AdminUsers from "./pages/AdminUsers";
+import AdminSubscriptionPlans from "./pages/AdminSubscriptionPlans";
 import SubscriptionPlans from "./pages/SubscriptionPlans";
 import SubscriptionUpgradeReview from "./pages/SubscriptionUpgradeReview";
 import SubscriptionUpgradeCheckout from "./pages/SubscriptionUpgradeCheckout";
@@ -163,6 +165,22 @@ export const router = createBrowserRouter([
             path: "admin",
             Component: AdminDashboard,
           },
+          {
+            path: "admin/users",
+            Component: AdminUsers,
+          },
+          {
+            path: "admin/subscriptions",
+            Component: AdminSubscriptionPlans,
+          },
+          {
+            path: "admin/orders",
+            Component: ShopOrders,
+          },
+          {
+            path: "admin/settings",
+            Component: Settings,
+          },
         ],
       },
       // Shop Owner Routes
@@ -180,6 +198,10 @@ export const router = createBrowserRouter([
           {
             path: "shop/services",
             Component: ShopServices,
+          },
+          {
+            path: "shop/subscriptions",
+            Component: AdminSubscriptionPlans,
           },
           {
             path: "shop/settings",

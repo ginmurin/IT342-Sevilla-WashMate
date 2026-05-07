@@ -305,6 +305,8 @@ export function Register() {
         lastName: data.last_name,
         password: data.password,
         phone: data.phone_number,
+        confirmPassword: data.confirm_password,
+        acceptTerms: data.accept_terms,
       });
 
       // Store pending info for OTP verification

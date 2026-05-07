@@ -41,6 +41,9 @@ const mapUser = (data: any): User => ({
   phoneNumber: data.phoneNumber ?? data.phone ?? undefined,
   emailVerified: data.emailVerified ?? undefined,
   twoFactorEnabled: data.twoFactorEnabled ?? undefined,
+  status: data.status ?? undefined,
+  createdAt: data.createdAt ?? undefined,
+  walletBalance: data.walletBalance ?? undefined,
 });
 
 // Request interceptor: Attach JWT token to every request
@@ -113,7 +116,8 @@ api.interceptors.response.use(
       return Promise.reject(new Error(backendMessage));
     }
 
-    return Promise.reject(error);
+    // Don't reject with the full error object as it contains the URL/endpoints
+    return Promise.reject(new Error('An unexpected error occurred. Please try again.'));
   }
 );
 
@@ -394,6 +398,57 @@ export const authAPI = {
   changePassword: async (payload: { currentPassword: string; newPassword: string }): Promise<{ message?: string }> => {
     const response = await api.post('/api/auth/change-password', payload);
     return response.data;
+  },
+};
+
+// ── Admin API ───────────────────────────────────────────────────────────────────
+
+export const adminAPI = {
+  /**
+   * Get global platform statistics
+   */
+  getGlobalStats: async (): Promise<{ totalUsers: number; totalShops: number; totalOrders: number; totalRevenue: number }> => {
+    const response = await api.get('/api/admin/stats');
+    return response.data;
+  },
+
+  /**
+   * Get all users in the system
+   */
+  getAllUsers: async (): Promise<User[]> => {
+    const response = await api.get<any[]>('/api/admin/users');
+    return response.data.map(mapUser);
+  },
+
+  /**
+   * Update a user's role
+   */
+  updateUserRole: async (userId: number, role: string): Promise<User> => {
+    const response = await api.put(`/api/admin/users/${userId}/role`, { role });
+    return mapUser(response.data);
+  },
+
+  /**
+   * Update a user's status
+   */
+  updateUserStatus: async (userId: number, status: string): Promise<User> => {
+    const response = await api.put(`/api/admin/users/${userId}/status`, { status });
+    return mapUser(response.data);
+  },
+
+  /**
+   * Update a user's wallet balance
+   */
+  updateUserWallet: async (userId: number, balance: number): Promise<User> => {
+    const response = await api.put(`/api/admin/users/${userId}/wallet`, { balance });
+    return mapUser(response.data);
+  },
+
+  /**
+   * Delete a user
+   */
+  deleteUser: async (userId: number): Promise<void> => {
+    await api.delete(`/api/admin/users/${userId}`);
   },
 };
 

@@ -19,6 +19,8 @@ import {
   Bell,
   Store,
   Palette,
+  Package,
+  Users,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { NotificationDropdown } from "./NotificationDropdown";
@@ -33,7 +35,7 @@ export function Navbar() {
   // Derive nav context from current path so ADMIN
   // viewing /customer still get the customer nav links.
   const currentView = user?.role === "ADMIN" 
-    ? (location.pathname.startsWith("/admin") ? "admin" : "customer")
+    ? (location.pathname.startsWith("/admin") || location.pathname === "/settings" ? "admin" : "customer")
     : user?.role === "SHOP_OWNER" 
     ? "shop" 
     : "customer";
@@ -42,17 +44,16 @@ export function Navbar() {
     currentView === "admin"
       ? [
           { label: "Dashboard", icon: Home, href: "/admin" },
-          { label: "Users", icon: User, href: "/admin/users" },
-          { label: "Shops", icon: ShoppingBag, href: "/admin/shops" },
-          { label: "Settings", icon: Settings, href: "/admin/settings" },
+          { label: "Users", icon: Users, href: "/admin/users" },
+          { label: "Orders", icon: Package, href: "/admin/orders" },
+          { label: "Subscriptions", icon: Crown, href: "/admin/subscriptions" },
         ]
       : currentView === "shop"
       ? [
           { label: "Dashboard", icon: Store, href: "/shop" },
           { label: "Orders", icon: ShoppingBag, href: "/shop/orders" },
           { label: "Services", icon: Palette, href: "/shop/services" },
-          { label: "Subscriptions", icon: Crown, href: "/subscriptions" },
-          { label: "Wallet", icon: WalletIcon, href: "/wallet" },
+          { label: "Subscriptions", icon: Crown, href: "/shop/subscriptions" },
         ]
       : [
           { label: "Home", icon: Home, href: "/customer" },
@@ -158,21 +159,18 @@ export function Navbar() {
                       {currentView === "shop" && (
                         <>
                           <Link
-                            to="/payment/history"
-                            onClick={() => setProfileMenuOpen(false)}
-                            className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                          >
-                            Payment History
-                          </Link>
-                          <Link
-                            to="/shop/settings"
-                            onClick={() => setProfileMenuOpen(false)}
-                            className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                          >
-                            Shop Settings
-                          </Link>
-                          <Link
                             to="/settings"
+                            onClick={() => setProfileMenuOpen(false)}
+                            className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                          >
+                            Account Settings
+                          </Link>
+                        </>
+                      )}
+                      {currentView === "admin" && (
+                        <>
+                          <Link
+                            to="/admin/settings"
                             onClick={() => setProfileMenuOpen(false)}
                             className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                           >

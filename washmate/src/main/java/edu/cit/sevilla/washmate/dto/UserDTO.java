@@ -17,4 +17,5 @@ public class UserDTO {
     private Boolean emailVerified;
     private Boolean twoFactorEnabled;
     private LocalDateTime createdAt;
+    private Double walletBalance;
 }

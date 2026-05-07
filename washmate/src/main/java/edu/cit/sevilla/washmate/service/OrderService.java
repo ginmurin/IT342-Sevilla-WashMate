@@ -427,4 +427,11 @@ public class OrderService {
     public Optional<Payment> getCompletedOrderPayment(Long orderId) {
         return paymentService.getCompletedOrderPayment(orderId);
     }
+
+    /**
+     * Get all orders in the system.
+     */
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
+    }
 }

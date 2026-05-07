@@ -93,3 +93,8 @@ export async function getSubscriptionHistory(): Promise<UserSubscriptionData[]> 
     return [];
   }
 }
+
+export async function updateSubscriptionPrice(subscriptionId: number, planPrice: number): Promise<SubscriptionData> {
+  const res = await api.put<SubscriptionData>(`/api/subscriptions/plans/${subscriptionId}/price`, { planPrice });
+  return res.data;
+}

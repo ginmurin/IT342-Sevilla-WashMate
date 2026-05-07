@@ -7,10 +7,13 @@ export interface User {
   lastName: string;
   email: string;
   role: UserRole;
+  status?: string;
   phone?: string;
   phoneNumber?: string;
   emailVerified?: boolean;
   twoFactorEnabled?: boolean;
+  createdAt?: string;
+  walletBalance?: number;
 }
 
 export interface AuthResponse {
