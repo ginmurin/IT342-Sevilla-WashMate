@@ -50,9 +50,32 @@ export interface OrderResponse {
   updatedAt: string;
 }
 
+export interface PaymentProcessResponse {
+  paymentId: number;
+  orderId: number;
+  amount: number;
+  paymentMethod: string;
+  paymentIntentId?: string;  // For card payments
+  clientKey?: string;        // For card payments
+  checkoutUrl?: string;      // For e-wallet payments
+  sourceId?: string;         // For e-wallet payments
+  walletPayment?: boolean;   // For wallet payments
+  error?: string;
+}
+
 export const orderAPI = {
   createOrder: async (request: CreateOrderRequest): Promise<OrderResponse> => {
     const response = await api.post<OrderResponse>('/api/orders/create', request);
+    return response.data;
+  },
+
+  processPayment: async (orderId: number, paymentMethod: string): Promise<PaymentProcessResponse> => {
+    const response = await api.post<PaymentProcessResponse>(`/api/orders/${orderId}/payment/process`, { paymentMethod });
+    return response.data;
+  },
+
+  confirmPayment: async (orderId: number, paymentId: string, amount?: number, paymongoPaymentIntentId?: string): Promise<OrderResponse> => {
+    const response = await api.post<OrderResponse>(`/api/orders/${orderId}/payment/confirm/${paymentId}`, { amount, paymongoPaymentIntentId });
     return response.data;
   },
 

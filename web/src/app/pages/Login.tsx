@@ -23,7 +23,7 @@ import { motion, AnimatePresence } from "motion/react";
 import laundryHero from "../../assets/laundry-hero.png";
 import type { User } from "../types";
 
-type Step = "credentials" | "otp" | "role-select";
+type Step = "credentials" | "otp" | "two-factor" | "role-select";
 
 const loginSchema = z.object({
   emailOrUsername: z.string().min(1, "Email or username is required"),
@@ -137,6 +137,8 @@ export function Login() {
         navigate("/customer", { replace: true });
       } else if (user.role === "ADMIN") {
         navigate("/admin", { replace: true });
+      } else if (user.role === "SHOP_OWNER") {
+        navigate("/shop", { replace: true });
       } else {
         navigate("/", { replace: true });
       }
@@ -157,6 +159,14 @@ export function Login() {
         setPendingUserId(response.userId || null);
         setPendingEmail(response.user.email);
         setStep("otp");
+        resetOtpForm();
+        return;
+      }
+
+      if (response.requiresTwoFactor) {
+        setPendingUserId(response.userId || null);
+        setPendingEmail(response.user.email);
+        setStep("two-factor");
         resetOtpForm();
         return;
       }
@@ -185,7 +195,9 @@ export function Login() {
     }
 
     try {
-      const response = await authAPI.verifyEmail(pendingUserId, data.code);
+      const response = step === "two-factor"
+        ? await authAPI.verifyTwoFactorLogin(pendingUserId, data.code)
+        : await authAPI.verifyEmail(pendingUserId, data.code);
 
       const userRole = String(response.user.role).toUpperCase();
       login(response.user);
@@ -197,12 +209,24 @@ export function Login() {
         setStep("role-select");
       }
     } catch (err: any) {
-      setError(err.message || "Invalid OTP. Please try again.");
+      setError(err.message || "Invalid code. Please try again.");
     }
   };
 
   const handleResendOtp = async () => {
     setError(null);
+    if (step === "two-factor") {
+      if (!pendingUserId) return;
+      try {
+        await authAPI.resendTwoFactorLogin(pendingUserId);
+        setError(null);
+        alert("Code resent to your email");
+      } catch (err: any) {
+        setError(err.message || "Failed to resend code.");
+      }
+      return;
+    }
+
     if (!pendingEmail) return;
 
     try {
@@ -271,13 +295,21 @@ export function Login() {
           {/* Title */}
           <div className="mb-8">
             <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
-              {step === "credentials" ? "Welcome Back" : step === "otp" ? "Verify Email" : "Choose Dashboard"}
+              {step === "credentials"
+                ? "Welcome Back"
+                : step === "otp"
+                  ? "Verify Email"
+                  : step === "two-factor"
+                    ? "Two-Factor Verification"
+                    : "Choose Dashboard"}
             </h1>
             <p className="text-slate-500 mt-1.5 text-sm">
               {step === "credentials"
                 ? "Sign in with your email or username."
                 : step === "otp"
                   ? "Enter the code sent to your email."
+                  : step === "two-factor"
+                    ? "Enter the two-factor code sent to your email."
                   : `You're signed in as ${dbRole === "ADMIN" ? "Admin" : "Shop Owner"}. Where would you like to go?`}
             </p>
           </div>
@@ -404,7 +436,7 @@ export function Login() {
             )}
 
             {/* ── Step 1.5: OTP Verification ── */}
-            {step === "otp" && (
+            {(step === "otp" || step === "two-factor") && (
               <motion.form
                 key="otp"
                 initial={{ opacity: 0, x: 16 }}
@@ -414,7 +446,7 @@ export function Login() {
                 className="space-y-5"
               >
                 <p className="text-sm text-slate-600">
-                  We found an account for <strong>{pendingEmail}</strong>. Enter the 6-digit OTP sent to your email.
+                  We found an account for <strong>{pendingEmail}</strong>. Enter the 6-digit {step === "two-factor" ? "code" : "OTP"} sent to your email.
                 </p>
 
                 <div className="space-y-1.5">
@@ -457,7 +489,7 @@ export function Login() {
                     onClick={handleResendOtp}
                     className="text-sm text-teal-600 hover:text-teal-700 font-medium"
                   >
-                    Resend OTP
+                    {step === "two-factor" ? "Resend Code" : "Resend OTP"}
                   </button>
                   <button
                     type="button"

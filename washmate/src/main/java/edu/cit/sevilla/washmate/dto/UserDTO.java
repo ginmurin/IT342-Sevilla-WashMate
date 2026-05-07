@@ -15,5 +15,6 @@ public class UserDTO {
     private String role;
     private String status;
     private Boolean emailVerified;
+    private Boolean twoFactorEnabled;
     private LocalDateTime createdAt;
 }

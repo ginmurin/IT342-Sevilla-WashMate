@@ -9,6 +9,8 @@ import edu.cit.sevilla.washmate.entity.Wallet;
 import edu.cit.sevilla.washmate.entity.WalletTransaction;
 import edu.cit.sevilla.washmate.repository.UserRepository;
 import edu.cit.sevilla.washmate.service.WalletService;
+import edu.cit.sevilla.washmate.service.PayMongoService;
+import edu.cit.sevilla.washmate.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,6 +19,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,6 +34,8 @@ public class WalletController {
 
     private final WalletService walletService;
     private final UserRepository userRepository;
+    private final PayMongoService payMongoService;
+    private final PaymentService paymentService;
 
     // ===== WALLET BALANCE OPERATIONS =====
 
@@ -97,6 +102,65 @@ public class WalletController {
         );
 
         return ResponseEntity.ok(toPaymentDTO(payment));
+    }
+
+    /**
+     * Process wallet top-up payment (handle PayMongo integration).
+     * Backend handles all PayMongo API calls - frontend never sees payment details.
+     */
+    @PostMapping("/topup/process")
+    public ResponseEntity<Map<String, Object>> processWalletTopupPayment(
+            @RequestBody Map<String, Object> request,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        try {
+            Long userId = Long.parseLong(jwt.getSubject());
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            BigDecimal amount = new BigDecimal(request.get("amount").toString());
+            String paymentMethod = (String) request.get("paymentMethod");
+
+            // Initiate wallet top-up (creates PENDING payment)
+            Payment payment = walletService.initiateWalletTopup(user.getUserId(), amount, paymentMethod);
+
+            // Handle payment based on method
+            Map<String, Object> response = new HashMap<>();
+            response.put("paymentId", payment.getPaymentId());
+            response.put("transactionId", payment.getReferenceId());
+            response.put("amount", amount);
+            response.put("paymentMethod", paymentMethod);
+
+            switch (paymentMethod.toUpperCase()) {
+                case "CARD":
+                    // Create PayMongo payment intent for card
+                    Map<String, String> intentResult = payMongoService.createPaymentIntent(amount);
+                    response.put("paymentIntentId", intentResult.get("paymentIntentId"));
+                    response.put("clientKey", intentResult.get("clientKey"));
+                    break;
+
+                case "GCASH":
+                case "PAYMAYA":
+                case "GRAB_PAY":
+                    // Create PayMongo source for e-wallet
+                    String sourceType = paymentMethod.toLowerCase();
+                    String successUrl = "http://localhost:5173/wallet/payment-success?paymentId=" + payment.getPaymentId();
+                    String failureUrl = "http://localhost:5173/wallet/payment-error";
+
+                    Map<String, String> sourceResult = payMongoService.createSource(sourceType, amount, successUrl, failureUrl);
+                    response.put("checkoutUrl", sourceResult.get("checkoutUrl"));
+                    response.put("sourceId", sourceResult.get("sourceId"));
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Unsupported payment method: " + paymentMethod);
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to process wallet top-up: " + e.getMessage(), e);
+        }
     }
 
     /**

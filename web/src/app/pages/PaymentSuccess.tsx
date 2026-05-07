@@ -14,10 +14,12 @@ import {
   Loader2,
 } from "lucide-react";
 import { motion } from "motion/react";
+import { useNotifications } from "../contexts/NotificationContext";
 
 export default function PaymentSuccess() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { fetchNotifications } = useNotifications();
   const state = location.state as any;
   const hasConfirmed = useRef(false);
 
@@ -56,6 +58,14 @@ export default function PaymentSuccess() {
         );
 
         console.log('✅ Order payment confirmed');
+        
+        // Fetch fresh notifications so the payment success notification appears
+        await fetchNotifications();
+        
+        // Clean up stored order data so new orders start fresh
+        localStorage.removeItem('currentOrderId');
+        localStorage.removeItem('currentOrderData');
+        
         setLoading(false);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to confirm payment';

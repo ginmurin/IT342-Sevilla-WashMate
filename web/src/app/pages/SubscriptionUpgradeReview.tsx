@@ -104,33 +104,50 @@ export default function SubscriptionUpgradeReview() {
     setUpgradeData({ paymentMethod: selectedMethod as any });
 
     try {
-      // 1. Initiate upgrade with backend to get userSubscriptionId and paymentId
-      const upgradeResponse = await subscriptionAPI.initiateUpgrade(upgradeData.newPlan);
-      console.log('📝 Subscription upgrade API response:', upgradeResponse);
+      // Standardize payment method IDs to uppercase
+      const paymentMethod = selectedMethod.toUpperCase();
 
-      const { userSubscriptionId, amount, paymentId } = upgradeResponse.data || upgradeResponse;
+      // 1. Process upgrade with backend (handles PayMongo integration)
+      const processResponse = await subscriptionAPI.processUpgrade(upgradeData.newPlan, paymentMethod);
+      console.log('📝 Subscription upgrade process response:', processResponse);
 
-      if (!userSubscriptionId) {
-        throw new Error('Failed to get userSubscriptionId from upgrade initiation');
+      const response = processResponse.data || processResponse;
+      const { userSubscriptionId, amount, paymentId } = response;
+
+      if (!userSubscriptionId || !paymentId) {
+        throw new Error('Failed to get payment details from upgrade processing');
       }
 
-      console.log('📝 Subscription upgrade initiated:', { userSubscriptionId, amount, paymentId, paymentMethod: selectedMethod });
+      console.log('📝 Subscription upgrade processed:', { userSubscriptionId, amount, paymentId, paymentMethod });
 
       // 2. Handle wallet payment (direct success, no checkout)
-      if (selectedMethod === 'wallet') {
+      if (paymentMethod === 'WALLET') {
         navigate('/subscription/upgrade-success', {
-          state: { userSubscriptionId, amount, paymentId, paymentMethod: 'wallet' },
+          state: { userSubscriptionId, amount, paymentId, paymentMethod: 'WALLET' },
         });
         return;
       }
 
-      // 3. Handle other payment methods (need checkout/gateway)
-      navigate('/subscription/upgrade-checkout', {
-        state: { userSubscriptionId, amount, paymentId, paymentMethod: selectedMethod },
-      });
+      // 3. Handle card payments
+      if (paymentMethod === 'CARD') {
+        const { paymentIntentId, clientKey } = response;
+        navigate('/subscription/upgrade-checkout', {
+          state: { userSubscriptionId, paymentId, amount, paymentIntentId, clientKey, paymentMethod: 'CARD' },
+        });
+        return;
+      }
+
+      // 4. Handle e-wallet payments (redirect to checkout URL)
+      if (response.checkoutUrl) {
+        console.log('🎯 Redirecting to e-wallet checkout:', response.checkoutUrl);
+        window.location.href = response.checkoutUrl;
+        return;
+      }
+
+      throw new Error('Invalid payment response from backend');
     } catch (err) {
-      console.error('❌ Upgrade initiation error:', err);
-      setPaymentError(err instanceof Error ? err.message : 'Failed to initiate upgrade. Please try again.');
+      console.error('❌ Upgrade processing error:', err);
+      setPaymentError(err instanceof Error ? err.message : 'Failed to process upgrade. Please try again.');
       setLoading(false);
     }
   };

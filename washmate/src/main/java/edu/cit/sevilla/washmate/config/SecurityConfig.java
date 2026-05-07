@@ -60,6 +60,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/2fa/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/2fa/resend-login").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/auth/email-by-username").permitAll()
                 // Google OAuth endpoints - public access
                 .requestMatchers(HttpMethod.GET, "/api/auth/google/login").permitAll()

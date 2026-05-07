@@ -29,6 +29,8 @@ export default function Wallet() {
   const handleLoadMoney = (amount: number) => {
     setSelectedAmount(amount);
     setTopUpData({ amount });
+    // Persist amount to localStorage in case of page refresh
+    localStorage.setItem('walletTopUpAmount', String(amount));
     navigate("/wallet/payment-review");
   };
 

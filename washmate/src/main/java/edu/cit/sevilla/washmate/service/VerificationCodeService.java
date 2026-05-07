@@ -57,6 +57,10 @@ public class VerificationCodeService {
                 emailService.sendVerificationEmail(userEmail, code, username);
             } else if ("PASSWORD_RESET".equals(codeType)) {
                 emailService.sendPasswordResetEmail(userEmail, code, username);
+            } else if ("TWO_FACTOR_AUTH".equals(codeType)) {
+                emailService.sendTwoFactorEmail(userEmail, code, username);
+            } else if ("TWO_FACTOR_LOGIN".equals(codeType)) {
+                emailService.sendTwoFactorEmail(userEmail, code, username);
             }
 
             log.info("Verification code generated and sent for user {} (type: {})", userId, codeType);

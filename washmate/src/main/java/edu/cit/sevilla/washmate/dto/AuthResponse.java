@@ -20,8 +20,12 @@ public class AuthResponse {
     private String firstName;
     private String lastName;
     private String email;
+    private String phoneNumber;
     private String role;
+    private Boolean emailVerified;
+    private Boolean twoFactorEnabled;
     private Boolean requiresEmailVerification;
+    private Boolean requiresTwoFactor;
     private String message;
 
     // Legacy constructor for backward compatibility

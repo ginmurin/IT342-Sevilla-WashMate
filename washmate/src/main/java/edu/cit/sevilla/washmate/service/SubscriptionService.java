@@ -26,6 +26,7 @@ public class SubscriptionService {
     private final UserSubscriptionRepository userSubscriptionRepository;
     private final UserRepository userRepository;
     private final PaymentService paymentService; // Added PaymentService injection
+    private final NotificationService notificationService;
 
     /** Returns the FREE plan, creating it if it doesn't exist yet. */
     public Subscription getOrCreateFreePlan() {
@@ -139,7 +140,12 @@ public class SubscriptionService {
         sub.setStatus("ACTIVE");
         // Note: No sub.setPayment(payment) - removed direct FK relationship
 
-        return userSubscriptionRepository.save(sub);
+        UserSubscription savedSub = userSubscriptionRepository.save(sub);
+
+        // Notify user about successful subscription upgrade
+        notificationService.notifySubscriptionUpgrade(sub.getUser().getUserId(), sub.getSubscription().getPlanType());
+
+        return savedSub;
     }
 
     /** Get current active subscription for a user. */

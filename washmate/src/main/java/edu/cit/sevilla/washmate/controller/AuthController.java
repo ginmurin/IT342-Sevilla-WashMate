@@ -156,6 +156,24 @@ public class AuthController {
                         .build());
             }
 
+            if (Boolean.TRUE.equals(user.getTwoFactorEnabled())) {
+                verificationCodeService.generateAndSendCode(
+                        user.getUserId(),
+                        "TWO_FACTOR_LOGIN",
+                        user.getEmail(),
+                        user.getUsername()
+                );
+
+                rateLimitUtil.reset(rateLimitKey);
+                log.info("2FA login code sent for user: {}", user.getEmail());
+                return ResponseEntity.ok(AuthResponse.builder()
+                        .userId(user.getUserId())
+                        .email(user.getEmail())
+                        .requiresTwoFactor(true)
+                        .message("Two-factor code sent to your email.")
+                        .build());
+            }
+
             // Generate tokens
             String accessToken = authService.generateAccessToken(user);
             String refreshToken = authService.generateRefreshToken(user);
@@ -172,7 +190,10 @@ public class AuthController {
                     .firstName(user.getFirstName())
                     .lastName(user.getLastName())
                     .email(user.getEmail())
+                    .phoneNumber(user.getPhoneNumber())
                     .role(user.getRole())
+                    .emailVerified(user.getEmailVerified())
+                    .twoFactorEnabled(user.getTwoFactorEnabled())
                     .build());
         } catch (Exception ex) {
             log.error("Login error: {}", ex.getMessage());
@@ -243,7 +264,10 @@ public class AuthController {
                     .firstName(user.getFirstName())
                     .lastName(user.getLastName())
                     .email(user.getEmail())
+                    .phoneNumber(user.getPhoneNumber())
                     .role(user.getRole())
+                    .emailVerified(user.getEmailVerified())
+                    .twoFactorEnabled(user.getTwoFactorEnabled())
                     .build());
         } catch (Exception ex) {
             log.error("Email verification error: {}", ex.getMessage());
@@ -702,7 +726,10 @@ public class AuthController {
                     .firstName(user.getFirstName())
                     .lastName(user.getLastName())
                     .email(user.getEmail())
+                    .phoneNumber(user.getPhoneNumber())
                     .role(user.getRole())
+                    .emailVerified(user.getEmailVerified())
+                    .twoFactorEnabled(user.getTwoFactorEnabled())
                     .build());
         } catch (Exception ex) {
             log.error("Redirect code verification error: {}", ex.getMessage());
@@ -746,7 +773,10 @@ public class AuthController {
                     .firstName(user.getFirstName())
                     .lastName(user.getLastName())
                     .email(user.getEmail())
+                    .phoneNumber(user.getPhoneNumber())
                     .role(user.getRole())
+                    .emailVerified(user.getEmailVerified())
+                    .twoFactorEnabled(user.getTwoFactorEnabled())
                     .build());
         } catch (RuntimeException ex) {
             log.warn("Mobile Google OAuth error: {}", ex.getMessage());
@@ -756,6 +786,366 @@ public class AuthController {
             log.error("Mobile Google OAuth error: {}", ex.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Mobile Google OAuth failed"));
+        }
+    }
+
+    /**
+     * GET /api/auth/me
+     * Get current authenticated user information
+     */
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(Authentication authentication) {
+        try {
+            if (authentication == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "User not authenticated"));
+            }
+
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            Long userId = Long.valueOf(jwt.getClaimAsString("sub"));
+            User user = authService.findUserById(userId);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "User not found"));
+            }
+
+            return ResponseEntity.ok(AuthResponse.builder()
+                    .userId(user.getUserId())
+                    .username(user.getUsername())
+                    .firstName(user.getFirstName())
+                    .lastName(user.getLastName())
+                    .email(user.getEmail())
+                    .phoneNumber(user.getPhoneNumber())
+                    .role(user.getRole())
+                    .emailVerified(user.getEmailVerified())
+                    .twoFactorEnabled(user.getTwoFactorEnabled())
+                    .build());
+        } catch (Exception ex) {
+            log.error("Error getting current user: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to get user information"));
+        }
+    }
+
+    /**
+     * PUT /api/auth/me
+     * Update user information (firstName, lastName, phoneNumber)
+     */
+    @PutMapping("/me")
+    public ResponseEntity<?> updateUser(Authentication authentication, @Valid @RequestBody UpdateUserRequest request) {
+        try {
+            if (authentication == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "User not authenticated"));
+            }
+
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            Long userId = Long.valueOf(jwt.getClaimAsString("sub"));
+            User user = authService.findUserById(userId);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "User not found"));
+            }
+
+            // Update fields
+            if (request.getFirstName() != null && !request.getFirstName().isEmpty()) {
+                user.setFirstName(request.getFirstName());
+            }
+            if (request.getLastName() != null && !request.getLastName().isEmpty()) {
+                user.setLastName(request.getLastName());
+            }
+            if (request.getPhoneNumber() != null && !request.getPhoneNumber().isEmpty()) {
+                user.setPhoneNumber(request.getPhoneNumber());
+            }
+
+            authService.updateUser(user);
+            log.info("User updated: {}", user.getEmail());
+
+            return ResponseEntity.ok(AuthResponse.builder()
+                    .userId(user.getUserId())
+                    .username(user.getUsername())
+                    .firstName(user.getFirstName())
+                    .lastName(user.getLastName())
+                    .email(user.getEmail())
+                    .phoneNumber(user.getPhoneNumber())
+                    .role(user.getRole())
+                    .message("User information updated successfully")
+                    .build());
+        } catch (Exception ex) {
+            log.error("Error updating user: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to update user information"));
+        }
+    }
+
+    /**
+     * POST /api/auth/change-password
+     * Change password for authenticated user
+     */
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(Authentication authentication, @Valid @RequestBody ChangePasswordRequest request) {
+        try {
+            if (authentication == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "User not authenticated"));
+            }
+
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            Long userId = Long.valueOf(jwt.getClaimAsString("sub"));
+            User user = authService.findUserById(userId);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "User not found"));
+            }
+
+            authService.changePassword(user, request.getCurrentPassword(), request.getNewPassword());
+            return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+        } catch (RuntimeException ex) {
+            log.warn("Change password error: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            log.error("Change password error: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to change password"));
+        }
+    }
+
+    /**
+     * GET /api/auth/subscription
+     * Get current user subscription information
+     */
+    @GetMapping("/subscription")
+    public ResponseEntity<?> getSubscription(Authentication authentication) {
+        try {
+            if (authentication == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "User not authenticated"));
+            }
+
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            Long userId = Long.valueOf(jwt.getClaimAsString("sub"));
+            User user = authService.findUserById(userId);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "User not found"));
+            }
+
+            UserSubscriptionDTO subscription = authService.getUserSubscriptionInfo(userId);
+
+            if (subscription == null) {
+                return ResponseEntity.ok(Map.of(
+                        "message", "No active subscription",
+                        "subscription", null
+                ));
+            }
+
+            return ResponseEntity.ok(subscription);
+        } catch (Exception ex) {
+            log.error("Error getting subscription: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to get subscription information"));
+        }
+    }
+
+    /**
+     * POST /api/auth/2fa/send-code
+     * Send 2FA verification code to user's email
+     */
+    @PostMapping("/2fa/send-code")
+    public ResponseEntity<?> send2FACode(Authentication authentication) {
+        try {
+            if (authentication == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "User not authenticated"));
+            }
+
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            Long userId = Long.valueOf(jwt.getClaimAsString("sub"));
+            User user = authService.findUserById(userId);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "User not found"));
+            }
+
+            // Generate and send 2FA code
+            verificationCodeService.generateAndSendCode(
+                    userId,
+                    "TWO_FACTOR_AUTH",
+                    user.getEmail(),
+                    user.getUsername()
+            );
+
+            log.info("2FA code sent to: {}", user.getEmail());
+            return ResponseEntity.ok(Map.of(
+                    "message", "Verification code sent to your email",
+                    "email", user.getEmail()
+            ));
+        } catch (Exception ex) {
+            log.error("Error sending 2FA code: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to send verification code"));
+        }
+    }
+
+    /**
+     * POST /api/auth/2fa/login
+     * Verify 2FA code during login and issue tokens
+     */
+    @PostMapping("/2fa/login")
+    public ResponseEntity<?> verifyLogin2FA(@Valid @RequestBody TwoFactorLoginRequest request) {
+        try {
+            User user = authService.findUserById(request.getUserId());
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "User not found"));
+            }
+
+            boolean isValid = verificationCodeService.verifyCode(user.getUserId(), request.getCode(), "TWO_FACTOR_LOGIN");
+            if (!isValid) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "Invalid or expired verification code"));
+            }
+
+            String accessToken = authService.generateAccessToken(user);
+            String refreshToken = authService.generateRefreshToken(user);
+
+            return ResponseEntity.ok(AuthResponse.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .expiresIn(900L)
+                    .userId(user.getUserId())
+                    .username(user.getUsername())
+                    .firstName(user.getFirstName())
+                    .lastName(user.getLastName())
+                    .email(user.getEmail())
+                    .phoneNumber(user.getPhoneNumber())
+                    .role(user.getRole())
+                    .emailVerified(user.getEmailVerified())
+                    .twoFactorEnabled(user.getTwoFactorEnabled())
+                    .build());
+        } catch (Exception ex) {
+            log.error("2FA login verification error: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to verify two-factor authentication"));
+        }
+    }
+
+    /**
+     * POST /api/auth/2fa/resend-login
+     * Resend 2FA login code
+     */
+    @PostMapping("/2fa/resend-login")
+    public ResponseEntity<?> resendLogin2FA(@Valid @RequestBody TwoFactorResendRequest request) {
+        try {
+            User user = authService.findUserById(request.getUserId());
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "User not found"));
+            }
+
+            verificationCodeService.resendCode(
+                    user.getUserId(),
+                    "TWO_FACTOR_LOGIN",
+                    user.getEmail(),
+                    user.getUsername()
+            );
+
+            return ResponseEntity.ok(Map.of("message", "Two-factor code resent"));
+        } catch (RuntimeException ex) {
+            log.warn("Resend 2FA login error: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            log.error("Resend 2FA login error: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to resend two-factor code"));
+        }
+    }
+
+    /**
+     * POST /api/auth/2fa/enable
+     * Enable 2FA after verifying code
+     */
+    @PostMapping("/2fa/enable")
+    public ResponseEntity<?> enable2FA(Authentication authentication, @Valid @RequestBody TwoFactorRequest request) {
+        try {
+            if (authentication == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "User not authenticated"));
+            }
+
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            Long userId = Long.valueOf(jwt.getClaimAsString("sub"));
+            User user = authService.findUserById(userId);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "User not found"));
+            }
+
+            // Verify the code
+            boolean isValid = verificationCodeService.verifyCode(userId, request.getCode(), "TWO_FACTOR_AUTH");
+            if (!isValid) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "Invalid or expired verification code"));
+            }
+
+            // Enable 2FA
+            user.setTwoFactorEnabled(true);
+            authService.updateUser(user);
+
+            log.info("2FA enabled for user: {}", user.getEmail());
+            return ResponseEntity.ok(Map.of(
+                    "message", "Two-factor authentication enabled successfully",
+                    "twoFactorEnabled", true
+            ));
+        } catch (Exception ex) {
+            log.error("Error enabling 2FA: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to enable two-factor authentication"));
+        }
+    }
+
+    /**
+     * POST /api/auth/2fa/disable
+     * Disable 2FA for user
+     */
+    @PostMapping("/2fa/disable")
+    public ResponseEntity<?> disable2FA(Authentication authentication) {
+        try {
+            if (authentication == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "User not authenticated"));
+            }
+
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            Long userId = Long.valueOf(jwt.getClaimAsString("sub"));
+            User user = authService.findUserById(userId);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "User not found"));
+            }
+
+            // Disable 2FA
+            user.setTwoFactorEnabled(false);
+            authService.updateUser(user);
+
+            log.info("2FA disabled for user: {}", user.getEmail());
+            return ResponseEntity.ok(Map.of(
+                    "message", "Two-factor authentication disabled",
+                    "twoFactorEnabled", false
+            ));
+        } catch (Exception ex) {
+            log.error("Error disabling 2FA: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to disable two-factor authentication"));
         }
     }
 }

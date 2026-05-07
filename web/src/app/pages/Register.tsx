@@ -959,6 +959,7 @@ export function Register() {
                         const role = String(verifiedUser?.role).toUpperCase();
                         if (role === "CUSTOMER") navigate("/customer", { replace: true });
                         else if (role === "ADMIN") navigate("/admin", { replace: true });
+                        else if (role === "SHOP_OWNER") navigate("/shop", { replace: true });
                         else navigate("/", { replace: true });
                       }}
                       className="w-full bg-teal-600 hover:bg-teal-700 text-white h-11 rounded-lg"

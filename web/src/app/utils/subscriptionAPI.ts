@@ -21,6 +21,10 @@ export const subscriptionAPI = {
   initiateUpgrade: (planType: string) =>
     api.post<UpgradeInitiationDTO>(`/api/subscriptions/upgrade/${planType}`),
 
+  // Process subscription upgrade payment (new endpoint - backend handles PayMongo)
+  processUpgrade: (planType: string, paymentMethod: string) =>
+    api.post(`/api/subscriptions/upgrade/${planType}/process`, { paymentMethod }),
+
   // Confirm subscription upgrade with payment
   confirmUpgrade: (userSubscriptionId: number, paymentId: string, paymentMethod?: string, amount?: number, paymongoPaymentIntentId?: string) =>
     api.post(`/api/subscriptions/confirm-upgrade/${userSubscriptionId}/${paymentId}`, {

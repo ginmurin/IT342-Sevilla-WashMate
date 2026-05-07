@@ -2,6 +2,7 @@ package edu.cit.sevilla.washmate.service;
 
 import edu.cit.sevilla.washmate.dto.AuthResponse;
 import edu.cit.sevilla.washmate.dto.RegisterRequest;
+import edu.cit.sevilla.washmate.dto.UserSubscriptionDTO;
 import edu.cit.sevilla.washmate.entity.Subscription;
 import edu.cit.sevilla.washmate.entity.User;
 import edu.cit.sevilla.washmate.entity.UserSubscription;
@@ -194,6 +195,41 @@ public class AuthService {
     }
 
     /**
+     * Change password for authenticated user
+     */
+    public void changePassword(User user, String currentPassword, String newPassword) {
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        if (user.getPasswordHash() == null || user.getPasswordHash().isEmpty()) {
+            throw new RuntimeException("Password not set for this account");
+        }
+
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+
+        if (!isPasswordStrong(newPassword)) {
+            throw new RuntimeException("Password must be at least 8 characters with at least one uppercase letter and one number");
+        }
+
+        String passwordHash = passwordEncoder.encode(newPassword);
+        user.setPasswordHash(passwordHash);
+        userRepository.save(user);
+        log.info("Password changed successfully for user: {}", user.getEmail());
+    }
+
+    /**
+     * Get current subscription info for a user.
+     */
+    public UserSubscriptionDTO getUserSubscriptionInfo(Long userId) {
+        return subscriptionService.getCurrentSubscription(userId)
+                .map(subscriptionService::toUserSubscriptionDTO)
+                .orElse(null);
+    }
+
+    /**
      * Check if password is strong enough
      */
     private boolean isPasswordStrong(String password) {
@@ -230,6 +266,20 @@ public class AuthService {
      */
     public User getUserById(Long userId) {
         return userRepository.findById(userId).orElse(null);
+    }
+
+    /**
+     * Alias for getUserById - used in controllers
+     */
+    public User findUserById(Long userId) {
+        return userRepository.findById(userId).orElse(null);
+    }
+
+    /**
+     * Update user information
+     */
+    public User updateUser(User user) {
+        return userRepository.save(user);
     }
 
     /**

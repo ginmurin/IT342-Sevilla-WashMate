@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router";
 import { usePayment } from "../contexts/PaymentContext";
 import { useWallet } from "../contexts/WalletContext";
+import { useNotifications } from "../contexts/NotificationContext";
 import { walletAPI } from "../utils/walletAPI";
 import { Card, CardContent } from "../components/Card";
 import { Button } from "../components/Button";
@@ -20,6 +21,7 @@ export default function WalletPaymentSuccess() {
   const [searchParams] = useSearchParams();
   const { refetchWalletData } = usePayment();
   const { topUpData } = useWallet();
+  const { fetchNotifications } = useNotifications();
   const hasConfirmedPayment = useRef(false);
 
   // Handle both state (from navigate) and query params (from 3DS redirect)
@@ -32,7 +34,26 @@ export default function WalletPaymentSuccess() {
 
   const topUpId = searchParams.get("topUpId") || state.topUpId || `TOPUP-${Date.now()}`;
   const paymentId = searchParams.get("paymentId") || state.paymentId?.toString();
-  const amount = parseFloat(searchParams.get("amount") || "0") || state.amount || topUpData.amount || 0;
+  const [amount] = useState(() => {
+    const queryAmount = Number(searchParams.get("amount"));
+    if (Number.isFinite(queryAmount) && queryAmount > 0) {
+      return queryAmount;
+    }
+
+    if (typeof state.amount === "number" && state.amount > 0) {
+      return state.amount;
+    }
+
+    const savedAmount = localStorage.getItem("walletTopUpAmount");
+    if (savedAmount) {
+      const parsedAmount = Number(savedAmount);
+      if (Number.isFinite(parsedAmount) && parsedAmount > 0) {
+        return parsedAmount;
+      }
+    }
+
+    return topUpData.amount > 0 ? topUpData.amount : 0;
+  });
   const paymongoPaymentIntentId = searchParams.get("paymongoPaymentIntentId") || state.paymongoPaymentIntentId;
 
   // Debug logging on mount
@@ -71,6 +92,9 @@ export default function WalletPaymentSuccess() {
           console.log("✅ Wallet top-up confirmed successfully", response.data);
           // Refetch wallet data to get updated balance
           refetchWalletData();
+          // Force fetch notifications to show the new top-up immediately
+          fetchNotifications();
+          localStorage.removeItem("walletTopUpAmount");
         })
         .catch((error) => {
           console.error("❌ Failed to confirm wallet top-up:", error);

@@ -50,7 +50,7 @@ interface OrderContextType {
   nextStep: () => void;
   prevStep: () => void;
   resetOrder: () => void;
-  submitOrder: () => Promise<any>;
+  submitOrder: (navigateToPaymentReview?: boolean) => Promise<any>;
   isSubmitting: boolean;
   submitError: string | null;
 }
@@ -105,7 +105,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
     setCurrentStep(1);
   };
 
-  const submitOrder = async (): Promise<any> => {
+  const submitOrder = async (navigateToPaymentReview = true): Promise<any> => {
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -198,26 +198,40 @@ export function OrderProvider({ children }: { children: ReactNode }) {
       };
 
       const response = await orderAPI.createOrder(request);
-      console.log('Order created successfully:', response);
+      console.log('✅ Order creation response:', response);
 
-      // Extract orderId from axios response.data (AxiosResponse wraps actual data in .data property)
-      const orderId = response?.orderId
+      const { orderId } = response;
 
       if (!orderId) {
-        console.error('❌ No orderId found in response:', response);
         throw new Error('Failed to get orderId from order creation');
       }
 
       console.log('✅ Order submitted with ID:', orderId);
 
+      // Store entire orderData in localStorage for persistence
+      // Convert Map to Object for JSON serialization
+      const updatedOrderData = {
+        ...orderData,
+        orderId,
+        selectedServices: Object.fromEntries(orderData.selectedServices) // Convert Map to Object
+      };
+      localStorage.setItem('currentOrderData', JSON.stringify(updatedOrderData));
+      localStorage.setItem('currentOrderId', String(orderId));
+
       // Store orderId in orderData for payment processing
       setOrderData({ orderId });
 
       // Navigate to payment review page with order details
-      navigate(`/order/payment-review`);
+      if (navigateToPaymentReview) {
+        navigate(`/order/payment-review`);
+      }
+
+      // Return the response so PaymentReview can access orderId if needed
+      return response;
     } catch (error) {
-      console.error('Order creation failed:', error);
-      setSubmitError(error instanceof Error ? error.message : 'Order creation failed');
+      console.error('❌ Order creation failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Order creation failed';
+      setSubmitError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

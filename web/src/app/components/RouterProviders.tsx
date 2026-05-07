@@ -3,6 +3,7 @@ import { OrderProvider } from "../contexts/OrderContext";
 import { PaymentProvider } from "../contexts/PaymentContext";
 import { WalletProvider } from "../contexts/WalletContext";
 import { SubscriptionProvider } from "../contexts/SubscriptionContext";
+import { NotificationProvider } from "../contexts/NotificationContext";
 
 interface RouterProvidersProps {
   children: ReactNode;
@@ -14,14 +15,16 @@ interface RouterProvidersProps {
  */
 export function RouterProviders({ children }: RouterProvidersProps) {
   return (
-    <OrderProvider>
-      <PaymentProvider>
-        <WalletProvider>
-          <SubscriptionProvider>
-            {children}
-          </SubscriptionProvider>
-        </WalletProvider>
-      </PaymentProvider>
-    </OrderProvider>
+    <NotificationProvider>
+      <OrderProvider>
+        <PaymentProvider>
+          <WalletProvider>
+            <SubscriptionProvider>
+              {children}
+            </SubscriptionProvider>
+          </WalletProvider>
+        </PaymentProvider>
+      </OrderProvider>
+    </NotificationProvider>
   );
 }

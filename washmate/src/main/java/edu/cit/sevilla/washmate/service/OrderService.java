@@ -43,6 +43,7 @@ public class OrderService {
     private final ServiceVariantRepository serviceVariantRepository;
     private final UserSubscriptionRepository userSubscriptionRepository;
     private final PaymentService paymentService;
+    private final NotificationService notificationService;
     private final EntityManager entityManager;
 
     // ===== ORDER CREATION AND MANAGEMENT =====
@@ -270,7 +271,12 @@ public class OrderService {
 
         // Update order status
         order.setStatus("CONFIRMED");
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+
+        // Notify user about successful payment
+        notificationService.notifyPaymentSuccess(order.getCustomer().getUserId(), order.getOrderId(), order.getOrderNumber());
+
+        return savedOrder;
     }
 
     // ===== ORDER STATUS MANAGEMENT =====

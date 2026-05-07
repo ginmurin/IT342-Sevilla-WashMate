@@ -68,4 +68,39 @@ public class ServiceController {
 
         return dto;
     }
+
+    /**
+     * Update the base price of a service.
+     */
+    @org.springframework.web.bind.annotation.PutMapping("/{serviceId}/price")
+    public ResponseEntity<WashServiceDTO> updateServicePrice(
+            @org.springframework.web.bind.annotation.PathVariable Long serviceId,
+            @org.springframework.web.bind.annotation.RequestBody java.util.Map<String, java.math.BigDecimal> request) {
+        WashService service = washServiceRepository.findById(serviceId)
+                .orElseThrow(() -> new RuntimeException("Service not found"));
+        
+        service.setBasePricePerUnit(request.get("price"));
+        WashService updatedService = washServiceRepository.save(service);
+        return ResponseEntity.ok(convertToDTO(updatedService));
+    }
+
+    /**
+     * Update the price of a service variant.
+     */
+    @org.springframework.web.bind.annotation.PutMapping("/{serviceId}/variants/{variantId}/price")
+    public ResponseEntity<WashServiceDTO> updateVariantPrice(
+            @org.springframework.web.bind.annotation.PathVariable Long serviceId,
+            @org.springframework.web.bind.annotation.PathVariable Long variantId,
+            @org.springframework.web.bind.annotation.RequestBody java.util.Map<String, java.math.BigDecimal> request) {
+        WashService service = washServiceRepository.findById(serviceId)
+                .orElseThrow(() -> new RuntimeException("Service not found"));
+        
+        service.getVariants().stream()
+                .filter(v -> v.getVariantId().equals(variantId))
+                .findFirst()
+                .ifPresent(v -> v.setVariantPrice(request.get("price")));
+                
+        WashService updatedService = washServiceRepository.save(service);
+        return ResponseEntity.ok(convertToDTO(updatedService));
+    }
 }

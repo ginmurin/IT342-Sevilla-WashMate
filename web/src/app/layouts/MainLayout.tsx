@@ -44,7 +44,13 @@ export function MainLayout() {
       "/payment/error": "WashMate | Payment Failed",
       "/payment/history": "WashMate | Payment History",
       "/shop": "WashMate | Shop Dashboard",
+      "/shop/orders": "WashMate | Shop Orders",
+      "/shop/services": "WashMate | Shop Services",
+      "/shop/settings": "WashMate | Shop Settings",
       "/admin": "WashMate | Admin Dashboard",
+      "/subscriptions": "WashMate | Subscriptions",
+      "/settings": "WashMate | Settings",
+      "/notifications": "WashMate | Notifications",
     };
     document.title = titles[location.pathname] ?? "WashMate";
   }, [location.pathname]);
@@ -58,7 +64,7 @@ export function MainLayout() {
     if (!user) return "/";
     switch (user.role) {
       case "CUSTOMER": return "/customer";
-      case "SHOPOWNER": return "/shop";
+      case "SHOP_OWNER": return "/shop";
       case "ADMIN": return "/admin";
       default: return "/";
     }

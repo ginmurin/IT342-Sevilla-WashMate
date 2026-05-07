@@ -8,6 +8,8 @@ import edu.cit.sevilla.washmate.entity.Payment;
 import edu.cit.sevilla.washmate.entity.User;
 import edu.cit.sevilla.washmate.repository.UserRepository;
 import edu.cit.sevilla.washmate.service.OrderService;
+import edu.cit.sevilla.washmate.service.PayMongoService;
+import edu.cit.sevilla.washmate.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,6 +17,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +32,8 @@ public class OrderController {
 
     private final OrderService orderService;
     private final UserRepository userRepository;
+    private final PayMongoService payMongoService;
+    private final PaymentService paymentService;
 
     // ===== ORDER CREATION =====
 
@@ -65,6 +71,79 @@ public class OrderController {
 
         Payment payment = orderService.initiateOrderPayment(orderId, paymentMethod);
         return ResponseEntity.ok(orderService.toPaymentDTO(payment));
+    }
+
+    /**
+     * Process order payment (handle PayMongo integration).
+     * Backend handles all PayMongo API calls - frontend never sees payment details.
+     */
+    @PostMapping("/{orderId}/payment/process")
+    public ResponseEntity<Map<String, Object>> processOrderPayment(
+            @PathVariable Long orderId,
+            @RequestBody Map<String, Object> request,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        // Verify order belongs to user
+        verifyOrderOwnership(orderId, jwt);
+
+        String paymentMethod = (String) request.get("paymentMethod");
+        Order order = orderService.getOrderById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("orderId", orderId);
+        response.put("paymentMethod", paymentMethod);
+        
+        Payment payment = null;
+
+        try {
+            // Create PENDING payment record
+            payment = orderService.initiateOrderPayment(orderId, paymentMethod);
+
+            response.put("paymentId", payment.getPaymentId());
+            response.put("amount", order.getTotalAmount());
+
+            switch (paymentMethod.toUpperCase()) {
+                case "CARD":
+                    // Create PayMongo payment intent for card
+                    Map<String, String> intentResult = payMongoService.createPaymentIntent(order.getTotalAmount());
+                    response.put("paymentIntentId", intentResult.get("paymentIntentId"));
+                    response.put("clientKey", intentResult.get("clientKey"));
+                    break;
+
+                case "GCASH":
+                case "PAYMAYA":
+                case "GRAB_PAY":
+                    // Create PayMongo source for e-wallet
+                    String sourceType = paymentMethod.toLowerCase();
+                    String successUrl = "http://localhost:5173/payment/success?orderId=" + orderId + "&paymentId=" + payment.getPaymentId() + "&amount=" + order.getTotalAmount();
+                    String failureUrl = "http://localhost:5173/payment/error?orderId=" + orderId;
+
+                    Map<String, String> sourceResult = payMongoService.createSource(sourceType, order.getTotalAmount(), successUrl, failureUrl);
+                    response.put("checkoutUrl", sourceResult.get("checkoutUrl"));
+                    response.put("sourceId", sourceResult.get("sourceId"));
+                    break;
+
+                case "WALLET":
+                    // Wallet payment - no PayMongo needed
+                    // Frontend will navigate directly to success
+                    response.put("walletPayment", true);
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Unsupported payment method: " + paymentMethod);
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            // Update payment status to FAILED if payment was created
+            if (payment != null && payment.getPaymentId() != null) {
+                paymentService.updatePaymentStatus(payment.getPaymentId(), "FAILED");
+            }
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 
     /**

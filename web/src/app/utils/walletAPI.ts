@@ -54,6 +54,10 @@ export const walletAPI = {
   initiateTopup: (amount: number, paymentMethod: string) =>
     api.post<WalletPaymentDTO>('/api/wallet/topup/initiate', { amount, paymentMethod }),
 
+  // Process wallet top-up payment (new endpoint - backend handles PayMongo)
+  processTopup: (amount: number, paymentMethod: string) =>
+    api.post('/api/wallet/topup/process', { amount, paymentMethod }),
+
   // Confirm wallet top-up
   confirmTopup: (paymentId: number, amount?: number, paymongoPaymentIntentId?: string) =>
     api.post<WalletBalance>(`/api/wallet/topup/confirm/${paymentId}`, { amount, paymongoPaymentIntentId }),

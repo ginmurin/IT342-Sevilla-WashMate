@@ -11,6 +11,10 @@ export interface User extends ApiUser {
   firstName: string;
   lastName: string;
   role: Role;
+  phone?: string;
+  phoneNumber?: string;
+  emailVerified?: boolean;
+  twoFactorEnabled?: boolean;
 }
 
 interface AuthContextType {
@@ -48,14 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const WARNING_TIME = 28 * 60 * 1000; // 28 minutes
   const TOKEN_REFRESH_INTERVAL = 14 * 60 * 1000; // Refresh every 14 minutes (access token is 15)
 
-  const setUser = (userData: User | null) => {
+  const setUser = useCallback((userData: User | null) => {
     setUserState(userData);
     if (userData) {
       sessionStorage.setItem("washmate_user", JSON.stringify(userData));
     } else {
       sessionStorage.removeItem("washmate_user");
     }
-  };
+  }, []);
 
   const normalizeUser = (userData: Partial<User>): User => ({
     id: userData.id || 0,
@@ -64,6 +68,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     firstName: userData.firstName || "",
     lastName: userData.lastName || "",
     role: (String(userData.role || "CUSTOMER").toUpperCase() as Role),
+    phone: userData.phone || userData.phoneNumber,
+    phoneNumber: userData.phoneNumber || userData.phone,
+    emailVerified: userData.emailVerified,
+    twoFactorEnabled: userData.twoFactorEnabled,
   });
 
   const login = (userData: User) => {

@@ -8,13 +8,16 @@ export interface User {
   email: string;
   role: UserRole;
   phone?: string;
+  phoneNumber?: string;
   emailVerified?: boolean;
+  twoFactorEnabled?: boolean;
 }
 
 export interface AuthResponse {
   token: string;
   user: User;
   requiresEmailVerification?: boolean;
+  requiresTwoFactor?: boolean;
   userId?: number;
 }
 

@@ -9,7 +9,6 @@ import {
   Clock,
   Wallet as WalletIcon,
   User,
-  Bell,
   Menu,
   X,
   LogOut,
@@ -17,8 +16,12 @@ import {
   Heart,
   ChevronDown,
   Crown,
+  Bell,
+  Store,
+  Palette,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { NotificationDropdown } from "./NotificationDropdown";
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -26,35 +29,38 @@ export function Navbar() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   // Derive nav context from current path so ADMIN
   // viewing /customer still get the customer nav links.
-  const currentView = location.pathname.startsWith("/admin")
-    ? "admin"
+  const currentView = user?.role === "ADMIN" 
+    ? (location.pathname.startsWith("/admin") ? "admin" : "customer")
+    : user?.role === "SHOP_OWNER" 
+    ? "shop" 
     : "customer";
 
   const navItems =
-    currentView === "customer"
+    currentView === "admin"
       ? [
+          { label: "Dashboard", icon: Home, href: "/admin" },
+          { label: "Users", icon: User, href: "/admin/users" },
+          { label: "Shops", icon: ShoppingBag, href: "/admin/shops" },
+          { label: "Settings", icon: Settings, href: "/admin/settings" },
+        ]
+      : currentView === "shop"
+      ? [
+          { label: "Dashboard", icon: Store, href: "/shop" },
+          { label: "Orders", icon: ShoppingBag, href: "/shop/orders" },
+          { label: "Services", icon: Palette, href: "/shop/services" },
+          { label: "Subscriptions", icon: Crown, href: "/subscriptions" },
+          { label: "Wallet", icon: WalletIcon, href: "/wallet" },
+        ]
+      : [
           { label: "Home", icon: Home, href: "/customer" },
           { label: "Services", icon: ShoppingBag, href: "/services" },
           { label: "Subscriptions", icon: Crown, href: "/subscriptions" },
           { label: "My Orders", icon: Clock, href: "/my-orders" },
           { label: "Wallet", icon: WalletIcon, href: "/wallet" },
-        ]
-      : [
-          { label: "Dashboard", icon: Home, href: "/admin" },
-          { label: "Users", icon: User, href: "/admin/users" },
-          { label: "Shops", icon: ShoppingBag, href: "/admin/shops" },
-          { label: "Settings", icon: Settings, href: "/admin/settings" },
         ];
-
-  const notifications = [
-    { id: 1, message: "Your order #ORD-001 is ready for pickup", time: "5 mins ago" },
-    { id: 2, message: "New service available: Premium Dry Clean", time: "2 hours ago" },
-    { id: 3, message: "Wallet loaded successfully: ₱2,000", time: "1 day ago" },
-  ];
 
   const handleLogout = async () => {
     await logout();
@@ -68,7 +74,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to={currentView === "customer" ? "/customer" : "/admin"} className="flex items-center gap-2.5">
+          <Link to={currentView === "admin" ? "/admin" : currentView === "shop" ? "/shop" : "/customer"} className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-md shadow-teal-200">
               <Droplets className="w-5 h-5 text-white" />
             </div>
@@ -100,52 +106,7 @@ export function Navbar() {
           <div className="flex items-center gap-4">
             {/* Notifications */}
             {currentView === "customer" && (
-              <div className="relative hidden sm:block">
-                <button
-                  onClick={() => setNotificationsOpen(!notificationsOpen)}
-                  className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                >
-                  <Bell className="w-5 h-5" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-                </button>
-
-                <AnimatePresence>
-                  {notificationsOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden"
-                    >
-                      <div className="max-h-96 overflow-y-auto">
-                        {notifications.length === 0 ? (
-                          <div className="p-8 text-center">
-                            <Bell className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                            <p className="text-slate-500 text-sm">No notifications</p>
-                          </div>
-                        ) : (
-                          <div className="divide-y divide-slate-100">
-                            {notifications.map((notif) => (
-                              <div
-                                key={notif.id}
-                                className="p-4 hover:bg-slate-50 cursor-pointer transition-colors"
-                              >
-                                <p className="text-sm font-medium text-slate-900">{notif.message}</p>
-                                <p className="text-xs text-slate-500 mt-1">{notif.time}</p>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="bg-slate-50 p-3 text-center border-t border-slate-100">
-                        <a href="#" className="text-xs font-medium text-teal-600 hover:text-teal-700">
-                          View all notifications
-                        </a>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              <NotificationDropdown />
             )}
 
             {/* Profile Dropdown */}
@@ -178,24 +139,45 @@ export function Navbar() {
                     <div className="space-y-1 p-2">
                       {currentView === "customer" && (
                         <>
-                          <a
-                            href="#"
+                          <Link
+                            to="/payment/history"
+                            onClick={() => setProfileMenuOpen(false)}
                             className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                           >
-                            Profile Settings
-                          </a>
-                          <a
-                            href="#"
+                            Payment History
+                          </Link>
+                          <Link
+                            to="/settings"
+                            onClick={() => setProfileMenuOpen(false)}
                             className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                           >
-                            Saved Addresses
-                          </a>
-                          <a
-                            href="#"
+                            Settings
+                          </Link>
+                        </>
+                      )}
+                      {currentView === "shop" && (
+                        <>
+                          <Link
+                            to="/payment/history"
+                            onClick={() => setProfileMenuOpen(false)}
                             className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                           >
-                            Payment Methods
-                          </a>
+                            Payment History
+                          </Link>
+                          <Link
+                            to="/shop/settings"
+                            onClick={() => setProfileMenuOpen(false)}
+                            className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                          >
+                            Shop Settings
+                          </Link>
+                          <Link
+                            to="/settings"
+                            onClick={() => setProfileMenuOpen(false)}
+                            className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                          >
+                            Account Settings
+                          </Link>
                         </>
                       )}
                     </div>

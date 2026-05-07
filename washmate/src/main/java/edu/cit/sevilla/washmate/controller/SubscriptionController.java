@@ -8,12 +8,16 @@ import edu.cit.sevilla.washmate.entity.User;
 import edu.cit.sevilla.washmate.entity.UserSubscription;
 import edu.cit.sevilla.washmate.repository.UserRepository;
 import edu.cit.sevilla.washmate.service.SubscriptionService;
+import edu.cit.sevilla.washmate.service.PayMongoService;
+import edu.cit.sevilla.washmate.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,6 +29,8 @@ public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
     private final UserRepository userRepository;
+    private final PayMongoService payMongoService;
+    private final PaymentService paymentService;
 
     /**
      * Get current user's active subscription.
@@ -101,6 +107,79 @@ public class SubscriptionController {
             System.err.println("ERROR in initiateUpgrade: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Failed to initiate subscription upgrade: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Process subscription upgrade payment (handle PayMongo integration).
+     * Backend handles all PayMongo API calls - frontend never sees payment details.
+     */
+    @PostMapping("/upgrade/{planType}/process")
+    public ResponseEntity<Map<String, Object>> processUpgradePayment(
+            @PathVariable String planType,
+            @RequestBody Map<String, Object> request,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        try {
+            Long userId = Long.parseLong(jwt.getSubject());
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            String paymentMethod = (String) request.get("paymentMethod");
+
+            // Initiate subscription upgrade (creates PENDING payment)
+            UserSubscription newSub = subscriptionService.initiateSubscriptionUpgrade(user.getUserId(), user, planType);
+            java.util.List<Payment> payments = subscriptionService.getSubscriptionPayments(newSub.getUserSubscriptionId());
+            Payment payment = payments.isEmpty() ? null : payments.get(0);
+
+            if (payment == null) {
+                throw new RuntimeException("Payment creation failed");
+            }
+
+            BigDecimal planPrice = newSub.getSubscription().getPlanPrice();
+
+            // Handle payment based on method
+            Map<String, Object> response = new HashMap<>();
+            response.put("paymentId", payment.getPaymentId());
+            response.put("userSubscriptionId", newSub.getUserSubscriptionId());
+            response.put("planType", planType);
+            response.put("amount", planPrice);
+            response.put("paymentMethod", paymentMethod);
+
+            switch (paymentMethod.toUpperCase()) {
+                case "CARD":
+                    // Create PayMongo payment intent for card
+                    Map<String, String> intentResult = payMongoService.createPaymentIntent(planPrice);
+                    response.put("paymentIntentId", intentResult.get("paymentIntentId"));
+                    response.put("clientKey", intentResult.get("clientKey"));
+                    break;
+
+                case "GCASH":
+                case "PAYMAYA":
+                case "GRAB_PAY":
+                    // Create PayMongo source for e-wallet
+                    String sourceType = paymentMethod.toLowerCase();
+                    String successUrl = "http://localhost:5173/subscription/upgrade-success?userSubscriptionId=" + newSub.getUserSubscriptionId() + "&paymentId=" + payment.getPaymentId();
+                    String failureUrl = "http://localhost:5173/subscription/upgrade-error";
+
+                    Map<String, String> sourceResult = payMongoService.createSource(sourceType, planPrice, successUrl, failureUrl);
+                    response.put("checkoutUrl", sourceResult.get("checkoutUrl"));
+                    response.put("sourceId", sourceResult.get("sourceId"));
+                    break;
+
+                case "WALLET":
+                    // Wallet payment - no PayMongo needed
+                    response.put("walletPayment", true);
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Unsupported payment method: " + paymentMethod);
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to process subscription upgrade payment: " + e.getMessage(), e);
         }
     }
 

@@ -13,6 +13,7 @@ import PaymentCheckout from "./pages/PaymentCheckout";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentError from "./pages/PaymentError";
 import PaymentHistory from "./pages/PaymentHistory";
+import Settings from "./pages/Settings";
 import Wallet from "./pages/Wallet";
 import WalletPaymentReview from "./pages/WalletPaymentReview";
 import WalletPaymentCheckout from "./pages/WalletPaymentCheckout";
@@ -23,6 +24,7 @@ import ScheduleAddress from "./pages/ScheduleAddress";
 import PaymentReview from "./pages/PaymentReview";
 import MyOrders from "./pages/MyOrders";
 import Services from "./pages/Services";
+import Notifications from "./pages/Notifications";
 import { CustomerDashboard } from "./pages/CustomerDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import SubscriptionPlans from "./pages/SubscriptionPlans";
@@ -31,6 +33,11 @@ import SubscriptionUpgradeCheckout from "./pages/SubscriptionUpgradeCheckout";
 import SubscriptionUpgradeSuccess from "./pages/SubscriptionUpgradeSuccess";
 import SubscriptionManagement from "./pages/SubscriptionManagement";
 import SubscriptionHistory from "./pages/SubscriptionHistory";
+import OrderDetail from "./pages/OrderDetail";
+import { ShopDashboard } from "./pages/ShopDashboard";
+import ShopOrders from "./pages/ShopOrders";
+import ShopServices from "./pages/ShopServices";
+import ShopSettings from "./pages/ShopSettings";
 
 // Wrapper component that provides router-dependent contexts to MainLayout
 function AppWithProviders() {
@@ -87,6 +94,10 @@ export const router = createBrowserRouter([
         Component: PaymentHistory,
       },
       {
+        path: "settings",
+        Component: Settings,
+      },
+      {
         path: "wallet",
         Component: Wallet,
       },
@@ -123,6 +134,10 @@ export const router = createBrowserRouter([
         Component: MyOrders,
       },
       {
+        path: "orders/:orderId",
+        Component: OrderDetail,
+      },
+      {
         path: "services",
         Component: Services,
       },
@@ -133,6 +148,10 @@ export const router = createBrowserRouter([
           {
             path: "customer",
             Component: CustomerDashboard,
+          },
+          {
+            path: "notifications",
+            Component: Notifications,
           },
         ],
       },
@@ -146,9 +165,31 @@ export const router = createBrowserRouter([
           },
         ],
       },
+      // Shop Owner Routes
+      {
+        element: <ProtectedRoute allowedRoles={["SHOP_OWNER"]} />,
+        children: [
+          {
+            path: "shop",
+            Component: ShopDashboard,
+          },
+          {
+            path: "shop/orders",
+            Component: ShopOrders,
+          },
+          {
+            path: "shop/services",
+            Component: ShopServices,
+          },
+          {
+            path: "shop/settings",
+            Component: ShopSettings,
+          },
+        ],
+      },
       // Subscription Routes — accessible by all authenticated users
       {
-        element: <ProtectedRoute allowedRoles={["CUSTOMER", "ADMIN"]} />,
+        element: <ProtectedRoute allowedRoles={["CUSTOMER", "ADMIN", "SHOP_OWNER"]} />,
         children: [
           {
             path: "subscriptions",

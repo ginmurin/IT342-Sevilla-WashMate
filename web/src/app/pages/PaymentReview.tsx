@@ -1,26 +1,50 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useOrder } from "../contexts/OrderContext";
-import { orderAPI } from "../utils/orderAPI";
+import { orderAPI } from "../services/order";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/Card";
 import { Button } from "../components/Button";
 import { CreditCard, Smartphone, CheckCircle2, AlertCircle, Loader2, Zap, Wallet } from "lucide-react";
 import { motion } from "motion/react";
-import { createSource, type SourceType } from "../services/paymongo";
+import { useEffect } from "react";
 
 export default function PaymentReview() {
   const navigate = useNavigate();
-  const { orderData, setOrderData, prevStep, submitOrder } = useOrder();
+  const { orderData, setOrderData, prevStep, submitOrder, resetOrder } = useOrder();
   const [isProcessing, setIsProcessing] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<string>("");
 
-  const sourceTypeMap: Record<string, SourceType> = {
-    gcash: "gcash",
-    maya: "paymaya",
-    grab_pay: "grab_pay",
-  };
+  // Restore orderId from localStorage if it was lost (e.g. page refresh)
+  useEffect(() => {
+    console.log('📋 PaymentReview mounted. orderData.orderId:', orderData.orderId);
+
+    if (!orderData.orderId) {
+      // Try to restore from localStorage
+      const savedOrderId = localStorage.getItem('currentOrderId');
+      const savedOrderData = localStorage.getItem('currentOrderData');
+
+      console.log('📦 Checking localStorage - orderId:', savedOrderId, 'orderData:', savedOrderData);
+
+      if (savedOrderData) {
+        try {
+          const parsedData = JSON.parse(savedOrderData);
+          // Convert selectedServices Object back to Map
+          if (parsedData.selectedServices && typeof parsedData.selectedServices === 'object') {
+            parsedData.selectedServices = new Map(Object.entries(parsedData.selectedServices));
+          }
+          console.log('✅ Restored order data from localStorage:', parsedData);
+          setOrderData(parsedData);
+        } catch (e) {
+          console.error('❌ Failed to parse stored order data:', e);
+        }
+      } else if (savedOrderId) {
+        console.log('✅ Restored orderId from localStorage:', savedOrderId);
+        setOrderData({ orderId: parseInt(savedOrderId) });
+      }
+    }
+  }, []);
 
   const handleSubmit = async () => {
     if (!agreeToTerms) {
@@ -37,68 +61,87 @@ export default function PaymentReview() {
     const amount = orderData.estimatedPrice || 0;
 
     try {
-      // 1. Submit order to backend
-      const submitResult = await submitOrder();
-      const orderId = submitResult?.orderId;
+      // Get orderId from orderData, localStorage, or create the order now.
+      let orderId = orderData.orderId;
 
       if (!orderId) {
-        throw new Error("Failed to get order ID from submission - check console for details");
+        // Try to get from localStorage (in case of page refresh)
+        const savedOrderId = localStorage.getItem('currentOrderId');
+        if (savedOrderId) {
+          orderId = parseInt(savedOrderId);
+        }
       }
 
-      console.log("📝 Order submitted with ID:", orderId, "Amount:", amount);
+      if (!orderId) {
+        const createdOrder = await submitOrder(false);
+        orderId = createdOrder?.orderId;
+      }
 
-      // 2. Initiate payment with backend
-      const paymentResponse = await orderAPI.initiatePayment(orderId, selectedMethod);
-      console.log("💳 Payment API response:", paymentResponse);
+      if (!orderId) {
+        throw new Error("Order ID not found - please go back and resubmit your order");
+      }
 
-      const paymentId = paymentResponse.data?.paymentId || paymentResponse?.paymentId;
+      console.log("📝 Using order ID:", orderId, "Amount:", amount);
+
+      // 2. Process payment with backend (backend handles PayMongo)
+      const paymentResponse = await orderAPI.processPayment(orderId, selectedMethod);
+      console.log("💳 Payment process response:", paymentResponse);
+
+      const paymentId = paymentResponse?.paymentId;
 
       if (!paymentId) {
         console.error("❌ No paymentId in response:", paymentResponse);
-        throw new Error("Failed to initiate payment - no paymentId returned from backend");
+        throw new Error("Failed to process payment - no paymentId returned from backend");
       }
 
-      console.log("💳 Payment initiated:", { paymentId, orderId, method: selectedMethod });
+      console.log("💳 Payment processing initiated:", { paymentId, orderId, method: selectedMethod });
 
       // 3. Route based on payment method
-      if (selectedMethod === "card") {
-        console.log("💳 Routing to card checkout");
+      if (selectedMethod === "CARD") {
+        // For card: backend returns paymentIntentId and clientKey
+        const paymentIntentId = paymentResponse?.paymentIntentId;
+        const clientKey = paymentResponse?.clientKey;
+
+        console.log("💳 Routing to card checkout with intent:", paymentIntentId);
+        // Clear the cart so the user can't accidentally double pay via the back button
+        localStorage.removeItem('currentOrderId');
+        localStorage.removeItem('currentOrderData');
+        resetOrder();
+        const actualAmount = paymentResponse?.amount || amount;
         navigate("/payment/checkout", {
-          state: { orderId, amount, paymentId, paymentMethod: "card" },
+          state: { orderId, amount: actualAmount, paymentId, paymentMethod: "CARD", paymentIntentId, clientKey },
         });
         return;
       }
 
-      if (selectedMethod === "wallet") {
-        console.log("💰 Routing to wallet success");
+      if (selectedMethod === "WALLET") {
+        console.log("💰 Routing to wallet success (direct payment)");
+        // Clear the stored order data after successful payment
+        localStorage.removeItem('currentOrderId');
+        localStorage.removeItem('currentOrderData');
+        const actualAmount = paymentResponse?.amount || amount;
+        resetOrder();
         navigate("/payment/success", {
-          state: { orderId, amount, paymentId, paymentMethod: "wallet" },
+          state: { orderId, amount: actualAmount, paymentId, paymentMethod: "WALLET" },
         });
         return;
       }
 
-      // Mobile wallets (gcash, maya, grab_pay)
-      const sourceTypeMap: Record<string, SourceType> = {
-        gcash: "gcash",
-        maya: "paymaya",
-        grab_pay: "grab_pay",
-      };
+      // E-wallet methods (GCASH, PAYMAYA, GRAB_PAY)
+      // Backend returns checkout URL
+      const checkoutUrl = paymentResponse?.checkoutUrl;
 
-      const sourceType = sourceTypeMap[selectedMethod];
-      if (!sourceType) {
-        setPaymentError("Please select a valid payment method.");
-        setIsProcessing(false);
-        return;
+      if (!checkoutUrl) {
+        throw new Error("No checkout URL returned from backend for e-wallet payment");
       }
 
-      const successUrl = `${window.location.origin}/payment/success?orderId=${orderId}&amount=${amount}&paymentId=${paymentId}`;
-      const failedUrl = `${window.location.origin}/payment/error`;
-
-      console.log("🔗 Creating PayMongo source:", { sourceType, amount });
-
-      const checkoutUrl = await createSource(sourceType, amount, successUrl, failedUrl);
-      console.log("✅ PayMongo checkout URL:", checkoutUrl);
+      console.log("✅ Redirecting to e-wallet checkout:", checkoutUrl);
+      // Clear the stored order data before redirecting
+      localStorage.removeItem('currentOrderId');
+      localStorage.removeItem('currentOrderData');
+      resetOrder();
       window.location.href = checkoutUrl;
+
     } catch (err) {
       console.error("❌ Payment error:", err);
       setPaymentError(err instanceof Error ? err.message : "Payment failed. Please try again.");
@@ -108,35 +151,35 @@ export default function PaymentReview() {
 
   const paymentMethods = [
     {
-      id: "gcash",
+      id: "GCASH",
       name: "GCash",
       icon: Smartphone,
       description: "Pay using GCash mobile wallet",
       color: "from-blue-500 to-cyan-500",
     },
     {
-      id: "maya",
+      id: "PAYMAYA",
       name: "Maya",
       icon: Smartphone,
       description: "Pay using Maya mobile wallet",
       color: "from-purple-500 to-pink-500",
     },
     {
-      id: "card",
+      id: "CARD",
       name: "Credit/Debit Card",
       icon: CreditCard,
       description: "Visa, Mastercard, or other cards",
       color: "from-orange-500 to-red-500",
     },
     {
-      id: "grab_pay",
+      id: "GRAB_PAY",
       name: "GrabPay",
       icon: Smartphone,
       description: "Pay through GrabPay",
       color: "from-green-500 to-emerald-500",
     },
     {
-      id: "wallet",
+      id: "WALLET",
       name: "Wallet",
       icon: Wallet,
       description: "Pay using your WashMate wallet balance",

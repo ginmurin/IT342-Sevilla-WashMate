@@ -54,7 +54,7 @@ const SERVICE_UI_CONFIG: Record<string, {
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function LaundryDetails() {
   const navigate = useNavigate();
-  const { orderData, setOrderData, nextStep } = useOrder();
+  const { orderData, setOrderData, nextStep, resetOrder } = useOrder();
 
   const [services, setServices] = useState<ServiceResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +70,13 @@ export default function LaundryDetails() {
 
   // Fetch services from API on mount
   useEffect(() => {
+    // Clear any stuck order ID when starting a fresh order session
+    localStorage.removeItem('currentOrderId');
+    localStorage.removeItem('currentOrderData');
+    
+    // Completely wipe the React context state so orderId is removed from memory
+    resetOrder();
+    
     const fetchData = async () => {
       try {
         const [servicesData, subData] = await Promise.all([

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useWallet } from "../contexts/WalletContext";
-import { usePayment } from "../contexts/PaymentContext";
+import { walletAPI } from "../utils/walletAPI";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/Card";
 import { Button } from "../components/Button";
 import {
@@ -13,21 +13,13 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { createSource, type SourceType } from "../services/paymongo";
 
 export default function WalletPaymentReview() {
   const navigate = useNavigate();
-  const { topUpData, setTopUpData, submitTopUp } = useWallet();
-  const { addToWallet } = usePayment();
+  const { topUpData, setTopUpData } = useWallet();
   const [isProcessing, setIsProcessing] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-
-  const sourceTypeMap: Record<string, SourceType> = {
-    gcash: "gcash",
-    maya: "paymaya",
-    grab_pay: "grab_pay",
-  };
 
   const handleSubmit = async () => {
     if (!agreeToTerms) {
@@ -37,47 +29,58 @@ export default function WalletPaymentReview() {
     setPaymentError(null);
     setIsProcessing(true);
 
-    const amount = topUpData.amount;
-    const topUpId = `TOPUP-${Date.now()}`;
+    // Get amount from topUpData or localStorage (in case of page refresh)
+    let amount = topUpData.amount || 0;
+    if (amount === 0) {
+      const savedAmount = localStorage.getItem('walletTopUpAmount');
+      if (savedAmount) {
+        amount = Number(savedAmount);
+        setTopUpData({ amount });
+      }
+    }
+
+    const paymentMethod = (topUpData.paymentMethod || "").toUpperCase();
 
     try {
-      // Step 1: Initiate wallet top-up (creates Payment record in backend)
-      const paymentData = await submitTopUp();
-      const paymentId = paymentData?.paymentId;
+      // Process top-up with backend (handles PayMongo integration)
+      const processResponse = await walletAPI.processTopup(amount, paymentMethod);
+      console.log("📝 Wallet top-up process response:", processResponse);
+
+      const response = processResponse.data || processResponse;
+      const { paymentId } = response;
 
       if (!paymentId) {
-        setPaymentError("Failed to initiate payment. Please try again.");
-        setIsProcessing(false);
-        return;
+        throw new Error("Failed to get payment details from top-up processing");
       }
 
-      if (topUpData.paymentMethod === "card") {
-        navigate("/wallet/payment-checkout", {
-          state: { topUpId, amount, paymentId, paymentMethod: "card" },
+      // Handle wallet payment (should not happen at this step, but for consistency)
+      if (paymentMethod === "WALLET") {
+        navigate("/wallet/payment-success", {
+          state: { amount, paymentId, paymentMethod: "WALLET" },
         });
         return;
       }
 
-      const sourceType = sourceTypeMap[topUpData.paymentMethod!];
-      if (!sourceType) {
-        setPaymentError("Please select a payment method.");
-        setIsProcessing(false);
+      // Handle card payments
+      if (paymentMethod === "CARD") {
+        const { paymentIntentId, clientKey } = response;
+        navigate("/wallet/payment-checkout", {
+          state: { paymentId, amount, paymentIntentId, clientKey, paymentMethod: "CARD" },
+        });
         return;
       }
 
-      const successUrl = `${window.location.origin}/wallet/payment-success?topUpId=${topUpId}&amount=${amount}&paymentId=${paymentId}`;
-      const failedUrl = `${window.location.origin}/wallet/payment-error`;
+      // Handle e-wallet payments (redirect to checkout URL)
+      if (response.checkoutUrl) {
+        console.log("🎯 Redirecting to e-wallet checkout:", response.checkoutUrl);
+        window.location.href = response.checkoutUrl;
+        return;
+      }
 
-      const checkoutUrl = await createSource(
-        sourceType,
-        amount,
-        successUrl,
-        failedUrl
-      );
-      window.location.href = checkoutUrl;
+      throw new Error("Invalid payment response from backend");
     } catch (err) {
       setPaymentError(
-        err instanceof Error ? err.message : "Payment failed. Please try again."
+        err instanceof Error ? err.message : "Top-up failed. Please try again."
       );
       setIsProcessing(false);
     }
@@ -85,28 +88,28 @@ export default function WalletPaymentReview() {
 
   const paymentMethods = [
     {
-      id: "gcash",
+      id: "GCASH",
       name: "GCash",
       icon: Smartphone,
       description: "Pay using GCash mobile wallet",
       color: "from-blue-500 to-cyan-500",
     },
     {
-      id: "maya",
+      id: "PAYMAYA",
       name: "Maya",
       icon: Smartphone,
       description: "Pay using Maya mobile wallet",
       color: "from-purple-500 to-pink-500",
     },
     {
-      id: "card",
+      id: "CARD",
       name: "Credit/Debit Card",
       icon: CreditCard,
       description: "Visa, Mastercard, or other cards",
       color: "from-orange-500 to-red-500",
     },
     {
-      id: "grab_pay",
+      id: "GRAB_PAY",
       name: "GrabPay",
       icon: Smartphone,
       description: "Pay through GrabPay",

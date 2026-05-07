@@ -26,6 +26,7 @@ public class WalletService {
     private final WalletTransactionRepository walletTransactionRepository;
     private final UserRepository userRepository;
     private final PaymentService paymentService;
+    private final NotificationService notificationService;
 
     // ===== WALLET CREATION AND INITIALIZATION =====
 
@@ -118,10 +119,8 @@ public class WalletService {
         WalletTransaction transaction = walletTransactionRepository.findById(payment.getReferenceId())
                 .orElseThrow(() -> new IllegalArgumentException("Wallet transaction not found"));
 
-        // Validate amount matches (if amount is provided)
-        if (amount != null && amount.compareTo(payment.getAmount()) != 0) {
-            throw new IllegalArgumentException("Amount mismatch");
-        }
+        // Use amount from payment record (already validated during creation)
+        amount = payment.getAmount();
 
         // Update wallet balance
         wallet.setAvailableBalance(wallet.getAvailableBalance().add(payment.getAmount()));
@@ -144,7 +143,12 @@ public class WalletService {
         paymentService.savePayment(payment);
         System.out.println("💾 Payment saved with paymongoPaymentIntentId: " + payment.getPaymongoPaymentIntentId());
 
-        return walletTransactionRepository.save(transaction);
+        WalletTransaction savedTransaction = walletTransactionRepository.save(transaction);
+
+        // Notify user about successful wallet top-up
+        notificationService.notifyWalletTopup(userId, amount);
+
+        return savedTransaction;
     }
 
     // ===== WALLET BALANCE MANAGEMENT =====
@@ -178,6 +182,9 @@ public class WalletService {
                 .build();
 
         walletTransactionRepository.save(transaction);
+
+        // Notify user about successful wallet top-up (manual credit)
+        notificationService.notifyWalletTopup(userId, amount);
 
         return wallet;
     }
