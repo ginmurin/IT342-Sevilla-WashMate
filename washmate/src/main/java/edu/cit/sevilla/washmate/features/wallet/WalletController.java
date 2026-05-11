@@ -128,10 +128,11 @@ public class WalletController {
 
             switch (paymentMethod.toUpperCase()) {
                 case "CARD":
-                    // Create PayMongo payment intent for card
-                    Map<String, String> intentResult = payMongoService.createPaymentIntent(amount);
-                    response.put("paymentIntentId", intentResult.get("paymentIntentId"));
-                    response.put("clientKey", intentResult.get("clientKey"));
+                    // Create PayMongo checkout session for card
+                    String successUrl = "http://localhost:5173/wallet/payment-success?paymentId=" + payment.getPaymentId();
+                    String failureUrl = "http://localhost:5173/wallet/payment-failure?paymentId=" + payment.getPaymentId();
+                    Map<String, String> sessionResult = payMongoService.createCheckoutSession(amount, successUrl, failureUrl);
+                    response.put("checkoutUrl", sessionResult.get("checkoutUrl"));
                     break;
 
                 case "GCASH":
@@ -139,10 +140,10 @@ public class WalletController {
                 case "GRAB_PAY":
                     // Create PayMongo source for e-wallet
                     String sourceType = paymentMethod.toLowerCase();
-                    String successUrl = "http://localhost:5173/wallet/payment-success?paymentId=" + payment.getPaymentId();
-                    String failureUrl = "http://localhost:5173/wallet/payment-error";
+                    String eWalletSuccessUrl = "http://localhost:5173/wallet/payment-success?paymentId=" + payment.getPaymentId();
+                    String eWalletFailureUrl = "http://localhost:5173/wallet/payment-error";
 
-                    Map<String, String> sourceResult = payMongoService.createSource(sourceType, amount, successUrl, failureUrl);
+                    Map<String, String> sourceResult = payMongoService.createSource(sourceType, amount, eWalletSuccessUrl, eWalletFailureUrl);
                     response.put("checkoutUrl", sourceResult.get("checkoutUrl"));
                     response.put("sourceId", sourceResult.get("sourceId"));
                     break;

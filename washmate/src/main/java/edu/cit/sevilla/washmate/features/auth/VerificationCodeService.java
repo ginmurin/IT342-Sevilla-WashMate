@@ -37,6 +37,9 @@ public class VerificationCodeService {
 
             // Generate 6-digit OTP
             String code = generateOTP();
+            log.info("========================================");
+            log.info("[DEBUG OTP] Code for user {} is: {}", userId, code);
+            log.info("========================================");
             LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(OTP_EXPIRATION_MINUTES);
 
             // Create and save verification code

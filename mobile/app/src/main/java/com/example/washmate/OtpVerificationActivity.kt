@@ -9,15 +9,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.washmate.api.RetrofitClient
-import com.example.washmate.api.SyncRequest
-import com.example.washmate.auth.SupabaseManager
+import com.example.washmate.api.VerifyEmailRequest
+import com.example.washmate.api.ResendOtpRequest
 import com.example.washmate.databinding.ActivityOtpVerificationBinding
-import io.github.jan.supabase.exceptions.RestException
-import io.github.jan.supabase.gotrue.auth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import io.github.jan.supabase.gotrue.OtpType
 
 class OtpVerificationActivity : AppCompatActivity() {
 
@@ -79,53 +76,29 @@ class OtpVerificationActivity : AppCompatActivity() {
         }
     }
 
-    private fun verifyOtp(email: String, otp: String, firstName: String, lastName: String, username: String,phone: String, password: String) {
+    private fun verifyOtp(email: String, otp: String, firstName: String, lastName: String, username: String, phone: String, password: String) {
+        val userId = intent.getLongExtra("userId", -1L)
+        if (userId == -1L) {
+            Toast.makeText(this, "User ID missing", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         binding.btnVerify.isEnabled = false
         binding.otpInput.setEnabled(false)
 
         lifecycleScope.launch {
             try {
-                // Verify OTP with Supabase
-                withContext(Dispatchers.IO) {
-                    SupabaseManager.client.auth.verifyEmailOtp(
-                        email = email,
-                        token = otp,
-                        type = OtpType.Email.SIGNUP
-                    )
+                // Verify OTP with Backend
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.instance.verifyEmail(VerifyEmailRequest(userId, otp))
                 }
 
-                val session = SupabaseManager.client.auth.currentSessionOrNull()
-                val user = SupabaseManager.client.auth.currentUserOrNull()
-
-                if (session == null || user == null) {
-                    binding.btnVerify.isEnabled = true
-                    binding.otpInput.setEnabled(true)
-                    Toast.makeText(this@OtpVerificationActivity, "OTP verification failed", Toast.LENGTH_SHORT).show()
-                    return@launch
-                }
-
-                // Sync with backend
-                val syncRequest = SyncRequest(
-                    email = user.email ?: email,
-                    firstName = firstName,
-                    lastName = lastName,
-                    phoneNumber = phone.ifEmpty { null },
-                    username = username,
-                    role = "CUSTOMER",
-                    oauthId = user.id,  // Supabase user UUID
-                    oauthProvider = "SUPABASE"  // Email signup uses SUPABASE provider
-                )
-
-                val syncResponse = withContext(Dispatchers.IO) {
-                    RetrofitClient.instance.sync(syncRequest)
-                }
-
-                if (syncResponse.isSuccessful && syncResponse.body() != null) {
-                    val authData = syncResponse.body()!!
+                if (response.isSuccessful && response.body() != null) {
+                    val authData = response.body()!!
 
                     val sharedPref = getSharedPreferences("WashMatePrefs", Context.MODE_PRIVATE)
                     with(sharedPref.edit()) {
-                        putString("JWT_TOKEN", session.accessToken)
+                        putString("JWT_TOKEN", authData.accessToken)
                         putString("USER_EMAIL", authData.email)
                         putString("USER_ROLE", authData.role)
                         putString("USER_ID", authData.userId.toString())
@@ -141,16 +114,13 @@ class OtpVerificationActivity : AppCompatActivity() {
                 } else {
                     binding.btnVerify.isEnabled = true
                     binding.otpInput.setEnabled(true)
-                    Toast.makeText(this@OtpVerificationActivity, "Sync failed: ${syncResponse.code()}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@OtpVerificationActivity, "Verification failed: ${response.code()}", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 binding.btnVerify.isEnabled = true
                 binding.otpInput.setEnabled(true)
                 Log.e("OtpVerificationActivity", "OTP verification error: ${e.message}", e)
-
-                // Helpful tip: Supabase exceptions often contain detailed messages
-                val errorMsg = if (e is RestException) "Invalid or expired code" else "An error occurred"
-                Toast.makeText(this@OtpVerificationActivity, errorMsg, Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@OtpVerificationActivity, "Network error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -160,18 +130,21 @@ class OtpVerificationActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                withContext(Dispatchers.IO) {
-                    SupabaseManager.client.auth.resendEmail(
-                        email = email,
-                        type = OtpType.Email.SIGNUP
-                    )
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.instance.resendOtp(ResendOtpRequest(email))
                 }
-                Toast.makeText(this@OtpVerificationActivity, "OTP code sent", Toast.LENGTH_SHORT).show()
-                startResendCooldown()
+
+                if (response.isSuccessful) {
+                    Toast.makeText(this@OtpVerificationActivity, "OTP code sent", Toast.LENGTH_SHORT).show()
+                    startResendCooldown()
+                } else {
+                    binding.btnResendCode.isEnabled = true
+                    Toast.makeText(this@OtpVerificationActivity, "Failed to resend code: ${response.code()}", Toast.LENGTH_SHORT).show()
+                }
             } catch (e: Exception) {
                 binding.btnResendCode.isEnabled = true
                 Log.e("OtpVerificationActivity", "Resend OTP error: ${e.message}", e)
-                Toast.makeText(this@OtpVerificationActivity, "Failed to resend code", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@OtpVerificationActivity, "Network error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }

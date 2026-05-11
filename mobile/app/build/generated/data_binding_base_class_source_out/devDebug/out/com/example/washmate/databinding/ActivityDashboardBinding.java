@@ -6,36 +6,85 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.example.washmate.R;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.card.MaterialCardView;
 import java.lang.NullPointerException;
 import java.lang.Override;
 import java.lang.String;
 
 public final class ActivityDashboardBinding implements ViewBinding {
   @NonNull
-  private final LinearLayout rootView;
+  private final RelativeLayout rootView;
+
+  @NonNull
+  public final BottomNavigationView bottomNavigation;
 
   @NonNull
   public final Button btnLogout;
 
   @NonNull
+  public final Button btnNewOrder;
+
+  @NonNull
+  public final MaterialCardView cardSubscription;
+
+  @NonNull
+  public final LinearLayout llRecentOrders;
+
+  @NonNull
+  public final ScrollView scrollView;
+
+  @NonNull
+  public final TextView tvActiveOrdersCount;
+
+  @NonNull
+  public final TextView tvNoOrders;
+
+  @NonNull
+  public final TextView tvSubscriptionPlan;
+
+  @NonNull
+  public final TextView tvTitle;
+
+  @NonNull
+  public final TextView tvTotalSpent;
+
+  @NonNull
   public final TextView tvWelcomeMessage;
 
-  private ActivityDashboardBinding(@NonNull LinearLayout rootView, @NonNull Button btnLogout,
-      @NonNull TextView tvWelcomeMessage) {
+  private ActivityDashboardBinding(@NonNull RelativeLayout rootView,
+      @NonNull BottomNavigationView bottomNavigation, @NonNull Button btnLogout,
+      @NonNull Button btnNewOrder, @NonNull MaterialCardView cardSubscription,
+      @NonNull LinearLayout llRecentOrders, @NonNull ScrollView scrollView,
+      @NonNull TextView tvActiveOrdersCount, @NonNull TextView tvNoOrders,
+      @NonNull TextView tvSubscriptionPlan, @NonNull TextView tvTitle,
+      @NonNull TextView tvTotalSpent, @NonNull TextView tvWelcomeMessage) {
     this.rootView = rootView;
+    this.bottomNavigation = bottomNavigation;
     this.btnLogout = btnLogout;
+    this.btnNewOrder = btnNewOrder;
+    this.cardSubscription = cardSubscription;
+    this.llRecentOrders = llRecentOrders;
+    this.scrollView = scrollView;
+    this.tvActiveOrdersCount = tvActiveOrdersCount;
+    this.tvNoOrders = tvNoOrders;
+    this.tvSubscriptionPlan = tvSubscriptionPlan;
+    this.tvTitle = tvTitle;
+    this.tvTotalSpent = tvTotalSpent;
     this.tvWelcomeMessage = tvWelcomeMessage;
   }
 
   @Override
   @NonNull
-  public LinearLayout getRoot() {
+  public RelativeLayout getRoot() {
     return rootView;
   }
 
@@ -60,9 +109,69 @@ public final class ActivityDashboardBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.bottomNavigation;
+      BottomNavigationView bottomNavigation = ViewBindings.findChildViewById(rootView, id);
+      if (bottomNavigation == null) {
+        break missingId;
+      }
+
       id = R.id.btnLogout;
       Button btnLogout = ViewBindings.findChildViewById(rootView, id);
       if (btnLogout == null) {
+        break missingId;
+      }
+
+      id = R.id.btnNewOrder;
+      Button btnNewOrder = ViewBindings.findChildViewById(rootView, id);
+      if (btnNewOrder == null) {
+        break missingId;
+      }
+
+      id = R.id.cardSubscription;
+      MaterialCardView cardSubscription = ViewBindings.findChildViewById(rootView, id);
+      if (cardSubscription == null) {
+        break missingId;
+      }
+
+      id = R.id.llRecentOrders;
+      LinearLayout llRecentOrders = ViewBindings.findChildViewById(rootView, id);
+      if (llRecentOrders == null) {
+        break missingId;
+      }
+
+      id = R.id.scrollView;
+      ScrollView scrollView = ViewBindings.findChildViewById(rootView, id);
+      if (scrollView == null) {
+        break missingId;
+      }
+
+      id = R.id.tvActiveOrdersCount;
+      TextView tvActiveOrdersCount = ViewBindings.findChildViewById(rootView, id);
+      if (tvActiveOrdersCount == null) {
+        break missingId;
+      }
+
+      id = R.id.tvNoOrders;
+      TextView tvNoOrders = ViewBindings.findChildViewById(rootView, id);
+      if (tvNoOrders == null) {
+        break missingId;
+      }
+
+      id = R.id.tvSubscriptionPlan;
+      TextView tvSubscriptionPlan = ViewBindings.findChildViewById(rootView, id);
+      if (tvSubscriptionPlan == null) {
+        break missingId;
+      }
+
+      id = R.id.tvTitle;
+      TextView tvTitle = ViewBindings.findChildViewById(rootView, id);
+      if (tvTitle == null) {
+        break missingId;
+      }
+
+      id = R.id.tvTotalSpent;
+      TextView tvTotalSpent = ViewBindings.findChildViewById(rootView, id);
+      if (tvTotalSpent == null) {
         break missingId;
       }
 
@@ -72,7 +181,9 @@ public final class ActivityDashboardBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityDashboardBinding((LinearLayout) rootView, btnLogout, tvWelcomeMessage);
+      return new ActivityDashboardBinding((RelativeLayout) rootView, bottomNavigation, btnLogout,
+          btnNewOrder, cardSubscription, llRecentOrders, scrollView, tvActiveOrdersCount,
+          tvNoOrders, tvSubscriptionPlan, tvTitle, tvTotalSpent, tvWelcomeMessage);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

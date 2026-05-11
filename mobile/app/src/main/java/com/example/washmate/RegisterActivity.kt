@@ -10,21 +10,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
 import com.example.washmate.api.RetrofitClient
-import com.example.washmate.api.SyncRequest
+import com.example.washmate.api.RegisterRequest
+import com.example.washmate.api.GoogleIdTokenRequest
 import com.example.washmate.auth.GoogleAuthHelper
-import com.example.washmate.auth.SupabaseManager
+import com.example.washmate.BuildConfig
 import com.example.washmate.databinding.ActivityRegisterBinding
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
-import io.github.jan.supabase.gotrue.auth
-import io.github.jan.supabase.gotrue.providers.builtin.Email
-import io.github.jan.supabase.exceptions.RestException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -66,8 +61,7 @@ class RegisterActivity : AppCompatActivity() {
         binding = ActivityRegisterBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Initialize if not already done
-        SupabaseManager.init(this)
+        // Initialize Retrofit
         RetrofitClient.init(this)
 
         // Initialize Google Auth Helper with web client ID
@@ -117,57 +111,46 @@ class RegisterActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                // Step 1: Sign up with Supabase using Email provider
-                withContext(Dispatchers.IO) {
-                    SupabaseManager.client.auth.signUpWith(Email) {
-                        this.email = email
-                        this.password = password
-                        data = buildJsonObject {
-                            put("first_name", firstName)
-                            put("last_name", lastName)
-                            put("username", username)
-                            put("phone", phone)
-                        }
-                    }
+                // Call backend register directly
+                val registerResponse = withContext(Dispatchers.IO) {
+                    RetrofitClient.instance.register(
+                        RegisterRequest(
+                            username = username,
+                            firstName = firstName,
+                            lastName = lastName,
+                            email = email,
+                            password = password,
+                            phoneNumber = phone.ifEmpty { null },
+                            role = "CUSTOMER"
+                        )
+                    )
                 }
 
-                val user = SupabaseManager.client.auth.currentUserOrNull()
+                binding.btnRegister.isEnabled = true
 
-                if (user == null) {
-                    binding.btnRegister.isEnabled = true
+                if (registerResponse.isSuccessful && registerResponse.body() != null) {
+                    val authData = registerResponse.body()!!
+                    
+                    // Navigate to OTP verification (Backend sends OTP to email)
+                    val intent = Intent(this@RegisterActivity, OtpVerificationActivity::class.java).apply {
+                        putExtra("userId", authData.userId)
+                        putExtra(OtpVerificationActivity.EMAIL_EXTRA, email)
+                        putExtra(OtpVerificationActivity.FIRST_NAME_EXTRA, firstName)
+                        putExtra(OtpVerificationActivity.LAST_NAME_EXTRA, lastName)
+                        putExtra(OtpVerificationActivity.USERNAME_EXTRA, username)
+                        putExtra(OtpVerificationActivity.PHONE_EXTRA, phone)
+                        putExtra(OtpVerificationActivity.PASSWORD_EXTRA, password)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    }
+                    startActivity(intent)
+                    finish()
+                } else {
                     Toast.makeText(
                         this@RegisterActivity,
-                        "Registration failed. Please try again.",
+                        "Registration failed: ${registerResponse.code()}",
                         Toast.LENGTH_SHORT
                     ).show()
-                    return@launch
                 }
-
-                binding.btnRegister.isEnabled = true
-
-                // Navigate to OTP verification (Supabase will send OTP to email)
-                val intent = Intent(this@RegisterActivity, OtpVerificationActivity::class.java).apply {
-                    putExtra(OtpVerificationActivity.EMAIL_EXTRA, email)
-                    putExtra(OtpVerificationActivity.FIRST_NAME_EXTRA, firstName)
-                    putExtra(OtpVerificationActivity.LAST_NAME_EXTRA, lastName)
-                    putExtra(OtpVerificationActivity.USERNAME_EXTRA, username)
-                    putExtra(OtpVerificationActivity.PHONE_EXTRA, phone)
-                    putExtra(OtpVerificationActivity.PASSWORD_EXTRA, password)
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                }
-                startActivity(intent)
-                finish()
-            } catch (e: RestException) {
-                binding.btnRegister.isEnabled = true
-                Log.e("RegisterActivity", "Signup error: ${e.message}", e)
-
-                val errorMessage = when {
-                    e.message?.contains("already registered") == true -> "Email already registered"
-                    e.message?.contains("invalid") == true -> "Invalid credentials"
-                    else -> e.message ?: "Registration failed"
-                }
-
-                Toast.makeText(this@RegisterActivity, errorMessage, Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 binding.btnRegister.isEnabled = true
                 Log.e("RegisterActivity", "Registration error: ${e.message}", e)
@@ -201,45 +184,17 @@ class RegisterActivity : AppCompatActivity() {
     private fun performGoogleSignUp(idToken: String) {
         lifecycleScope.launch {
             try {
-                // 1. Exchange token with Supabase
-                val user = GoogleAuthHelper.exchangeTokenWithSupabase(idToken)
-
-                if (user == null) {
-                    resetLoadingState()
-                    Toast.makeText(this@RegisterActivity, "Authentication failed", Toast.LENGTH_SHORT).show()
-                    return@launch
+                // Call backend google/mobile directly
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.instance.googleMobile(GoogleIdTokenRequest(idToken))
                 }
 
-                // 2. Get Session and Provider Info
-                val session = SupabaseManager.client.auth.currentSessionOrNull()
+                if (response.isSuccessful && response.body() != null) {
+                    val authData = response.body()!!
 
-                // For Google signup, provider should always be "google"
-                val provider = user.appMetadata?.get("provider")?.jsonPrimitive?.content
-
-                // 3. Sync with your backend
-                val fullName = user.userMetadata?.get("full_name")?.jsonPrimitive?.content
-                val (firstName, lastName) = GoogleAuthHelper.parseGoogleName(fullName)
-
-                val syncRequest = SyncRequest(
-                    email = user.email ?: "",
-                    firstName = firstName,
-                    lastName = lastName,
-                    username = user.email?.substringBefore("@"),
-                    phoneNumber = null,
-                    role = "CUSTOMER",
-                    oauthId = user.id,  // Supabase UUID
-                    oauthProvider = if (provider == "google") "GOOGLE" else null
-                )
-
-                val syncResponse = withContext(Dispatchers.IO) {
-                    RetrofitClient.instance.sync(syncRequest)
-                }
-
-                if (syncResponse.isSuccessful && syncResponse.body() != null && session != null) {
-                    val authData = syncResponse.body()!!
-
+                    // Save to Prefs
                     getSharedPreferences("WashMatePrefs", Context.MODE_PRIVATE).edit().apply {
-                        putString("JWT_TOKEN", session.accessToken)
+                        putString("JWT_TOKEN", authData.accessToken)
                         putString("USER_EMAIL", authData.email)
                         putString("USER_ROLE", authData.role)
                         putString("USER_ID", authData.userId.toString())
@@ -252,7 +207,7 @@ class RegisterActivity : AppCompatActivity() {
                     finish()
                 } else {
                     resetLoadingState()
-                    Toast.makeText(this@RegisterActivity, "Sync failed: ${syncResponse.code()}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@RegisterActivity, "Google Sign-Up failed: ${response.code()}", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 resetLoadingState()

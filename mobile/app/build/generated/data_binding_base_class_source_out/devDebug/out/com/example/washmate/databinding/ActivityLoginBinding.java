@@ -5,39 +5,41 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.example.washmate.R;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
 import java.lang.NullPointerException;
 import java.lang.Override;
 import java.lang.String;
 
 public final class ActivityLoginBinding implements ViewBinding {
   @NonNull
-  private final LinearLayout rootView;
+  private final ScrollView rootView;
 
   @NonNull
-  public final Button btnGoogleSignIn;
+  public final MaterialButton btnGoogleSignIn;
 
   @NonNull
   public final Button btnLogin;
 
   @NonNull
-  public final EditText etEmail;
+  public final TextInputEditText etEmail;
 
   @NonNull
-  public final EditText etPassword;
+  public final TextInputEditText etPassword;
 
   @NonNull
   public final TextView tvRegister;
 
-  private ActivityLoginBinding(@NonNull LinearLayout rootView, @NonNull Button btnGoogleSignIn,
-      @NonNull Button btnLogin, @NonNull EditText etEmail, @NonNull EditText etPassword,
+  private ActivityLoginBinding(@NonNull ScrollView rootView,
+      @NonNull MaterialButton btnGoogleSignIn, @NonNull Button btnLogin,
+      @NonNull TextInputEditText etEmail, @NonNull TextInputEditText etPassword,
       @NonNull TextView tvRegister) {
     this.rootView = rootView;
     this.btnGoogleSignIn = btnGoogleSignIn;
@@ -49,7 +51,7 @@ public final class ActivityLoginBinding implements ViewBinding {
 
   @Override
   @NonNull
-  public LinearLayout getRoot() {
+  public ScrollView getRoot() {
     return rootView;
   }
 
@@ -75,7 +77,7 @@ public final class ActivityLoginBinding implements ViewBinding {
     int id;
     missingId: {
       id = R.id.btnGoogleSignIn;
-      Button btnGoogleSignIn = ViewBindings.findChildViewById(rootView, id);
+      MaterialButton btnGoogleSignIn = ViewBindings.findChildViewById(rootView, id);
       if (btnGoogleSignIn == null) {
         break missingId;
       }
@@ -87,13 +89,13 @@ public final class ActivityLoginBinding implements ViewBinding {
       }
 
       id = R.id.etEmail;
-      EditText etEmail = ViewBindings.findChildViewById(rootView, id);
+      TextInputEditText etEmail = ViewBindings.findChildViewById(rootView, id);
       if (etEmail == null) {
         break missingId;
       }
 
       id = R.id.etPassword;
-      EditText etPassword = ViewBindings.findChildViewById(rootView, id);
+      TextInputEditText etPassword = ViewBindings.findChildViewById(rootView, id);
       if (etPassword == null) {
         break missingId;
       }
@@ -104,7 +106,7 @@ public final class ActivityLoginBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityLoginBinding((LinearLayout) rootView, btnGoogleSignIn, btnLogin, etEmail,
+      return new ActivityLoginBinding((ScrollView) rootView, btnGoogleSignIn, btnLogin, etEmail,
           etPassword, tvRegister);
     }
     String missingId = rootView.getResources().getResourceName(id);

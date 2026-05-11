@@ -5,53 +5,56 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.example.washmate.R;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
 import java.lang.NullPointerException;
 import java.lang.Override;
 import java.lang.String;
 
 public final class ActivityRegisterBinding implements ViewBinding {
   @NonNull
-  private final LinearLayout rootView;
+  private final ScrollView rootView;
 
   @NonNull
-  public final Button btnGoogleSignUp;
+  public final MaterialButton btnGoogleSignUp;
 
   @NonNull
   public final Button btnRegister;
 
   @NonNull
-  public final EditText etEmail;
+  public final TextInputEditText etEmail;
 
   @NonNull
-  public final EditText etFirstName;
+  public final TextInputEditText etFirstName;
 
   @NonNull
-  public final EditText etLastName;
+  public final TextInputEditText etLastName;
 
   @NonNull
-  public final EditText etPassword;
+  public final TextInputEditText etPassword;
 
   @NonNull
-  public final EditText etPhone;
+  public final TextInputEditText etPhone;
 
   @NonNull
-  public final EditText etUsername;
+  public final TextInputEditText etUsername;
 
   @NonNull
   public final TextView tvLogin;
 
-  private ActivityRegisterBinding(@NonNull LinearLayout rootView, @NonNull Button btnGoogleSignUp,
-      @NonNull Button btnRegister, @NonNull EditText etEmail, @NonNull EditText etFirstName,
-      @NonNull EditText etLastName, @NonNull EditText etPassword, @NonNull EditText etPhone,
-      @NonNull EditText etUsername, @NonNull TextView tvLogin) {
+  private ActivityRegisterBinding(@NonNull ScrollView rootView,
+      @NonNull MaterialButton btnGoogleSignUp, @NonNull Button btnRegister,
+      @NonNull TextInputEditText etEmail, @NonNull TextInputEditText etFirstName,
+      @NonNull TextInputEditText etLastName, @NonNull TextInputEditText etPassword,
+      @NonNull TextInputEditText etPhone, @NonNull TextInputEditText etUsername,
+      @NonNull TextView tvLogin) {
     this.rootView = rootView;
     this.btnGoogleSignUp = btnGoogleSignUp;
     this.btnRegister = btnRegister;
@@ -66,7 +69,7 @@ public final class ActivityRegisterBinding implements ViewBinding {
 
   @Override
   @NonNull
-  public LinearLayout getRoot() {
+  public ScrollView getRoot() {
     return rootView;
   }
 
@@ -92,7 +95,7 @@ public final class ActivityRegisterBinding implements ViewBinding {
     int id;
     missingId: {
       id = R.id.btnGoogleSignUp;
-      Button btnGoogleSignUp = ViewBindings.findChildViewById(rootView, id);
+      MaterialButton btnGoogleSignUp = ViewBindings.findChildViewById(rootView, id);
       if (btnGoogleSignUp == null) {
         break missingId;
       }
@@ -104,37 +107,37 @@ public final class ActivityRegisterBinding implements ViewBinding {
       }
 
       id = R.id.etEmail;
-      EditText etEmail = ViewBindings.findChildViewById(rootView, id);
+      TextInputEditText etEmail = ViewBindings.findChildViewById(rootView, id);
       if (etEmail == null) {
         break missingId;
       }
 
       id = R.id.etFirstName;
-      EditText etFirstName = ViewBindings.findChildViewById(rootView, id);
+      TextInputEditText etFirstName = ViewBindings.findChildViewById(rootView, id);
       if (etFirstName == null) {
         break missingId;
       }
 
       id = R.id.etLastName;
-      EditText etLastName = ViewBindings.findChildViewById(rootView, id);
+      TextInputEditText etLastName = ViewBindings.findChildViewById(rootView, id);
       if (etLastName == null) {
         break missingId;
       }
 
       id = R.id.etPassword;
-      EditText etPassword = ViewBindings.findChildViewById(rootView, id);
+      TextInputEditText etPassword = ViewBindings.findChildViewById(rootView, id);
       if (etPassword == null) {
         break missingId;
       }
 
       id = R.id.etPhone;
-      EditText etPhone = ViewBindings.findChildViewById(rootView, id);
+      TextInputEditText etPhone = ViewBindings.findChildViewById(rootView, id);
       if (etPhone == null) {
         break missingId;
       }
 
       id = R.id.etUsername;
-      EditText etUsername = ViewBindings.findChildViewById(rootView, id);
+      TextInputEditText etUsername = ViewBindings.findChildViewById(rootView, id);
       if (etUsername == null) {
         break missingId;
       }
@@ -145,7 +148,7 @@ public final class ActivityRegisterBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityRegisterBinding((LinearLayout) rootView, btnGoogleSignUp, btnRegister,
+      return new ActivityRegisterBinding((ScrollView) rootView, btnGoogleSignUp, btnRegister,
           etEmail, etFirstName, etLastName, etPassword, etPhone, etUsername, tvLogin);
     }
     String missingId = rootView.getResources().getResourceName(id);

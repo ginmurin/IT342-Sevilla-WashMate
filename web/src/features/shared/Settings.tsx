@@ -23,7 +23,9 @@ import { motion, AnimatePresence } from "motion/react";
 export default function Settings() {
   const navigate = useNavigate();
   const { user, setUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<"account" | "security">("account");
+  const [activeTab, setActiveTab] = useState<"account" | "security" | "subscription">("account");
+  const [subscription, setSubscription] = useState<UserSubscriptionData | null>(null);
+  const [loadingSubscription, setLoadingSubscription] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -81,6 +83,23 @@ export default function Settings() {
       cancelled = true;
     };
   }, [user?.id, isEditing, setUser]);
+
+  useEffect(() => {
+    if (activeTab === "subscription") {
+      const loadSubscription = async () => {
+        setLoadingSubscription(true);
+        try {
+          const sub = await getCurrentSubscription();
+          setSubscription(sub);
+        } catch (error) {
+          console.error("Failed to load subscription:", error);
+        } finally {
+          setLoadingSubscription(false);
+        }
+      };
+      loadSubscription();
+    }
+  }, [activeTab]);
 
 
 
@@ -294,7 +313,18 @@ export default function Settings() {
           >
             Security
           </button>
-
+          {user?.role === "CUSTOMER" && (
+            <button
+              onClick={() => setActiveTab("subscription")}
+              className={`pb-3 font-medium transition-colors border-b-2 ${
+                activeTab === "subscription"
+                  ? "border-teal-600 text-teal-600"
+                  : "border-transparent text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Subscription
+            </button>
+          )}
         </div>
 
         {/* Account Tab */}
@@ -465,6 +495,97 @@ export default function Settings() {
                 )}
               </div>
             </div>
+          </motion.div>
+        )}
+
+        {/* Subscription Tab */}
+        {activeTab === "subscription" && user?.role === "CUSTOMER" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="border-slate-200 shadow-sm overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-teal-50 to-blue-50 border-b border-slate-200">
+                <CardTitle className="text-slate-900">Current Subscription</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-8 pb-8 px-8">
+                {loadingSubscription ? (
+                  <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                    <div className="w-10 h-10 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin" />
+                    <p className="text-slate-500 font-medium">Loading subscription details...</p>
+                  </div>
+                ) : subscription ? (
+                  <div className="space-y-8">
+                    {/* Plan Badge & Status */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Active Plan</p>
+                        <h3 className="text-2xl font-bold text-slate-900">{subscription.planType}</h3>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className={`px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-2 ${
+                          subscription.status === 'ACTIVE' 
+                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
+                            : 'bg-amber-100 text-amber-700 border border-amber-200'
+                        }`}>
+                          <div className={`w-2 h-2 rounded-full ${subscription.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                          {subscription.status}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Details Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {/* Start Date */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <CheckCircle className="w-4 h-4 text-slate-400" />
+                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Start Date</p>
+                        </div>
+                        <p className="text-lg font-medium text-slate-900">
+                          {formatDate(subscription.startDate)}
+                        </p>
+                      </div>
+
+                      {/* Expiry Date */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <ShieldCheck className="w-4 h-4 text-teal-500" />
+                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Expiry Date</p>
+                        </div>
+                        <p className="text-lg font-bold text-teal-600">
+                          {formatDate(subscription.expiryDate)}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {new Date(subscription.expiryDate || "") > new Date() ? "Your plan is current" : "Plan has expired"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-4">
+                      <Button 
+                        onClick={() => navigate('/customer/subscriptions')}
+                        className="bg-slate-900 hover:bg-slate-800 text-white"
+                      >
+                        Change or Upgrade Plan
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    <p className="text-slate-500">No active subscription found.</p>
+                    <Button 
+                      variant="link" 
+                      onClick={() => navigate('/customer/subscriptions')}
+                      className="text-teal-600 font-bold mt-2"
+                    >
+                      Browse Plans
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </motion.div>
         )}
 

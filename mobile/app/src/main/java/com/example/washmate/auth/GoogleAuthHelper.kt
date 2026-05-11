@@ -93,29 +93,6 @@ object GoogleAuthHelper {
     }
 
     /**
-     * Exchange Google ID token with Supabase for session
-     * @param idToken Google ID token
-     * @param rawNonce Raw nonce used in token generation
-     * @return Supabase session with user info
-     */
-    suspend fun exchangeTokenWithSupabase(
-        idToken: String,
-        //rawNonce: String? = null
-    ): io.github.jan.supabase.gotrue.user.UserInfo? = withContext(Dispatchers.IO) {
-        try {
-            // Use the idToken function inside the Google provider block
-            SupabaseManager.client.auth.signInWith(IDToken) {
-                this.idToken = idToken
-                this.provider = Google
-            }
-            SupabaseManager.client.auth.currentUserOrNull()
-        } catch (e: Exception) {
-            android.util.Log.e("GoogleAuthHelper", "Supabase Exchange Error: ${e.message}")
-            throw e
-        }
-    }
-
-    /**
      * Sign out from Google and clear cached account
      * Must be called on app logout
      * @param context Application context

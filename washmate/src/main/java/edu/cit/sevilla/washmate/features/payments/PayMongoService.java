@@ -291,6 +291,64 @@ public class PayMongoService {
         }
     }
 
+    /**
+     * Create a PayMongo Checkout Session for card payments.
+     * @param amountPHP Amount in Philippine Pesos
+     * @param successUrl URL to redirect to on success
+     * @param failureUrl URL to redirect to on failure
+     * @return Map with session ID and checkout URL
+     */
+    public Map<String, String> createCheckoutSession(java.math.BigDecimal amountPHP, String successUrl, String failureUrl) {
+        try {
+            String url = payMongoConfig.getBaseUrl() + "/checkout_sessions";
+
+            long amountInCents = amountPHP.multiply(new java.math.BigDecimal("100")).longValue();
+
+            Map<String, Object> requestBody = new HashMap<>();
+            Map<String, Object> data = new HashMap<>();
+            Map<String, Object> attributes = new HashMap<>();
+
+            attributes.put("cancel_url", failureUrl);
+            attributes.put("success_url", successUrl);
+            attributes.put("payment_method_types", List.of("card"));
+
+            Map<String, Object> lineItem = new HashMap<>();
+            lineItem.put("amount", amountInCents);
+            lineItem.put("currency", "PHP");
+            lineItem.put("name", "WashMate Order Payment");
+            lineItem.put("quantity", 1);
+
+            attributes.put("line_items", List.of(lineItem));
+
+            data.put("attributes", attributes);
+            requestBody.put("data", data);
+
+            HttpHeaders headers = createAuthHeaders();
+            HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(requestBody), headers);
+
+            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+
+            if (response.getStatusCode() != HttpStatus.OK && response.getStatusCode() != HttpStatus.CREATED) {
+                log.error("PayMongo checkout session creation failed: {}", response.getBody());
+                throw new RuntimeException("Failed to create checkout session: " + response.getStatusCode());
+            }
+
+            Map<String, Object> responseBody = objectMapper.readValue(response.getBody(), Map.class);
+            Map<String, Object> responseData = (Map<String, Object>) responseBody.get("data");
+            String sessionId = (String) responseData.get("id");
+
+            Map<String, Object> responseAttributes = (Map<String, Object>) responseData.get("attributes");
+            String checkoutUrl = (String) responseAttributes.get("checkout_url");
+
+            log.info("✅ Created PayMongo Checkout Session: {}", sessionId);
+            return Map.of("sessionId", sessionId, "checkoutUrl", checkoutUrl);
+
+        } catch (Exception e) {
+            log.error("❌ Error creating checkout session", e);
+            throw new RuntimeException("PayMongo checkout session creation failed", e);
+        }
+    }
+
     // ===== GET PAYMENT INTENT STATUS =====
 
     /**

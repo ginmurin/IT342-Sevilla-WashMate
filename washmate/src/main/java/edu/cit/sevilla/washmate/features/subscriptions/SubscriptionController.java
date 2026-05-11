@@ -69,8 +69,8 @@ public class SubscriptionController {
             @AuthenticationPrincipal Jwt jwt) {
 
         try {
-            String oauthId = jwt.getSubject();
-            User user = userRepository.findByOauthId(oauthId)
+            Long userId = Long.parseLong(jwt.getSubject());
+            User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             System.out.println("DEBUG - Initiating upgrade for user: " + user.getUserId() + ", plan: " + planType);
@@ -207,8 +207,8 @@ public class SubscriptionController {
      */
     @GetMapping("/history")
     public ResponseEntity<List<UserSubscriptionDTO>> getSubscriptionHistory(@AuthenticationPrincipal Jwt jwt) {
-        String oauthId = jwt.getSubject();
-        User user = userRepository.findByOauthId(oauthId)
+        Long userId = Long.parseLong(jwt.getSubject());
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<UserSubscription> history = subscriptionService.getSubscriptionHistory(user.getUserId());

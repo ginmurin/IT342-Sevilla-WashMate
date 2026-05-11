@@ -20,60 +20,7 @@ export default function PaymentHistory() {
   const { transactions } = usePayment();
   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "pending" | "failed">("all");
 
-  const mockTransactions = [
-    {
-      id: "TXN-1704067200000",
-      orderId: "ORD-1704067200000",
-      amount: 350,
-      status: "completed" as const,
-      serviceType: "Wash & Iron",
-      date: "2024-01-01T08:00:00Z",
-      paymentMethod: "card",
-      referenceNumber: "REF-ABC123XYZ",
-    },
-    {
-      id: "TXN-1704153600000",
-      orderId: "ORD-1704153600000",
-      amount: 200,
-      status: "completed" as const,
-      serviceType: "Wash & Fold",
-      date: "2024-01-02T14:30:00Z",
-      paymentMethod: "card",
-      referenceNumber: "REF-DEF456UVW",
-    },
-    {
-      id: "TXN-1704240000000",
-      orderId: "ORD-1704240000000",
-      amount: 560,
-      status: "completed" as const,
-      serviceType: "Dry Clean",
-      date: "2024-01-03T10:15:00Z",
-      paymentMethod: "card",
-      referenceNumber: "REF-GHI789RST",
-    },
-    {
-      id: "TXN-1704326400000",
-      orderId: "ORD-1704326400000",
-      amount: 150,
-      status: "pending" as const,
-      serviceType: "Wash & Fold",
-      date: "2024-01-04T16:45:00Z",
-      paymentMethod: "card",
-      referenceNumber: "REF-JKL012MNO",
-    },
-    {
-      id: "TXN-1704412800000",
-      orderId: "ORD-1704412800000",
-      amount: 300,
-      status: "failed" as const,
-      serviceType: "Wash & Iron",
-      date: "2024-01-05T09:20:00Z",
-      paymentMethod: "card",
-      referenceNumber: "REF-PQR345LMK",
-    },
-  ];
-
-  const allTransactions = [...transactions, ...mockTransactions].filter(t => t.serviceType !== 'SUBSCRIPTION');
+  const allTransactions = transactions.filter(t => t.serviceType !== 'SUBSCRIPTION');
 
   const filteredTransactions =
     statusFilter === "all"

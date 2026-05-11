@@ -8,6 +8,10 @@ import java.nio.charset.StandardCharsets;
  * HMAC-SHA256 Utility for webhook signature verification.
  */
 public class HmacSHA256 {
+    private HmacSHA256() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+
     public static String generateSignature(String message, String secret) throws Exception {
         Mac mac = Mac.getInstance("HmacSHA256");
         SecretKeySpec secretKeySpec = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");

@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import edu.cit.sevilla.washmate.features.wallet.Wallet;
+import edu.cit.sevilla.washmate.features.wallet.WalletService;
 
 /**
  * REST Controller for order management with polymorphic payment integration.
@@ -31,6 +32,7 @@ public class OrderController {
     private final UserRepository userRepository;
     private final PayMongoService payMongoService;
     private final PaymentService paymentService;
+    private final WalletService walletService;
 
     // ===== ORDER CREATION =====
 
@@ -102,10 +104,13 @@ public class OrderController {
 
             switch (paymentMethod.toUpperCase()) {
                 case "CARD":
-                    // Create PayMongo payment intent for card
-                    Map<String, String> intentResult = payMongoService.createPaymentIntent(order.getTotalAmount());
-                    response.put("paymentIntentId", intentResult.get("paymentIntentId"));
-                    response.put("clientKey", intentResult.get("clientKey"));
+                    // Create PayMongo checkout session for card
+                    String cardSuccessUrl = "http://localhost:5173/payment/success?orderId=" + orderId + "&paymentId=" + payment.getPaymentId() + "&amount=" + order.getTotalAmount();
+                    String cardFailureUrl = "http://localhost:5173/payment/error?orderId=" + orderId;
+                    
+                    Map<String, String> sessionResult = payMongoService.createCheckoutSession(order.getTotalAmount(), cardSuccessUrl, cardFailureUrl);
+                    response.put("checkoutUrl", sessionResult.get("checkoutUrl"));
+                    response.put("sessionId", sessionResult.get("sessionId"));
                     break;
 
                 case "GCASH":
@@ -113,6 +118,9 @@ public class OrderController {
                 case "GRAB_PAY":
                     // Create PayMongo source for e-wallet
                     String sourceType = paymentMethod.toLowerCase();
+                    if (sourceType.equals("paymaya")) {
+                        sourceType = "maya";
+                    }
                     String successUrl = "http://localhost:5173/payment/success?orderId=" + orderId + "&paymentId=" + payment.getPaymentId() + "&amount=" + order.getTotalAmount();
                     String failureUrl = "http://localhost:5173/payment/error?orderId=" + orderId;
 
@@ -122,8 +130,18 @@ public class OrderController {
                     break;
 
                 case "WALLET":
-                    // Wallet payment - no PayMongo needed
-                    // Frontend will navigate directly to success
+                    // Wallet payment - deduct from wallet
+                    Long userId = Long.parseLong(jwt.getSubject());
+                    walletService.deductFromWallet(userId, order.getTotalAmount(), "ORDER_PAYMENT", orderId);
+                    
+                    // Update payment status to COMPLETED
+                    payment.setPaymentStatus("COMPLETED");
+                    payment.setPaymentDate(java.time.LocalDateTime.now());
+                    paymentService.savePayment(payment);
+                    
+                    // Update order status to CONFIRMED
+                    orderService.updateOrderStatus(orderId, "CONFIRMED");
+                    
                     response.put("walletPayment", true);
                     break;
 

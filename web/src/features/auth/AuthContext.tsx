@@ -33,7 +33,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const stored = sessionStorage.getItem("washmate_user");
       if (!stored) return null;
       const parsed: User = JSON.parse(stored);
-      parsed.role = String(parsed.role).toUpperCase() as Role;
+      if (parsed && parsed.role) {
+        parsed.role = String(parsed.role).toUpperCase() as Role;
+      }
       return parsed;
     } catch {
       return null;

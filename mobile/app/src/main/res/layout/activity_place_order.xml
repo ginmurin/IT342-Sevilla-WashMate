@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8FAFC"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center_vertical">
+
+        <!-- Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Order Details"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="#0F172A"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Selected Services List -->
+        <LinearLayout
+            android:id="@+id/llSelectedServices"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="24dp">
+            
+            <!-- Service items with quantity inputs will be added here dynamically -->
+        </LinearLayout>
+
+        <!-- Special Instructions Field -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxStrokeColor="#0D9488"
+            app:hintTextColor="#0D9488">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etSpecialInstructions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Special Instructions (Optional)"
+                android:inputType="textMultiLine"
+                android:minLines="3"
+                android:gravity="top"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Total Summary -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="32dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Estimated Total:"
+                android:textSize="18sp"
+                android:textColor="#0F172A"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/tvTotalAmount"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="₱0.00"
+                android:textSize="24sp"
+                android:textColor="#0D9488"
+                android:textStyle="bold"
+                android:gravity="end"/>
+        </LinearLayout>
+
+        <!-- Submit Button -->
+        <Button
+            android:id="@+id/btnSubmitOrder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Continue to Schedule"
+            android:backgroundTint="#0D9488"
+            android:textColor="#FFFFFF"
+            app:cornerRadius="12dp"
+            android:padding="14dp"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Cancel Button -->
+        <Button
+            android:id="@+id/btnCancel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:textColor="#EF4444"
+            android:padding="14dp"/>
+
+    </LinearLayout>
+</ScrollView>

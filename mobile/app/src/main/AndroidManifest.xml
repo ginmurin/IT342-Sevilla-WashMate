@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -24,6 +26,13 @@
         <activity android:name=".OtpVerificationActivity" />
         <activity android:name=".RoleSelectActivity" />
         <activity android:name=".DashboardActivity" />
+        <activity android:name=".ServicesActivity" />
+        <activity android:name=".PlaceOrderActivity" />
+        <activity android:name=".ScheduleAddressActivity" />
+        <activity android:name=".PaymentReviewActivity" />
+        <activity android:name=".PaymentWebViewActivity" />
+        <activity android:name=".OrderSuccessActivity" />
+        <activity android:name=".WalletActivity" />
     </application>
 
 </manifest>

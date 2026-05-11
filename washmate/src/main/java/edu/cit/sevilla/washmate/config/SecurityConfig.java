@@ -63,6 +63,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/auth/2fa/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/2fa/resend-login").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/auth/email-by-username").permitAll()
+                // Subscription plans - public access
+                .requestMatchers(HttpMethod.GET, "/api/subscriptions/plans").permitAll()
                 // Google OAuth endpoints - public access
                 .requestMatchers(HttpMethod.GET, "/api/auth/google/login").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/auth/google/callback").permitAll()

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="24dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="1dp"
+    app:cardBackgroundColor="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/tvServiceName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Service Name"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#0F172A"/>
+
+            <TextView
+                android:id="@+id/tvServicePrice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="₱0.00"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#0D9488"
+                android:layout_alignParentEnd="true"/>
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/tvServiceDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Service description goes here."
+            android:textColor="#64748B"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tvUnitType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Per kg"
+            android:textColor="#94A3B8"
+            android:textSize="12sp"/>
+
+        <RadioGroup
+            android:id="@+id/rgVariants"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"/>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
