@@ -30,6 +30,7 @@ class PaymentReviewActivity : AppCompatActivity() {
     private var deliveryTime: String = ""
     private var address: String = ""
     private var phone: String = ""
+    private var currentOrderId: Long? = null
     
     private val selectedServicesList = mutableListOf<WashServiceDTO>()
     private var selectedPaymentMethod = "GCASH"
@@ -143,30 +144,47 @@ class PaymentReviewActivity : AppCompatActivity() {
             }
         }
 
-        val paymentMethod = "WALLET"
+        val paymentMethod = selectedPaymentMethod
 
         val request = OrderRequest(
             services = serviceInputs,
             totalWeight = totalWeight,
-            specialInstructions = "$specialInstructions | Payment: $paymentMethod | Pickup: $pickupDate $pickupTime | Delivery: $deliveryDate $deliveryTime | Address: $address | Phone: $phone"
+            specialInstructions = specialInstructions,
+            pickupAddressString = "$address (Ph: $phone)",
+            deliveryAddressString = "$address (Ph: $phone)",
+            pickupSchedule = formatSchedule(pickupDate, pickupTime).takeIf { it.isNotEmpty() },
+            deliverySchedule = formatSchedule(deliveryDate, deliveryTime).takeIf { it.isNotEmpty() }
         )
 
         lifecycleScope.launch {
             try {
                 binding.btnConfirmOrder.isEnabled = false
-                val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.instance.createOrder(request)
+                
+                val orderIdToPay: Long
+                
+                if (currentOrderId != null) {
+                    orderIdToPay = currentOrderId!!
+                } else {
+                    val response = withContext(Dispatchers.IO) {
+                        RetrofitClient.instance.createOrder(request)
+                    }
+
+                    if (response.isSuccessful && response.body() != null) {
+                        val order = response.body()!!
+                        currentOrderId = order.orderId
+                        orderIdToPay = currentOrderId!!
+                    } else {
+                        Toast.makeText(this@PaymentReviewActivity, "Failed to place order: ${response.message()}", Toast.LENGTH_SHORT).show()
+                        binding.btnConfirmOrder.isEnabled = true
+                        return@launch
+                    }
                 }
 
-                if (response.isSuccessful && response.body() != null) {
-                    val order = response.body()!!
-                    val orderId = order.orderId
-
-                    // Call processOrderPayment with selected method
-                    val paymentRequest = mapOf("paymentMethod" to selectedPaymentMethod)
-                    val paymentResponse = withContext(Dispatchers.IO) {
-                        RetrofitClient.instance.processOrderPayment(orderId, paymentRequest)
-                    }
+                // Call processOrderPayment with selected method
+                val paymentRequest = mapOf("paymentMethod" to selectedPaymentMethod)
+                val paymentResponse = withContext(Dispatchers.IO) {
+                    RetrofitClient.instance.processOrderPayment(orderIdToPay, paymentRequest)
+                }
 
                     if (paymentResponse.isSuccessful && paymentResponse.body() != null) {
                         val paymentData = paymentResponse.body()!!
@@ -180,7 +198,8 @@ class PaymentReviewActivity : AppCompatActivity() {
                             intent.putExtra("URL", checkoutUrl)
                             intent.putExtra("PAYMENT_METHOD", selectedPaymentMethod)
                             startActivity(intent)
-                            finish()
+                            // DO NOT finish() here so the user can return to this screen if they cancel payment
+                            binding.btnConfirmOrder.isEnabled = true
                         } else {
                             // If no checkoutUrl (maybe it's wallet payment or failed), just go to success screen
                             Toast.makeText(this@PaymentReviewActivity, "Order placed successfully!", Toast.LENGTH_LONG).show()
@@ -190,17 +209,9 @@ class PaymentReviewActivity : AppCompatActivity() {
                             finish()
                         }
                     } else {
-                        Toast.makeText(this@PaymentReviewActivity, "Order created but payment failed to process", Toast.LENGTH_SHORT).show()
-                        // Still go to dashboard since order was created!
-                        val dashboardIntent = Intent(this@PaymentReviewActivity, DashboardActivity::class.java)
-                        dashboardIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        startActivity(dashboardIntent)
-                        finish()
+                        Toast.makeText(this@PaymentReviewActivity, "Payment failed to process, please try another method.", Toast.LENGTH_SHORT).show()
+                        binding.btnConfirmOrder.isEnabled = true
                     }
-                } else {
-                    Toast.makeText(this@PaymentReviewActivity, "Failed to place order: ${response.message()}", Toast.LENGTH_SHORT).show()
-                    binding.btnConfirmOrder.isEnabled = true
-                }
             } catch (e: Exception) {
                 Toast.makeText(this@PaymentReviewActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                 binding.btnConfirmOrder.isEnabled = true
@@ -247,6 +258,19 @@ class PaymentReviewActivity : AppCompatActivity() {
                 binding.cardWallet.setStrokeWidth(dp2)
                 binding.cardWallet.setCardBackgroundColor(android.graphics.Color.parseColor("#F0FDFA"))
             }
+        }
+    }
+
+    private fun formatSchedule(date: String, timeSlot: String): String {
+        if (date.isEmpty() || timeSlot.isEmpty()) return ""
+        val startTime = timeSlot.split("–")[0].trim()
+        return try {
+            val inputFormat = java.text.SimpleDateFormat("yyyy-MM-dd hh:mm a", java.util.Locale.US)
+            val outputFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US)
+            val parsed = inputFormat.parse("$date $startTime")
+            outputFormat.format(parsed!!)
+        } catch (e: Exception) {
+            ""
         }
     }
 }

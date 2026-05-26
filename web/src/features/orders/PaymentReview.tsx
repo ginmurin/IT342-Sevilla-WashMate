@@ -96,6 +96,21 @@ export default function PaymentReview() {
 
       console.log("💳 Payment processing initiated:", { paymentId, orderId, method: selectedMethod });
 
+      if (selectedMethod === "CARD") {
+        const checkoutUrl = paymentResponse?.checkoutUrl;
+
+        if (!checkoutUrl) {
+          throw new Error("No checkout URL returned from backend for card payment");
+        }
+
+        console.log("Redirecting to card checkout:", checkoutUrl);
+        localStorage.removeItem('currentOrderId');
+        localStorage.removeItem('currentOrderData');
+        resetOrder();
+        window.location.href = checkoutUrl;
+        return;
+      }
+
       // 3. Route based on payment method
       if (selectedMethod === "CARD") {
         // For card: backend returns paymentIntentId and clientKey

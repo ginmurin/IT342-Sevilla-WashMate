@@ -177,21 +177,6 @@ public class OrderService {
     }
 
     /**
-     * Calculate total amount for order using actual service pricing.
-     */
-    private BigDecimal calculateOrderTotal(OrderRequest request, WashService washService) {
-        // Use actual service price per unit
-        BigDecimal basePrice = washService.getBasePricePerUnit();
-
-        // Calculate based on weight if provided, otherwise use base price
-        BigDecimal totalPrice = request.getTotalWeight() != null
-                ? washService.getBasePricePerUnit().multiply(request.getTotalWeight())
-                : washService.getBasePricePerUnit();
-
-        return totalPrice;
-    }
-
-    /**
      * Calculate delivery fee based on subscription and order total.
      * Rule: Premium users → FREE, Non-premium + subtotal >= ₱400 → FREE, otherwise → ₱50
      */
@@ -245,12 +230,14 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found"));
 
-        // Check if polymorphic payment exists for this order
-        Optional<Payment> existingPayment = paymentService.getPaymentByPaymongoIntentId(paymentId);
+        Optional<Payment> existingPayment = getExistingPayment(paymentId);
 
         Payment payment;
         if (existingPayment.isPresent()) {
             payment = existingPayment.get();
+            payment.setPaymentStatus("COMPLETED");
+            payment.setPaymentDate(LocalDateTime.now());
+            payment = paymentService.savePayment(payment);
         } else {
             // Create new polymorphic payment for this order
             payment = Payment.builder()
@@ -276,6 +263,14 @@ public class OrderService {
         return savedOrder;
     }
 
+    private Optional<Payment> getExistingPayment(String paymentId) {
+        try {
+            return paymentService.getPaymentById(Long.parseLong(paymentId));
+        } catch (NumberFormatException e) {
+            return paymentService.getPaymentByPaymongoIntentId(paymentId);
+        }
+    }
+
     // ===== ORDER STATUS MANAGEMENT =====
 
     /**
@@ -289,6 +284,10 @@ public class OrderService {
         // Validate status transitions (you can add more business rules here)
         if ("CANCELLED".equals(newStatus) && !"PENDING".equals(order.getStatus())) {
             throw new IllegalStateException("Only pending orders can be cancelled");
+        }
+
+        if ("DELIVERED".equals(newStatus) && !"DELIVERED".equals(order.getStatus())) {
+            notificationService.notifyOrderDeliveredForFeedback(order.getCustomer().getUserId(), order.getOrderId(), order.getOrderNumber());
         }
 
         order.setStatus(newStatus);

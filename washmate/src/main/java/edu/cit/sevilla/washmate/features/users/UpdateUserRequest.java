@@ -5,6 +5,7 @@ import lombok.Data;
 
 @Data
 public class UpdateUserRequest {
+    private String username;
     private String firstName;
     private String lastName;
     @Pattern(regexp = "^(\\+?[0-9]{10,})?$", message = "Invalid phone number")

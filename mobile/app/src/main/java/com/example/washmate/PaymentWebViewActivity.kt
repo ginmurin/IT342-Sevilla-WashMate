@@ -109,7 +109,40 @@ class PaymentWebViewActivity : AppCompatActivity() {
                 }
             }
             return true
-        } else if (currentUrl.contains("payment/error") || currentUrl.contains("wallet/payment-error")) {
+        } else if (currentUrl.contains("subscription/upgrade-success")) {
+            val uri = android.net.Uri.parse(currentUrl)
+            val userSubscriptionId = uri.getQueryParameter("userSubscriptionId")?.toLongOrNull()
+            val paymentId = uri.getQueryParameter("paymentId") ?: ""
+            
+            if (userSubscriptionId != null && paymentId.isNotEmpty()) {
+                Toast.makeText(this, "Confirming subscription upgrade...", Toast.LENGTH_SHORT).show()
+                
+                lifecycleScope.launch {
+                    try {
+                        val paymentMethod = intent.getStringExtra("PAYMENT_METHOD") ?: "GCASH"
+                        val response = withContext(Dispatchers.IO) {
+                            com.example.washmate.api.RetrofitClient.instance.confirmSubscriptionUpgrade(userSubscriptionId, paymentId, paymentMethod)
+                        }
+                        
+                        if (response.isSuccessful) {
+                            Toast.makeText(this@PaymentWebViewActivity, "Subscription Upgraded Successfully!", Toast.LENGTH_LONG).show()
+                            
+                            val intent = Intent(this@PaymentWebViewActivity, DashboardActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            startActivity(intent)
+                            finish()
+                        } else {
+                            Toast.makeText(this@PaymentWebViewActivity, "Failed to confirm upgrade", Toast.LENGTH_SHORT).show()
+                            finish()
+                        }
+                    } catch (e: java.lang.Exception) {
+                        Toast.makeText(this@PaymentWebViewActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
+                }
+            }
+            return true
+        } else if (currentUrl.contains("payment/error") || currentUrl.contains("wallet/payment-error") || currentUrl.contains("subscription/upgrade-error")) {
             Toast.makeText(this, "Payment Failed", Toast.LENGTH_LONG).show()
             finish()
             return true

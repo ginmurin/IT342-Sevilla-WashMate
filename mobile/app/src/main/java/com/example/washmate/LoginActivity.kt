@@ -113,17 +113,44 @@ class LoginActivity : AppCompatActivity() {
                 if (loginResponse.isSuccessful && loginResponse.body() != null) {
                     val authData = loginResponse.body()!!
 
+                    if (authData.requiresTwoFactor) {
+                        val intent = Intent(this@LoginActivity, OtpVerificationActivity::class.java).apply {
+                            putExtra(OtpVerificationActivity.EMAIL_EXTRA, authData.email)
+                            putExtra("userId", authData.userId)
+                            putExtra("isTwoFactor", true)
+                        }
+                        startActivity(intent)
+                        finish()
+                        return@launch
+                    }
+
+                    if (authData.requiresEmailVerification) {
+                        val intent = Intent(this@LoginActivity, OtpVerificationActivity::class.java).apply {
+                            putExtra(OtpVerificationActivity.EMAIL_EXTRA, authData.email)
+                            putExtra("userId", authData.userId)
+                            putExtra("isTwoFactor", false)
+                        }
+                        startActivity(intent)
+                        finish()
+                        return@launch
+                    }
+
                     // Save token and user info from our backend
                     val sharedPref = getSharedPreferences("WashMatePrefs", Context.MODE_PRIVATE)
                     with(sharedPref.edit()) {
                         putString("JWT_TOKEN", authData.accessToken)
                         putString("USER_EMAIL", authData.email)
+                        
+                        val displayFirstName = authData.firstName?.takeIf { it.isNotBlank() }
+                            ?: authData.email.substringBefore("@")
+                            
+                        putString("USER_FIRST_NAME", displayFirstName)
                         putString("USER_ROLE", authData.role)
                         putString("USER_ID", authData.userId.toString())
                         apply()
                     }
 
-                    val userRole = authData.role.uppercase()
+                    val userRole = authData.role?.uppercase() ?: "CUSTOMER"
 
                     // Navigate based on role
                     if (userRole == "CUSTOMER") {
@@ -194,11 +221,12 @@ class LoginActivity : AppCompatActivity() {
                         apply()
                     }
 
-                    if (authData.role.uppercase() == "CUSTOMER") {
+                    val roleStr = authData.role?.uppercase() ?: "CUSTOMER"
+                    if (roleStr == "CUSTOMER") {
                         startDashboard()
                     } else {
                         val intent = Intent(this@LoginActivity, RoleSelectActivity::class.java)
-                        intent.putExtra("user_role", authData.role.uppercase())
+                        intent.putExtra("user_role", roleStr)
                         startActivity(intent)
                         finish()
                     }

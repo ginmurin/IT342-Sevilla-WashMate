@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8FAFC">
+
+    <!-- Header bar -->
+    <LinearLayout
+        android:id="@+id/llHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#FFFFFF"
+        android:padding="16dp"
+        android:gravity="center_vertical"
+        android:elevation="4dp">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_revert"
+            android:contentDescription="Back"
+            android:tint="#0F172A"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="Subscription Plans"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#0F172A"/>
+    </LinearLayout>
+
+    <!-- Scrollable content -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/llHeader"
+        android:padding="16dp"
+        android:clipToPadding="false">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Current subscription info -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="1dp"
+                app:cardBackgroundColor="#E2E8F0">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Current Plan"
+                        android:textColor="#1E293B"
+                        android:textSize="14sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/tvCurrentPlan"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="FREE"
+                        android:textColor="#0D9488"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Premium Subscription Upgrade Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardPremiumPlan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#FDFBF7"
+                app:strokeWidth="2dp"
+                app:strokeColor="#F59E0B"> <!-- Gold/Amber border -->
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="👑 RECOMMENDED"
+                        android:textColor="#D97706"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="6dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="PREMIUM MEMBER"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:textColor="#92400E"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="₱199.00 / month"
+                        android:textSize="26sp"
+                        android:textStyle="bold"
+                        android:textColor="#B45309"
+                        android:layout_marginTop="8dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Save 15% on every order + priority slot booking!"
+                        android:textSize="13sp"
+                        android:textColor="#78350F"
+                        android:layout_marginTop="4dp"/>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#FEF3C7"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="16dp"/>
+
+                    <!-- Benefit Bullet points -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="✨ 15% Order Discount\n✨ Unlimited Orders\n✨ Priority Support\n✨ Early Booking Slots"
+                        android:textSize="15sp"
+                        android:textColor="#78350F"
+                        android:lineSpacingExtra="8dp"
+                        android:layout_marginBottom="20dp"/>
+
+                    <!-- Upgrade actions selection -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Select Payment Source:"
+                        android:textSize="12sp"
+                        android:textColor="#92400E"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:layout_marginBottom="16dp">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/cardGcash"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="6dp"
+                            app:cardCornerRadius="8dp"
+                            app:cardElevation="1dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="#CBD5E1">
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:text="GCash"
+                                android:gravity="center"
+                                android:padding="10dp"
+                                android:textStyle="bold"
+                                android:textColor="#475569"/>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/cardMaya"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="6dp"
+                            app:cardCornerRadius="8dp"
+                            app:cardElevation="1dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="#CBD5E1">
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:text="PayMaya"
+                                android:gravity="center"
+                                android:padding="10dp"
+                                android:textStyle="bold"
+                                android:textColor="#475569"/>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/cardWallet"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            app:cardCornerRadius="8dp"
+                            app:cardElevation="1dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="#CBD5E1">
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:text="Wallet"
+                                android:gravity="center"
+                                android:padding="10dp"
+                                android:textStyle="bold"
+                                android:textColor="#475569"/>
+                        </com.google.android.material.card.MaterialCardView>
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/btnUpgrade"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Upgrade to Premium"
+                        android:backgroundTint="#F59E0B"
+                        android:textColor="#FFFFFF"
+                        app:cornerRadius="10dp"
+                        android:padding="12dp"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="All upgrades are active immediately upon successful payment transaction. Plans renew automatically."
+                android:textSize="12sp"
+                android:textColor="#94A3B8"
+                android:textAlignment="center"/>
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>

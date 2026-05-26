@@ -14,9 +14,12 @@ import {
   Truck,
   Home,
   Download,
+  Star,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { orderAPI, type OrderResponse } from "@/features/shared/services/order";
+import api from "@/features/shared/utils/api";
+import OrderFeedbackModal from "@/features/customer/components/OrderFeedbackModal";
 
 export default function OrderDetail() {
   const navigate = useNavigate();
@@ -24,31 +27,43 @@ export default function OrderDetail() {
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<any | null>(null);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+
+  const fetchOrderAndFeedback = async () => {
+    if (!orderId) {
+      setError("Order ID not found");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      const orderData = await orderAPI.getOrderById(parseInt(orderId));
+      setOrder(orderData);
+
+      if (orderData.status.toUpperCase() === "DELIVERED") {
+        try {
+          const feedbackRes = await api.get(`/api/feedbacks/orders/${orderId}`);
+          setFeedback(feedbackRes.data);
+        } catch (fbErr) {
+          // If 404 or other error, it means no feedback yet
+          setFeedback(null);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch order:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to load order details"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchOrder = async () => {
-      if (!orderId) {
-        setError("Order ID not found");
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        setError(null);
-        const orderData = await orderAPI.getOrderById(parseInt(orderId));
-        setOrder(orderData);
-      } catch (err) {
-        console.error("Failed to fetch order:", err);
-        setError(
-          err instanceof Error ? err.message : "Failed to load order details"
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchOrder();
+    fetchOrderAndFeedback();
   }, [orderId]);
 
   const formatDate = (dateString: string) => {
@@ -318,6 +333,41 @@ export default function OrderDetail() {
           </CardContent>
         </Card>
 
+        {/* Feedback Display Card */}
+        {feedback && (
+          <Card className="border-amber-200 bg-amber-50/20 shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                <h3 className="font-semibold text-slate-900">Your Feedback</h3>
+              </div>
+              <div className="ml-7 space-y-2">
+                <div className="flex gap-1 mb-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={`w-5 h-5 ${
+                        star <= feedback.starRating
+                          ? "text-amber-500 fill-amber-500"
+                          : "text-slate-200"
+                      }`}
+                    />
+                  ))}
+                </div>
+                {feedback.commentText && (
+                  <p className="text-slate-700 italic">"{feedback.commentText}"</p>
+                )}
+                {feedback.adminResponse && (
+                  <div className="mt-3 p-3 bg-white rounded-lg border border-slate-100">
+                    <p className="text-xs font-semibold text-teal-600 mb-1">Response from Shop:</p>
+                    <p className="text-slate-700 text-sm">{feedback.adminResponse}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Payment Summary Card */}
         <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-slate-50 to-slate-100/50">
           <CardContent className="p-6 space-y-4">
@@ -355,6 +405,15 @@ export default function OrderDetail() {
           transition={{ delay: 0.2 }}
           className="flex gap-3 flex-wrap"
         >
+          {order.status.toUpperCase() === "DELIVERED" && !feedback && (
+            <Button
+              onClick={() => setIsFeedbackModalOpen(true)}
+              className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold"
+            >
+              <Star className="w-4 h-4 fill-white" />
+              Leave Feedback
+            </Button>
+          )}
           <Button
             className="flex items-center gap-2 border-slate-300"
             variant="outline"
@@ -368,10 +427,15 @@ export default function OrderDetail() {
           </Button>
         </motion.div>
       </motion.div>
+
+      {isFeedbackModalOpen && (
+        <OrderFeedbackModal
+          isOpen={isFeedbackModalOpen}
+          orderId={order.orderId}
+          onClose={() => setIsFeedbackModalOpen(false)}
+          onSuccess={fetchOrderAndFeedback}
+        />
+      )}
     </div>
   );
 }
-
-
-
-

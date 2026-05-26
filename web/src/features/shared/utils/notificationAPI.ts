@@ -4,7 +4,7 @@ export interface NotificationData {
   notificationId: number;
   title: string;
   message: string;
-  notificationType: 'ORDER_UPDATE' | 'PAYMENT' | 'PROMOTION' | 'SYSTEM';
+  notificationType: 'ORDER_UPDATE' | 'PAYMENT' | 'PROMOTION' | 'SYSTEM' | 'FEEDBACK_REQUEST';
   referenceType?: string;
   referenceId?: number;
   isRead: boolean;
@@ -43,6 +43,7 @@ export const notificationAPI = {
     await api.delete(`/api/notifications/${notificationId}`);
   },
 };
+
 
 
 

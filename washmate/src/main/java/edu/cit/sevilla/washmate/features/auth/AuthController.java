@@ -862,6 +862,17 @@ public class AuthController {
             }
 
             // Update fields
+            if (request.getUsername() != null && !request.getUsername().isEmpty() && !request.getUsername().equals(user.getUsername())) {
+                if (!"CUSTOMER".equals(user.getRole())) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(Map.of("error", "Only customers are allowed to change their username"));
+                }
+                if (authService.existsByUsername(request.getUsername())) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(Map.of("error", "Username is already taken"));
+                }
+                user.setUsername(request.getUsername());
+            }
             if (request.getFirstName() != null && !request.getFirstName().isEmpty()) {
                 user.setFirstName(request.getFirstName());
             }

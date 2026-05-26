@@ -15,7 +15,6 @@ public class FeedbackDTO {
     private String feedbackType;
     private String commentText;
     private String adminResponse;
-    private String status;
     private LocalDateTime createdAt;
 }
 

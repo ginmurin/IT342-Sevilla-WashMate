@@ -280,6 +280,10 @@ public class AuthService {
         return userRepository.save(user);
     }
 
+    public boolean existsByUsername(String username) {
+        return userRepository.findByUsername(username).isPresent();
+    }
+
     /**
      * Get authentication service instance
      */

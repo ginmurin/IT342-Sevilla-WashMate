@@ -192,4 +192,118 @@ class AdminControllerTest {
                 
         verify(walletRepository).save(wallet);
     }
+
+    @Test
+    void updateUserRole_NullRole() throws Exception {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(adminUser));
+
+        Map<String, String> request = new HashMap<>();
+        // No "role" key
+
+        org.junit.jupiter.api.Assertions.assertThrows(jakarta.servlet.ServletException.class, () -> {
+            mockMvc.perform(put("/api/admin/users/2/role")
+                    .with(jwt().jwt(jwt -> jwt.subject("1")))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+        });
+    }
+
+    @Test
+    void updateUserStatus_NullStatus() throws Exception {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(adminUser));
+
+        Map<String, String> request = new HashMap<>();
+        // No "status" key
+
+        org.junit.jupiter.api.Assertions.assertThrows(jakarta.servlet.ServletException.class, () -> {
+            mockMvc.perform(put("/api/admin/users/2/status")
+                    .with(jwt().jwt(jwt -> jwt.subject("1")))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+        });
+    }
+
+    @Test
+    void updateUserWallet_NullBalance() throws Exception {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(adminUser));
+
+        Map<String, Double> request = new HashMap<>();
+        // No "balance" key
+
+        org.junit.jupiter.api.Assertions.assertThrows(jakarta.servlet.ServletException.class, () -> {
+            mockMvc.perform(put("/api/admin/users/2/wallet")
+                    .with(jwt().jwt(jwt -> jwt.subject("1")))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+        });
+    }
+
+    @Test
+    void updateUserWallet_CreateNewWallet() throws Exception {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(adminUser));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(regularUser));
+        when(walletRepository.findByUserUserId(2L)).thenReturn(Optional.empty());
+
+        Map<String, Double> request = new HashMap<>();
+        request.put("balance", 200.00);
+
+        mockMvc.perform(put("/api/admin/users/2/wallet")
+                .with(jwt().jwt(jwt -> jwt.subject("1")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        verify(walletRepository).save(any(Wallet.class));
+    }
+
+    @Test
+    void getGlobalStats_WithCancelledAndNullAmountOrders() throws Exception {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(adminUser));
+        when(userRepository.count()).thenReturn(2L);
+        when(orderRepository.count()).thenReturn(3L);
+
+        Order completedOrder = new Order();
+        completedOrder.setTotalAmount(new BigDecimal("100.00"));
+        completedOrder.setStatus("COMPLETED");
+
+        Order cancelledOrder = new Order();
+        cancelledOrder.setTotalAmount(new BigDecimal("200.00"));
+        cancelledOrder.setStatus("CANCELLED");
+
+        Order nullAmountOrder = new Order();
+        nullAmountOrder.setTotalAmount(null);
+        nullAmountOrder.setStatus("PENDING");
+
+        when(orderRepository.findAll()).thenReturn(Arrays.asList(completedOrder, cancelledOrder, nullAmountOrder));
+
+        User shopOwner = new User();
+        shopOwner.setUserId(3L);
+        shopOwner.setRole("SHOP_OWNER");
+
+        when(userRepository.findAll()).thenReturn(Arrays.asList(adminUser, regularUser, shopOwner));
+
+        mockMvc.perform(get("/api/admin/stats")
+                .with(jwt().jwt(jwt -> jwt.subject("1")))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalRevenue").value(100.00))
+                .andExpect(jsonPath("$.totalShops").value(1));
+    }
+
+    @Test
+    void getAllUsers_WithNullWalletBalance() throws Exception {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(adminUser));
+        when(userRepository.findAll()).thenReturn(Arrays.asList(regularUser));
+
+        Wallet walletNoBalance = new Wallet();
+        walletNoBalance.setUser(regularUser);
+        walletNoBalance.setAvailableBalance(null);
+
+        when(walletRepository.findByUserUserId(2L)).thenReturn(Optional.of(walletNoBalance));
+
+        mockMvc.perform(get("/api/admin/users")
+                .with(jwt().jwt(jwt -> jwt.subject("1")))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
 }

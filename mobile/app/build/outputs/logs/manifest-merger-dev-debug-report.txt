@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:2:1-38:12
-INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:2:1-38:12
-INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:2:1-38:12
-INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:2:1-38:12
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:2:1-45:12
+INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:2:1-45:12
+INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:2:1-45:12
+INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:2:1-45:12
 MERGED from [androidx.databinding:viewbinding:8.2.0] C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\aaa9884b697baef71a5ae3888d35a6a3\transformed\jetified-viewbinding-8.2.0\AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\58540bdc5ba467d81fd4cde815e00c00\transformed\material-1.12.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\bf89afb24284a3f2771080513e6eb37b\transformed\constraintlayout-2.1.4\AndroidManifest.xml:2:1-11:12
@@ -94,8 +94,8 @@ ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashM
 	android:name
 		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:7:22-78
 application
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:9:5-36:19
-INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:9:5-36:19
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:9:5-43:19
+INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:9:5-43:19
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\58540bdc5ba467d81fd4cde815e00c00\transformed\material-1.12.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\58540bdc5ba467d81fd4cde815e00c00\transformed\material-1.12.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\bf89afb24284a3f2771080513e6eb37b\transformed\constraintlayout-2.1.4\AndroidManifest.xml:9:5-20
@@ -131,79 +131,105 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\John\.gradle\cache
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.13.1] C:\Users\John\.gradle\caches\9.0-milestone-1\transforms\2845200ed1c322d48bc9b960c626b4ca\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:12:9-35
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:13:9-35
 	android:label
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:11:9-41
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:12:9-41
 	tools:targetApi
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:16:9-29
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:17:9-29
 	android:allowBackup
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:10:9-35
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:11:9-35
 	android:theme
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:13:9-46
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:14:9-46
 	android:networkSecurityConfig
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:14:9-69
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:15:9-69
 	android:usesCleartextTraffic
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:15:9-44
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:16:9-44
+	android:name
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:10:9-44
 activity#com.example.washmate.LoginActivity
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:17:9-24:20
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:18:9-25:20
 	android:exported
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:19:13-36
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:20:13-36
 	android:name
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:18:13-42
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:19:13-42
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:20:13-23:29
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:21:13-24:29
 action#android.intent.action.MAIN
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:21:17-69
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:22:17-69
 	android:name
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:21:25-66
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:22:25-66
 category#android.intent.category.LAUNCHER
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:22:17-77
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:23:17-77
 	android:name
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:22:27-74
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:23:27-74
 activity#com.example.washmate.RegisterActivity
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:25:9-54
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:26:9-54
 	android:name
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:25:19-51
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:26:19-51
 activity#com.example.washmate.OtpVerificationActivity
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:26:9-61
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:27:9-61
 	android:name
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:26:19-58
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:27:19-58
 activity#com.example.washmate.RoleSelectActivity
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:27:9-56
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:28:9-56
 	android:name
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:27:19-53
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:28:19-53
 activity#com.example.washmate.DashboardActivity
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:28:9-55
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:29:9-55
 	android:name
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:28:19-52
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:29:19-52
 activity#com.example.washmate.ServicesActivity
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:29:9-54
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:30:9-54
 	android:name
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:29:19-51
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:30:19-51
 activity#com.example.washmate.PlaceOrderActivity
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:30:9-56
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:31:9-56
 	android:name
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:30:19-53
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:31:19-53
 activity#com.example.washmate.ScheduleAddressActivity
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:31:9-61
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:32:9-61
 	android:name
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:31:19-58
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:32:19-58
 activity#com.example.washmate.PaymentReviewActivity
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:32:9-59
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:33:9-59
 	android:name
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:32:19-56
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:33:19-56
 activity#com.example.washmate.PaymentWebViewActivity
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:33:9-60
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:34:9-60
 	android:name
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:33:19-57
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:34:19-57
 activity#com.example.washmate.OrderSuccessActivity
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:34:9-58
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:35:9-58
 	android:name
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:34:19-55
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:35:19-55
 activity#com.example.washmate.WalletActivity
-ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:35:9-52
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:36:9-52
 	android:name
-		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:35:19-49
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:36:19-49
+activity#com.example.washmate.OrdersActivity
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:37:9-52
+	android:name
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:37:19-49
+activity#com.example.washmate.OrderDetailActivity
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:38:9-57
+	android:name
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:38:19-54
+activity#com.example.washmate.NotificationsActivity
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:39:9-59
+	android:name
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:39:19-56
+activity#com.example.washmate.SettingsActivity
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:40:9-54
+	android:name
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:40:19-51
+activity#com.example.washmate.SubscriptionsActivity
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:41:9-59
+	android:name
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:41:19-56
+activity#com.example.washmate.TransactionHistoryActivity
+ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:42:9-64
+	android:name
+		ADDED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml:42:19-61
 uses-sdk
 INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\John\Documents\System integ\all-features\IT342-Sevilla-WashMate\mobile\app\src\main\AndroidManifest.xml

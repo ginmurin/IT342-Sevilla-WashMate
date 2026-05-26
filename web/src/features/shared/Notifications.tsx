@@ -1,10 +1,14 @@
+import React, { useState } from 'react';
 import { useNotifications } from "@/features/shared/contexts/NotificationContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/features/shared/components/Card";
-import { Bell, CheckCircle2, AlertCircle, Zap, Gift, Loader2 } from 'lucide-react';
+import { Bell, CheckCircle2, AlertCircle, Zap, Gift, Loader2, Star } from 'lucide-react';
 import { motion } from 'motion/react';
+import OrderFeedbackModal from '@/features/customer/components/OrderFeedbackModal';
 
 export default function Notifications() {
-  const { notifications, markAsRead, markAllAsRead, isLoading } = useNotifications();
+  const { notifications, markAsRead, markAllAsRead, isLoading, fetchNotifications } = useNotifications();
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -16,6 +20,8 @@ export default function Notifications() {
         return <Gift className="w-5 h-5 text-amber-600" />;
       case 'SYSTEM':
         return <Zap className="w-5 h-5 text-slate-600" />;
+      case 'FEEDBACK_REQUEST':
+        return <Star className="w-5 h-5 text-amber-500" />;
       default:
         return <Bell className="w-5 h-5 text-slate-600" />;
     }
@@ -31,6 +37,8 @@ export default function Notifications() {
         return 'bg-amber-50 border-amber-100';
       case 'SYSTEM':
         return 'bg-slate-50 border-slate-200';
+      case 'FEEDBACK_REQUEST':
+        return 'bg-amber-50 border-amber-200';
       default:
         return 'bg-slate-50 border-slate-200';
     }
@@ -45,6 +53,12 @@ export default function Notifications() {
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const handleFeedbackClick = (notificationId: number, orderId: number) => {
+    markAsRead(notificationId);
+    setSelectedOrderId(orderId);
+    setIsFeedbackModalOpen(true);
   };
 
   return (
@@ -85,12 +99,10 @@ export default function Notifications() {
                     key={notification.notificationId}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`p-6 transition-colors ${
-                      !notification.isRead ? 'bg-blue-50/50' : 'hover:bg-slate-50'
-                    }`}
+                    className="p-6 transition-colors"
                   >
                     <div className="flex gap-4">
-                      <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center border ${getNotificationBgColor(notification.notificationType)}`}>
+                      <div className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center border">
                         {getNotificationIcon(notification.notificationType)}
                       </div>
                       <div className="flex-1 min-w-0 pt-1">
@@ -102,6 +114,14 @@ export default function Notifications() {
                             <p className="text-sm text-slate-600 mt-1">
                               {notification.message}
                             </p>
+                            {notification.notificationType === 'FEEDBACK_REQUEST' && notification.referenceId && (
+                               <button 
+                                 onClick={() => handleFeedbackClick(notification.notificationId, notification.referenceId!)}
+                                 className="mt-3 text-sm font-medium text-teal-600 hover:text-teal-700 bg-teal-50 px-3 py-1.5 rounded-lg transition-colors inline-block"
+                               >
+                                 Leave Feedback
+                               </button>
+                            )}
                           </div>
                           <div className="flex items-center gap-4 mt-2 sm:mt-0">
                             <p className="text-xs font-medium text-slate-500 whitespace-nowrap">
@@ -126,9 +146,20 @@ export default function Notifications() {
           </CardContent>
         </Card>
       </div>
+
+      {isFeedbackModalOpen && selectedOrderId && (
+        <OrderFeedbackModal
+          isOpen={isFeedbackModalOpen}
+          orderId={selectedOrderId}
+          onClose={() => {
+            setIsFeedbackModalOpen(false);
+            setSelectedOrderId(null);
+          }}
+          onSuccess={() => {
+            fetchNotifications();
+          }}
+        />
+      )}
     </div>
   );
 }
-
-
-

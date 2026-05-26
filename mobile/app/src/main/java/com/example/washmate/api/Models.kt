@@ -21,10 +21,11 @@ data class AuthResponse(
     val email: String,
     val firstName: String? = null,
     val lastName: String? = null,
-    val role: String,
+    val role: String? = null,
     val userId: Long,
     val message: String? = null,
-    val requiresEmailVerification: Boolean = false
+    val requiresEmailVerification: Boolean = false,
+    val requiresTwoFactor: Boolean = false
 )
 
 data class VerifyEmailRequest(
@@ -89,7 +90,11 @@ data class OrderRequest(
     val services: List<OrderServiceInput>,
     val totalWeight: Double? = null,
     val specialInstructions: String? = null,
-    val isRushOrder: Boolean = false
+    val isRushOrder: Boolean = false,
+    val pickupAddressString: String? = null,
+    val deliveryAddressString: String? = null,
+    val pickupSchedule: String? = null,
+    val deliverySchedule: String? = null
 )
 
 data class WalletDTO(
@@ -99,3 +104,95 @@ data class WalletDTO(
     val currency: String,
     val updatedAt: String?
 )
+
+data class SubscriptionDTO(
+    val subscriptionId: Long,
+    val planType: String,
+    val planPrice: Double,
+    val discountPercentage: Int,
+    val ordersIncluded: Int? = null,
+    val description: String? = null
+)
+
+data class NotificationDTO(
+    val notificationId: Long,
+    val title: String,
+    val message: String,
+    val notificationType: String,
+    val referenceType: String? = null,
+    val referenceId: Long? = null,
+    val isRead: Boolean,
+    val createdAt: String
+)
+
+data class UserDTO(
+    val userId: Long,
+    val username: String?,
+    val firstName: String?,
+    val lastName: String?,
+    val email: String,
+    val phoneNumber: String?,
+    val role: String,
+    val emailVerified: Boolean,
+    val twoFactorEnabled: Boolean
+)
+
+data class UpdateUserRequest(
+    val username: String?,
+    val firstName: String?,
+    val lastName: String?,
+    val phoneNumber: String?
+)
+
+data class ChangePasswordRequest(
+    val currentPassword: String,
+    val newPassword: String
+)
+
+data class TwoFactorEnableRequest(
+    val code: String
+)
+
+data class TwoFactorLoginRequest(
+    val userId: Long,
+    val code: String
+)
+
+data class TwoFactorResendRequest(
+    val userId: Long
+)
+
+data class WalletTransactionDTO(
+    val transactionId: Long,
+    val walletId: Long,
+    val amount: Double,
+    val transactionType: String,
+    val referenceType: String?,
+    val referenceId: Long?,
+    val status: String,
+    val description: String?,
+    val balanceBefore: Double,
+    val balanceAfter: Double,
+    val createdAt: String
+)
+
+data class FeedbackRequest(
+    val orderId: Long,
+    val starRating: Int,
+    val feedbackType: String = "SHOP_REVIEW",
+    val commentText: String = ""
+)
+
+data class FeedbackDTO(
+    val feedbackId: Long,
+    val orderId: Long? = null,
+    val orderNumber: String? = null,
+    val customerId: Long? = null,
+    val customerName: String? = null,
+    val starRating: Int? = null,
+    val feedbackType: String? = null,
+    val commentText: String? = null,
+    val adminResponse: String? = null,
+    val createdAt: String? = null
+)
+

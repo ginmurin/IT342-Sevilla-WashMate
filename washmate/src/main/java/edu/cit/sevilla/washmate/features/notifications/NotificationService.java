@@ -127,8 +127,23 @@ public class NotificationService {
      */
     public void notifyWalletTopup(Long userId, java.math.BigDecimal amount) {
         String title = "Wallet Top-up Successful";
-        String message = "Added ₱" + amount.setScale(2, java.math.RoundingMode.HALF_UP) + " to your wallet";
+        String message = "Added ?" + amount.setScale(2, java.math.RoundingMode.HALF_UP) + " to your wallet";
         createNotification(userId, "PAYMENT", title, message, "WALLET_TOPUP", userId);
     }
-}
+    
+    /**
+     * Create order delivered for feedback notification
+     */
+    public void notifyOrderDeliveredForFeedback(Long userId, Long orderId, String orderNumber) {
+        String title = "Order Delivered - Leave Feedback";
+        String message = "Your order " + orderNumber + " has been delivered. Please rate and leave your feedback!";
+        createNotification(userId, "FEEDBACK_REQUEST", title, message, "ORDER", orderId);
+    }
 
+    @Transactional
+    public void markOrderFeedbackNotificationAsRead(Long orderId) {
+        List<Notification> notifications = notificationRepository.findByNotificationTypeAndReferenceTypeAndReferenceId("FEEDBACK_REQUEST", "ORDER", orderId);
+        notifications.forEach(n -> n.setIsRead(true));
+        notificationRepository.saveAll(notifications);
+    }
+}

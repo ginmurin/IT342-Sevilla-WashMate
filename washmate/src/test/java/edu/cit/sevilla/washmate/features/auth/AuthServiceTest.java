@@ -1076,7 +1076,6 @@ class AuthServiceTest {
     @Test
     void registerWithEmailPassword_UsernameNullCheck() {
         when(userRepository.findByEmail("new@test.com")).thenReturn(Optional.empty());
-        when(userRepository.findByUsername(null)).thenReturn(Optional.empty());
         when(passwordEncoder.encode("Password1")).thenReturn("encoded");
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(userSubscriptionRepository.findFirstByUserUserIdOrderByCreatedAtDesc(anyLong()))

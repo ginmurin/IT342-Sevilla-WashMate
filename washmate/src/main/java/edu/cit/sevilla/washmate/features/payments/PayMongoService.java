@@ -311,6 +311,23 @@ public class PayMongoService {
             attributes.put("cancel_url", failureUrl);
             attributes.put("success_url", successUrl);
             attributes.put("payment_method_types", List.of("card"));
+            attributes.put("send_email_receipt", false);
+
+            // Prefill billing info so user only types card info
+            Map<String, Object> billing = new HashMap<>();
+            billing.put("name", "Sandbox User");
+            billing.put("email", "sandbox@washmate.com");
+            billing.put("phone", "09123456789");
+
+            Map<String, Object> address = new HashMap<>();
+            address.put("line1", "Test Address");
+            address.put("city", "Cebu City");
+            address.put("state", "Cebu");
+            address.put("postal_code", "6000");
+            address.put("country", "PH");
+            billing.put("address", address);
+
+            attributes.put("billing", billing);
 
             Map<String, Object> lineItem = new HashMap<>();
             lineItem.put("amount", amountInCents);

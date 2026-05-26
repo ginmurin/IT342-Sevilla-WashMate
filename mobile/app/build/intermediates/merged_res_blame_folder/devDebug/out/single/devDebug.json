@@ -8,6 +8,14 @@
         "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\menu\\bottom_nav_menu.xml"
     },
     {
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_activity_transaction_history.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\layout\\activity_transaction_history.xml"
+    },
+    {
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_item_notification.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\layout\\item_notification.xml"
+    },
+    {
         "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_item_selected_service.xml.flat",
         "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\layout\\item_selected_service.xml"
     },
@@ -16,8 +24,20 @@
         "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\layout\\activity_place_order.xml"
     },
     {
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_activity_notifications.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\layout\\activity_notifications.xml"
+    },
+    {
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\menu_drawer_menu.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\menu\\drawer_menu.xml"
+    },
+    {
         "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_activity_wallet.xml.flat",
         "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\layout\\activity_wallet.xml"
+    },
+    {
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_activity_subscriptions.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\layout\\activity_subscriptions.xml"
     },
     {
         "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_activity_payment_web_view.xml.flat",
@@ -26,10 +46,6 @@
     {
         "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\drawable_button_background.xml.flat",
         "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\drawable\\button_background.xml"
-    },
-    {
-        "merged": "com.example.washmate.app-merged_res-41:/layout_activity_order_success.xml.flat",
-        "source": "com.example.washmate.app-main-45:/layout/activity_order_success.xml"
     },
     {
         "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_activity_login.xml.flat",
@@ -48,8 +64,12 @@
         "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\drawable\\ic_wallet.xml"
     },
     {
-        "merged": "com.example.washmate.app-merged_res-41:/layout_activity_wallet.xml.flat",
-        "source": "com.example.washmate.app-main-45:/layout/activity_wallet.xml"
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\drawable_ic_settings.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\drawable\\ic_settings.xml"
+    },
+    {
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_nav_header_dashboard.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\layout\\nav_header_dashboard.xml"
     },
     {
         "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_activity_otp_verification.xml.flat",
@@ -60,16 +80,48 @@
         "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\drawable\\button_outline_background.xml"
     },
     {
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_activity_orders.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\layout\\activity_orders.xml"
+    },
+    {
         "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\drawable_ic_back.xml.flat",
         "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\drawable\\ic_back.xml"
+    },
+    {
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_item_transaction.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\layout\\item_transaction.xml"
     },
     {
         "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\drawable_otp_input_bg.xml.flat",
         "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\drawable\\otp_input_bg.xml"
     },
     {
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_activity_settings.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\layout\\activity_settings.xml"
+    },
+    {
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_dialog_feedback.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\layout\\dialog_feedback.xml"
+    },
+    {
         "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_activity_payment_review.xml.flat",
         "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\layout\\activity_payment_review.xml"
+    },
+    {
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_activity_order_detail.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\layout\\activity_order_detail.xml"
+    },
+    {
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_item_order.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\layout\\item_order.xml"
+    },
+    {
+        "merged": "com.example.washmate.app-merged_res-41:/layout_activity_order_detail.xml.flat",
+        "source": "com.example.washmate.app-main-45:/layout/activity_order_detail.xml"
+    },
+    {
+        "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\drawable_ic_menu.xml.flat",
+        "source": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-main-45:\\drawable\\ic_menu.xml"
     },
     {
         "merged": "C:\\Users\\John\\.gradle\\daemon\\9.0-milestone-1\\com.example.washmate.app-merged_res-41:\\layout_item_service.xml.flat",

@@ -30,7 +30,6 @@ public class Feedback {
     @JoinColumn(name = "customer_id", nullable = false)
     private User customer;
 
-
     @Column(name = "star_rating", nullable = false)
     private Integer starRating;
 
@@ -43,11 +42,6 @@ public class Feedback {
 
     @Column(name = "admin_response", columnDefinition = "TEXT")
     private String adminResponse;
-
-    /** PENDING, RESOLVED */
-    @Column(name = "status", nullable = false)
-    @Builder.Default
-    private String status = "PENDING";
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -11,6 +11,8 @@ import androidx.lifecycle.lifecycleScope
 import com.example.washmate.api.RetrofitClient
 import com.example.washmate.api.VerifyEmailRequest
 import com.example.washmate.api.ResendOtpRequest
+import com.example.washmate.api.TwoFactorLoginRequest
+import com.example.washmate.api.TwoFactorResendRequest
 import com.example.washmate.databinding.ActivityOtpVerificationBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,6 +47,13 @@ class OtpVerificationActivity : AppCompatActivity() {
 
         // Display masked email
         binding.tvEmailAddress.text = maskEmail(email)
+
+        val isTwoFactor = intent.getBooleanExtra("isTwoFactor", false)
+        if (isTwoFactor) {
+            binding.tvTitle.text = "Two-Factor Auth"
+            binding.btnVerify.text = "Verify & Login"
+            binding.tvEmailAddress.text = email // If 2FA, we can show the email directly or still mask it
+        }
 
         // Set up OTP input
         setupOtpInput()
@@ -85,12 +94,17 @@ class OtpVerificationActivity : AppCompatActivity() {
 
         binding.btnVerify.isEnabled = false
         binding.otpInput.setEnabled(false)
+        val isTwoFactor = intent.getBooleanExtra("isTwoFactor", false)
 
         lifecycleScope.launch {
             try {
                 // Verify OTP with Backend
                 val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.instance.verifyEmail(VerifyEmailRequest(userId, otp))
+                    if (isTwoFactor) {
+                        RetrofitClient.instance.verifyTwoFactorLogin(TwoFactorLoginRequest(userId, otp))
+                    } else {
+                        RetrofitClient.instance.verifyEmail(VerifyEmailRequest(userId, otp))
+                    }
                 }
 
                 if (response.isSuccessful && response.body() != null) {
@@ -102,10 +116,18 @@ class OtpVerificationActivity : AppCompatActivity() {
                         putString("USER_EMAIL", authData.email)
                         putString("USER_ROLE", authData.role)
                         putString("USER_ID", authData.userId.toString())
+                        
+                        val displayFirstName = authData.firstName?.takeIf { it.isNotBlank() }
+                            ?: authData.email.substringBefore("@")
+                        putString("USER_FIRST_NAME", displayFirstName)
                         apply()
                     }
 
-                    Toast.makeText(this@OtpVerificationActivity, "Email verified! Registration complete.", Toast.LENGTH_SHORT).show()
+                    if (isTwoFactor) {
+                        Toast.makeText(this@OtpVerificationActivity, "Two-factor authentication successful!", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this@OtpVerificationActivity, "Email verified! Registration complete.", Toast.LENGTH_SHORT).show()
+                    }
 
                     val intent = Intent(this@OtpVerificationActivity, DashboardActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -127,11 +149,17 @@ class OtpVerificationActivity : AppCompatActivity() {
 
     private fun resendOtp(email: String) {
         binding.btnResendCode.isEnabled = false
+        val isTwoFactor = intent.getBooleanExtra("isTwoFactor", false)
+        val userId = intent.getLongExtra("userId", -1L)
 
         lifecycleScope.launch {
             try {
                 val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.instance.resendOtp(ResendOtpRequest(email))
+                    if (isTwoFactor) {
+                        RetrofitClient.instance.resendTwoFactorLogin(TwoFactorResendRequest(userId))
+                    } else {
+                        RetrofitClient.instance.resendOtp(ResendOtpRequest(email))
+                    }
                 }
 
                 if (response.isSuccessful) {

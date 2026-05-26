@@ -3,7 +3,7 @@ package edu.cit.sevilla.washmate;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+@SpringBootTest(classes = WashmateApplication.class)
 class WashmateApplicationTests {
 
 	@Test

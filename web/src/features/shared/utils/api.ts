@@ -363,7 +363,7 @@ export const authAPI = {
   /**
    * Update current user profile
    */
-  updateMe: async (payload: { firstName?: string; lastName?: string; phoneNumber?: string }): Promise<User> => {
+  updateMe: async (payload: { username?: string; firstName?: string; lastName?: string; phoneNumber?: string }): Promise<User> => {
     const response = await api.put('/api/auth/me', payload);
     return mapUser(response.data);
   },

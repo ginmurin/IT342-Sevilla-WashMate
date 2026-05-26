@@ -9,6 +9,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GravityCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.washmate.api.RetrofitClient
 import com.example.washmate.api.OrderDTO
@@ -28,9 +29,18 @@ class DashboardActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         val sharedPref = getSharedPreferences("WashMatePrefs", Context.MODE_PRIVATE)
-        val email = sharedPref.getString("USER_EMAIL", "User")
+        var firstName = sharedPref.getString("USER_FIRST_NAME", "User")
         
-        binding.tvWelcomeMessage.text = "Welcome back, $email!"
+        if (firstName == "User") {
+            val email = sharedPref.getString("USER_EMAIL", "") ?: ""
+            if (email.isNotEmpty()) {
+                firstName = email.substringBefore("@")
+                // Save it for next time
+                sharedPref.edit().putString("USER_FIRST_NAME", firstName).apply()
+            }
+        }
+        
+        binding.tvWelcomeMessage.text = "Welcome back, $firstName!"
 
         binding.btnLogout.setOnClickListener {
             sharedPref.edit().clear().apply()
@@ -44,16 +54,65 @@ class DashboardActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        binding.cardSubscription.setOnClickListener {
+            val intent = Intent(this, SubscriptionsActivity::class.java)
+            startActivity(intent)
+        }
+
+        binding.btnNotifications.setOnClickListener {
+            val intent = Intent(this, NotificationsActivity::class.java)
+            startActivity(intent)
+        }
+
+        // Drawer Menu Button Toggle (3 Bars)
+        binding.btnMenu.setOnClickListener {
+            binding.drawerLayout.openDrawer(GravityCompat.START)
+        }
+
+        // Side Navigation Drawer Item Clicks
+        val headerView = binding.navigationView.getHeaderView(0)
+        val tvDrawerUserEmail = headerView.findViewById<TextView>(R.id.tvDrawerUserEmail)
+        val userEmail = sharedPref.getString("USER_EMAIL", "user@washmate.com")
+        tvDrawerUserEmail.text = userEmail
+
+        binding.navigationView.setNavigationItemSelectedListener { item ->
+            binding.drawerLayout.closeDrawer(GravityCompat.START)
+            when (item.itemId) {
+                R.id.menu_services -> {
+                    val intent = Intent(this, ServicesActivity::class.java)
+                    startActivity(intent)
+                    true
+                }
+                R.id.menu_subscription -> {
+                    val intent = Intent(this, SubscriptionsActivity::class.java)
+                    startActivity(intent)
+                    true
+                }
+                R.id.menu_transactions -> {
+                    val intent = Intent(this, TransactionHistoryActivity::class.java)
+                    startActivity(intent)
+                    true
+                }
+                else -> false
+            }
+        }
+
         binding.bottomNavigation.selectedItemId = R.id.nav_home
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> true
                 R.id.nav_orders -> {
-                    Toast.makeText(this, "Orders clicked", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, OrdersActivity::class.java)
+                    startActivity(intent)
                     true
                 }
                 R.id.nav_wallet -> {
                     val intent = Intent(this, WalletActivity::class.java)
+                    startActivity(intent)
+                    true
+                }
+                R.id.nav_settings -> {
+                    val intent = Intent(this, SettingsActivity::class.java)
                     startActivity(intent)
                     true
                 }

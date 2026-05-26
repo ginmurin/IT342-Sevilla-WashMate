@@ -97,6 +97,8 @@ class ServicesActivity : AppCompatActivity() {
             tvServiceDescription.text = service.description ?: "No description available"
             tvUnitType.text = "Per ${service.unitType.lowercase()}"
 
+            val cardView = itemView as com.google.android.material.card.MaterialCardView
+
             val rgVariants = itemView.findViewById<android.widget.RadioGroup>(R.id.rgVariants)
             if (service.hasVariants && !service.variants.isNullOrEmpty()) {
                 rgVariants.visibility = View.VISIBLE
@@ -113,24 +115,39 @@ class ServicesActivity : AppCompatActivity() {
                 }
                 
                 rgVariants.setOnCheckedChangeListener { _, checkedId ->
-                    selectedVariants[service.serviceId] = checkedId.toLong()
+                    if (checkedId != -1) {
+                        selectedVariants[service.serviceId] = checkedId.toLong()
+                        if (!selectedServices.contains(service.serviceId)) {
+                            selectedServices.add(service.serviceId)
+                            cardView.setCardBackgroundColor(Color.parseColor("#F0FDFA"))
+                            cardView.strokeColor = Color.parseColor("#0D9488")
+                            cardView.strokeWidth = 4
+                            binding.btnContinue.visibility = View.VISIBLE
+                        }
+                    }
                 }
             } else {
                 rgVariants.visibility = View.GONE
             }
-
-            val cardView = itemView as com.google.android.material.card.MaterialCardView
             
             itemView.setOnClickListener {
                 if (selectedServices.contains(service.serviceId)) {
                     selectedServices.remove(service.serviceId)
                     cardView.setCardBackgroundColor(Color.parseColor("#FFFFFF"))
                     cardView.strokeWidth = 0
+                    if (service.hasVariants) {
+                        rgVariants.clearCheck()
+                        selectedVariants.remove(service.serviceId)
+                    }
                 } else {
                     selectedServices.add(service.serviceId)
                     cardView.setCardBackgroundColor(Color.parseColor("#F0FDFA")) // Teal 50
                     cardView.strokeColor = Color.parseColor("#0D9488")
                     cardView.strokeWidth = 4
+                    if (service.hasVariants && !service.variants.isNullOrEmpty()) {
+                        val firstVariantId = service.variants[0].variantId.toInt()
+                        rgVariants.check(firstVariantId)
+                    }
                 }
                 
                 // Show/hide continue button

@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
+        android:name=".WashMateApplication"
         android:allowBackup="true"
         android:label="@string/app_name"
         android:supportsRtl="true"
@@ -33,6 +34,12 @@
         <activity android:name=".PaymentWebViewActivity" />
         <activity android:name=".OrderSuccessActivity" />
         <activity android:name=".WalletActivity" />
+        <activity android:name=".OrdersActivity" />
+        <activity android:name=".OrderDetailActivity" />
+        <activity android:name=".NotificationsActivity" />
+        <activity android:name=".SettingsActivity" />
+        <activity android:name=".SubscriptionsActivity" />
+        <activity android:name=".TransactionHistoryActivity" />
     </application>
 
 </manifest>

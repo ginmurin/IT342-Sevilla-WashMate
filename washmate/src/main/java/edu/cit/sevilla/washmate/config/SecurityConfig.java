@@ -70,8 +70,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/auth/google/callback").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/google/mobile").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/verify-redirect-code").permitAll()
-                // Admin endpoints - require authentication (role checked in controller)
-                .requestMatchers("/api/admin/**").authenticated()
+                // Webhook endpoints - public access
+                .requestMatchers("/api/webhook/**").permitAll()
                 // All other endpoints require authentication
                 .anyRequest().authenticated()
             )

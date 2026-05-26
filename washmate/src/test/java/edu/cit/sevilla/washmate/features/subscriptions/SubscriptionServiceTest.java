@@ -174,4 +174,179 @@ class SubscriptionServiceTest {
 
         assertEquals(new BigDecimal("399.00"), proPlan.getPlanPrice());
     }
+
+    // ===== Additional Comprehensive Tests for Branch Coverage =====
+
+    @Test
+    void getCurrentSubscription_NotFound() {
+        when(userSubscriptionRepository.findByUserUserIdAndStatusOrderByCreatedAtDesc(999L, "ACTIVE"))
+                .thenReturn(Optional.empty());
+
+        Optional<UserSubscription> result = subscriptionService.getCurrentSubscription(999L);
+
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    void initiateSubscriptionUpgrade_PlanNotFound() {
+        when(subscriptionRepository.findByPlanType("ELITE")).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> subscriptionService.initiateSubscriptionUpgrade(1L, user, "ELITE"));
+    }
+
+    @Test
+    void confirmSubscriptionUpgrade_NotFound() {
+        when(userSubscriptionRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> subscriptionService.confirmSubscriptionUpgrade(999L, "pay_123", "GCASH"));
+    }
+
+    @Test
+    void confirmSubscriptionUpgrade_WithExistingPayment() {
+        Payment existingPayment = new Payment();
+        when(userSubscriptionRepository.findById(1L)).thenReturn(Optional.of(userSubscription));
+        when(paymentService.getPaymentByPaymongoIntentId("pay_existing"))
+                .thenReturn(Optional.of(existingPayment));
+        when(userSubscriptionRepository.save(any(UserSubscription.class))).thenReturn(userSubscription);
+
+        UserSubscription result = subscriptionService.confirmSubscriptionUpgrade(1L, "pay_existing", "CARD");
+
+        assertEquals("ACTIVE", result.getStatus());
+    }
+
+    @Test
+    void getSubscriptionHistory_Empty() {
+        when(userSubscriptionRepository.findByUserUserId(999L)).thenReturn(Arrays.asList());
+
+        List<UserSubscription> result = subscriptionService.getSubscriptionHistory(999L);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void updatePlanPrice_NotFound() {
+        when(subscriptionRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> subscriptionService.updatePlanPrice(999L, new BigDecimal("500.00")));
+    }
+
+    @Test
+    void getAllPlans_Empty() {
+        when(subscriptionRepository.findAll()).thenReturn(Arrays.asList());
+
+        List<Subscription> result = subscriptionService.getAllPlans();
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void initiateSubscriptionUpgrade_NoActiveSubscription() {
+        when(subscriptionRepository.findByPlanType("PRO")).thenReturn(Optional.of(proPlan));
+        when(userSubscriptionRepository.findByUserUserIdAndStatusOrderByCreatedAtDesc(1L, "ACTIVE"))
+                .thenReturn(Optional.empty());
+        when(userSubscriptionRepository.save(any(UserSubscription.class))).thenReturn(userSubscription);
+
+        UserSubscription result = subscriptionService.initiateSubscriptionUpgrade(1L, user, "PRO");
+
+        assertNotNull(result);
+    }
+
+    @Test
+    void toUserSubscriptionDTO_Success() {
+        UserSubscriptionDTO dto = subscriptionService.toUserSubscriptionDTO(userSubscription);
+
+        assertNotNull(dto);
+        assertEquals(userSubscription.getStatus(), dto.getStatus());
+    }
+
+    @Test
+    void initializeUsersWithFreeSubscription_UserAlreadyHasSubscription() {
+        when(subscriptionRepository.findByPlanType("FREE")).thenReturn(Optional.of(freePlan));
+        when(userRepository.findAll()).thenReturn(Arrays.asList(user));
+        when(userSubscriptionRepository.findByUserUserIdAndStatusOrderByCreatedAtDesc(1L, "ACTIVE"))
+                .thenReturn(Optional.of(userSubscription));
+
+        int count = subscriptionService.initializeUsersWithFreeSubscription();
+
+        assertEquals(0, count);
+    }
+
+    @Test
+    void confirmSubscriptionUpgrade_UpdatesPaymongoId() {
+        when(userSubscriptionRepository.findById(1L)).thenReturn(Optional.of(userSubscription));
+        when(paymentService.getPaymentByPaymongoIntentId("pay_new")).thenReturn(Optional.empty());
+        when(paymentService.savePayment(any(Payment.class))).thenReturn(new Payment());
+        when(userSubscriptionRepository.save(any(UserSubscription.class))).thenReturn(userSubscription);
+
+        UserSubscription result = subscriptionService.confirmSubscriptionUpgrade(1L, "pay_new", "CARD");
+
+        assertNotNull(result);
+        verify(userSubscriptionRepository).save(any(UserSubscription.class));
+    }
+
+    @Test
+    void getSubscriptionDTO_Success() {
+        Optional<SubscriptionDTO> dto = subscriptionService.getSubscriptionDTO(proPlan);
+
+        assertTrue(dto.isPresent());
+        assertEquals("PRO", dto.get().getPlanType());
+    }
+
+    @Test
+    void getSubscriptionDTO_Null() {
+        Optional<SubscriptionDTO> result = subscriptionService.getSubscriptionDTO(null);
+
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    void getSubscriptionPayments_Success() {
+        Payment payment = new Payment();
+        when(paymentService.getSubscriptionPayments(1L)).thenReturn(Arrays.asList(payment));
+
+        List<Payment> result = subscriptionService.getSubscriptionPayments(1L);
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getCompletedSubscriptionPayment_Found() {
+        Payment payment = new Payment();
+        when(paymentService.getCompletedSubscriptionPayment(1L)).thenReturn(Optional.of(payment));
+
+        Optional<Payment> result = subscriptionService.getCompletedSubscriptionPayment(1L);
+
+        assertTrue(result.isPresent());
+    }
+
+    @Test
+    void getCompletedSubscriptionPayment_NotFound() {
+        when(paymentService.getCompletedSubscriptionPayment(999L)).thenReturn(Optional.empty());
+
+        Optional<Payment> result = subscriptionService.getCompletedSubscriptionPayment(999L);
+
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    void hasCompletedPayment_True() {
+        Payment payment = new Payment();
+        when(paymentService.getCompletedSubscriptionPayment(1L)).thenReturn(Optional.of(payment));
+
+        boolean result = subscriptionService.hasCompletedPayment(1L);
+
+        assertTrue(result);
+    }
+
+    @Test
+    void hasCompletedPayment_False() {
+        when(paymentService.getCompletedSubscriptionPayment(999L)).thenReturn(Optional.empty());
+
+        boolean result = subscriptionService.hasCompletedPayment(999L);
+
+        assertFalse(result);
+    }
 }
